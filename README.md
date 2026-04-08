@@ -1,72 +1,110 @@
+<div align="center">
 
 # 🐀 WitchcatCode
 
-**面向多 Provider 原生接入增强的代码助手 CLI** 🚀**
+**多 Provider 原生接入的 AI 编程助手 CLI**
 
-专业、务实、可落地。适合需要稳定接入第三方模型、代理服务与自定义网关的开发环境。 🛠
+[![Bun](https://img.shields.io/badge/runtime-Bun%20%7E%201.3.5-f472b6)](https://bun.sh)
+[![Node](https://img.shields.io/badge/runtime-Node%20%7E%2024-339933)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@witchcat-code/cli?color=cb3837)](https://github.com/witchscottishfoldcat/WitchCatCode)
 
-[![Runtime](https://img.shields.io/badge/runtime-Bun%20%2BNode)](README.md)
-[![Config](https://img.shields.io/badge/config-~/.witchcat-8b5cf6)](README.md)
-[![Providers](https://img.shields.io/badge/providers-Anthropic%20%2BOpenAI%20compatible%20%2bGLM-like-10b981)](README.md)
-[![Status](https://img.shields.io/badge/status-active%20fork-f59e0b)](README.md)
+[English](#english) · [中文](#中文)
 
-[![GitHub](https://img.shields.io/badge/Gateway-https://github.com/witchscottishfoldcat/WitchCatCode)](README.md)
-[![License](https://img.shields.io/badge/license-MIT)](README.md)
+</div>
 
 ---
 
-## 核心特性
+## 中文
 
-- **原生多 Provider 接入** - 支持 Anthropic、 OpenAI、 Gemini、 GLM 协议
-- **多鉴权模式隔离** - API Key / OAuth 模式，独立持久化
-- **自定义模型与列表管理** - 支持维护本地模型列表
-- **OpenAI 协议深度支持** - Chat Completions / Responses / OAuth
-- **独立配置目录** - `~/.witchcat`
-- **思维链流式输出**
+WitchcatCode 是一个面向多 Provider 原生接入的 AI 编程助手命令行工具。支持 Anthropic、OpenAI、Gemini、GLM 等多种模型协议，内置 Agent 团队协作、MCP 工具生态、文件操作、Chrome 集成等能力，适合需要稳定接入第三方模型或自定义网关的开发环境。
 
-## 支持的网络类型
+### 核心特性
 
-| 类型 | 说明 |
-| --- | --- |
-| `anthropic-like` | Anthropic 兼容 | `~/.anthropic/v1/messages` |
-| `openai-like` | OpenAI 兼容 | `https://api.openai.com` / 自定义 |
-| `gemini-like` | Gemini 兼容 | Gemini API / OAuth |
-| `glm-like` | 智谱AI GLM 系列 | `https://open.bigmodel.cn/api/anthropic` |
+- **多 Provider 原生接入** — 支持 Anthropic、OpenAI、Gemini、GLM 四种协议，每种协议支持多种认证模式
+- **自定义网关** — 可配置任意兼容 API 端点，支持 Base URL、API Key、模型列表管理
+- **Agent 团队系统** — Swarm 多 Agent 协作，支持进程内生成、权限同步、断线重连
+- **MCP 工具生态** — 完整的 MCP 客户端/服务端支持，含 OAuth 认证、资源管理、插件桥接
+- **文件操作工具链** — 读取、编辑、写入、搜索（Glob/Grep）、LSP 集成、Shell 执行
+- **Chrome 集成** — 远程控制浏览器，支持 Computer Use
+- **远程开发** — SSH / Docker / WSL / Windows Server 全环境支持
 
-## 环境要求
+### 支持的 Provider
 
-- **Bun** >= 1.3.5
-- **Node.js** >= 24
+| 类型 | 说明 | 默认端点 | 认证模式 |
+|---|---|---|---|
+| `anthropic-like` | Anthropic 兼容 | `https://api.anthropic.com` | API Key |
+| `openai-like` | OpenAI 兼容 | `https://api.openai.com` | Chat Completions / Responses / OAuth |
+| `gemini-like` | Gemini 兼容 | `https://generativelanguage.googleapis.com` | API / OAuth / Vertex AI |
+| `glm-like` | 智谱 AI GLM | `https://open.bigmodel.cn/api/anthropic` | API Key (Anthropic 兼容) |
 
-## 快速开始
+### 安装
+
+**环境要求：** Bun >= 1.3.5，Node.js >= 24
 
 ```bash
-git clone https://github.com/witchscottishfoldcat/WitchCatCode
-cd WitchCatCode
-bun install
-bun link
-witchcat
+# 从 GitHub 安装（含依赖，无需网络下载）
+bun install -g witchscottishfoldcat/WitchCatCode
+
+# 或通过 tgz 文件离线安装
+bun install -g witchcat-code-cli-1.0.0.tgz
 ```
 
-## 配置
+安装完成后在终端输入 `witchcat` 即可启动。
+
+### 快速配置
+
+```bash
+# 设置 API Key
+export WITCHCAT_API_KEY="your-api-key"
+
+# 或通过交互式配置
+witchcat config
+```
 
 配置文件位于 `~/.witchcat/.claude.json`
 
-**环境变量:**
+### 常用命令
 
-| 变量 | 说明 |
-| --- | --- |
-| `WITCHCAT_API_KEY` | API Key |
-| `ANTHROPIC_BASE_URL` | Anthropic 兼容网关地址 |
-| `OPENAI_BASE_URL` | OpenAI 兼容网关地址 (可选) |
+| 命令 | 说明 |
+|---|---|
+| `/model` | 切换模型 |
+| `/add-model` | 添加自定义模型端点 |
+| `/mcp` | 管理 MCP 服务 |
+| `/agent` | Agent 团队管理 |
+| `/session` | 会话管理 |
+| `/compact` | 压缩上下文 |
+| `/commit` | AI 生成 commit |
+| `/diff` | 查看代码差异 |
+| `/review` | 代码审查 |
+| `/chrome` | Chrome 集成控制 |
+| `/doctor` | 环境诊断 |
+| `/theme` | 主题切换 |
 
-## 其他特性
+---
 
-- 原生 Chrome 集成
-- 远程开发环境支持 (SSH / Docker / WSL)
-- 多语言支持 (中文 / 英文)
-- 主题定制
-- Vim 模式
+## English
+
+WitchcatCode is a multi-provider native CLI for AI coding assistants. It supports Anthropic, OpenAI, Gemini, and GLM protocols with multiple authentication modes, built-in Agent swarm collaboration, MCP tool ecosystem, file operations, Chrome integration, and more.
+
+### Key Features
+
+- **Multi-Provider** — Anthropic, OpenAI, Gemini, GLM with custom gateway support
+- **Agent Swarm** — Multi-agent collaboration with in-process spawning and permission sync
+- **MCP Ecosystem** — Full MCP client/server support with OAuth, resources, and plugin bridge
+- **File Tools** — Read, edit, write, search (Glob/Grep), LSP integration, Shell execution
+- **Chrome Integration** — Remote browser control with Computer Use
+- **Remote Dev** — SSH / Docker / WSL / Windows Server support
+
+### Install
+
+```bash
+bun install -g witchscottishfoldcat/WitchCatCode
+```
+
+Run `witchcat` to start.
+
+---
 
 ## 致谢
 
@@ -74,4 +112,4 @@ witchcat
 
 ## License
 
-MIT
+[MIT](LICENSE)
