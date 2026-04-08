@@ -1,18 +1,3 @@
-<div align="center">
-
-![WitchcatCode Preview](preview.png)
-
-[![Runtime](https://img.shields.io/badge/runtime-Bun%20%2BNode)](README.md)
-[![Config](https://img.shields.io/badge/config-~/.witchcat-8b5cf6)](README.md)
-[![Providers](https://img.shields.io/badge/providers-Anthropic%20%2BOpenAI%20compatible%20%2bGLM-like-10b981)](README.md)
-[![Status](https://img.shields.io/badge/status-active%20fork-f59e0b)](README.md)
-
-[![GitHub](https://img.shields.io/badge/Gateway-https://github.com/witchscottishfoldcat/WitchCatCode)](README.md)
-[![License](https://img.shields.io/badge/license-MIT)](README.md)
-
-</div>
-
----
 
 # 🐀 WitchcatCode
 
