@@ -16,3 +16,8 @@ coverage/
 .claude/
 .idea/
 .vscode/
+
+.witchcat/
+.env
+.env.local
+.env.*.local
