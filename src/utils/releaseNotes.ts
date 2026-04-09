@@ -90,7 +90,7 @@ export async function fetchAndStoreChangelog(): Promise<void> {
     return
   }
 
-  const response = await axios.get(RAW_CHANGELOG_URL)
+  const response = await axios.get(RAW_CHANGELOG_URL, { timeout: 5000 })
   if (response.status === 200) {
     const changelogContent = response.data
 
