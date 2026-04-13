@@ -218,7 +218,7 @@ async function makeTestQuery() {
 }
 
 export async function checkQuotaStatus(): Promise<void> {
-  // Skip network requests if nonessential traffic is disabled
+  return
   if (isEssentialTrafficOnly()) {
     return
   }

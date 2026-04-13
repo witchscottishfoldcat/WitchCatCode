@@ -1,4 +1,4 @@
-﻿import { feature } from 'bun:bundle';
+import { feature } from 'bun:bundle';
 import { appendFileSync } from 'fs';
 import React from 'react';
 import { logEvent } from 'src/services/analytics/index.js';
@@ -129,15 +129,12 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
   // Note: non-interactive sessions (CI/CD with -p) never reach showSetupScreens at all.
   // Skip permission checks in claubbit
   if (!isEnvTruthy(process.env.CLAUBBIT)) {
-    // Fast-path: skip TrustDialog import+render when CWD is already trusted.
-    // If it returns true, the TrustDialog would auto-resolve regardless of
-    // security features, so we can skip the dynamic import and render cycle.
-    if (!checkHasTrustDialogAccepted()) {
-      const {
-        TrustDialog
-      } = await import('./components/TrustDialog/TrustDialog.js');
-      await showSetupDialog(root, done => <TrustDialog commands={commands} onDone={done} />);
-    }
+      if (!checkHasTrustDialogAccepted()) {
+        const {
+          TrustDialog
+        } = await import('./components/TrustDialog/TrustDialog.js');
+        await showSetupDialog(root, done => <TrustDialog commands={commands} onDone={done} />);
+      }
 
     // Signal that trust has been verified for this session.
     // GrowthBook checks this to decide whether to include auth headers.

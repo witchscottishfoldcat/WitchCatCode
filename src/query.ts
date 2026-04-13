@@ -13,10 +13,16 @@ import {
 import { buildPostCompactMessages } from './services/compact/compact.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const reactiveCompact = feature('REACTIVE_COMPACT')
-  ? (require('./services/compact/reactiveCompact.js') as typeof import('./services/compact/reactiveCompact.js'))
+  ? (() => {
+      let _mod: typeof import('./services/compact/reactiveCompact.js') | null = null
+      return () => (_mod ??= require('./services/compact/reactiveCompact.js') as typeof import('./services/compact/reactiveCompact.js'))
+    })()
   : null
 const contextCollapse = feature('CONTEXT_COLLAPSE')
-  ? (require('./services/contextCollapse/index.js') as typeof import('./services/contextCollapse/index.js'))
+  ? (() => {
+      let _mod: typeof import('./services/contextCollapse/index.js') | null = null
+      return () => (_mod ??= require('./services/contextCollapse/index.js') as typeof import('./services/contextCollapse/index.js'))
+    })()
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -64,10 +70,16 @@ import {
 } from './utils/attachments.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const skillPrefetch = feature('EXPERIMENTAL_SKILL_SEARCH')
-  ? (require('./services/skillSearch/prefetch.js') as typeof import('./services/skillSearch/prefetch.js'))
+  ? (() => {
+      let _mod: typeof import('./services/skillSearch/prefetch.js') | null = null
+      return () => (_mod ??= require('./services/skillSearch/prefetch.js') as typeof import('./services/skillSearch/prefetch.js'))
+    })()
   : null
 const jobClassifier = feature('TEMPLATES')
-  ? (require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
+  ? (() => {
+      let _mod: typeof import('./jobs/classifier.js') | null = null
+      return () => (_mod ??= require('./jobs/classifier.js') as typeof import('./jobs/classifier.js'))
+    })()
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 import {
@@ -114,10 +126,16 @@ import { count } from './utils/array.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const snipModule = feature('HISTORY_SNIP')
-  ? (require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
+  ? (() => {
+      let _mod: typeof import('./services/compact/snipCompact.js') | null = null
+      return () => (_mod ??= require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
+    })()
   : null
 const taskSummaryModule = feature('BG_SESSIONS')
-  ? (require('./utils/taskSummary.js') as typeof import('./utils/taskSummary.js'))
+  ? (() => {
+      let _mod: typeof import('./utils/taskSummary.js') | null = null
+      return () => (_mod ??= require('./utils/taskSummary.js') as typeof import('./utils/taskSummary.js'))
+    })()
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -329,7 +347,7 @@ async function* queryLoop(
     // nothing in prod). Turn-0 user-input discovery still blocks in
     // userInputAttachments — that's the one signal where there's no prior
     // work to hide under.
-    const pendingSkillPrefetch = skillPrefetch?.startSkillDiscoveryPrefetch(
+    const pendingSkillPrefetch = skillPrefetch?.().startSkillDiscoveryPrefetch(
       null,
       messages,
       toolUseContext,
@@ -401,7 +419,7 @@ async function* queryLoop(
     let snipTokensFreed = 0
     if (feature('HISTORY_SNIP')) {
       queryCheckpoint('query_snip_start')
-      const snipResult = snipModule!.snipCompactIfNeeded(messagesForQuery)
+      const snipResult = snipModule!().snipCompactIfNeeded(messagesForQuery)
       messagesForQuery = snipResult.messages
       snipTokensFreed = snipResult.tokensFreed
       if (snipResult.boundaryMessage) {
@@ -439,7 +457,7 @@ async function* queryLoop(
     // continue site (query.ts:1192), and the next projectView() no-ops
     // because the archived messages are already gone from its input.
     if (feature('CONTEXT_COLLAPSE') && contextCollapse) {
-      const collapseResult = await contextCollapse.applyCollapsesIfNeeded(
+      const collapseResult = await contextCollapse().applyCollapsesIfNeeded(
         messagesForQuery,
         toolUseContext,
         querySource,
@@ -616,7 +634,7 @@ async function* queryLoop(
     let collapseOwnsIt = false
     if (feature('CONTEXT_COLLAPSE')) {
       collapseOwnsIt =
-        (contextCollapse?.isContextCollapseEnabled() ?? false) &&
+        (contextCollapse?.().isContextCollapseEnabled() ?? false) &&
         isAutoCompactEnabled()
     }
     // Hoist media-recovery gate once per turn. Withholding (inside the
@@ -625,13 +643,13 @@ async function* queryLoop(
     // the message. PTL doesn't hoist because its withholding is ungated —
     // it predates the experiment and is already the control-arm baseline.
     const mediaRecoveryEnabled =
-      reactiveCompact?.isReactiveCompactEnabled() ?? false
+      reactiveCompact?.().isReactiveCompactEnabled() ?? false
     if (
       !compactionResult &&
       querySource !== 'compact' &&
       querySource !== 'session_memory' &&
       !(
-        reactiveCompact?.isReactiveCompactEnabled() && isAutoCompactEnabled()
+        reactiveCompact?.().isReactiveCompactEnabled() && isAutoCompactEnabled()
       ) &&
       !collapseOwnsIt
     ) {
@@ -800,7 +818,7 @@ async function* queryLoop(
             let withheld = false
             if (feature('CONTEXT_COLLAPSE')) {
               if (
-                contextCollapse?.isWithheldPromptTooLong(
+                contextCollapse?.().isWithheldPromptTooLong(
                   message,
                   isPromptTooLongMessage,
                   querySource,
@@ -809,12 +827,12 @@ async function* queryLoop(
                 withheld = true
               }
             }
-            if (reactiveCompact?.isWithheldPromptTooLong(message)) {
+            if (reactiveCompact?.().isWithheldPromptTooLong(message)) {
               withheld = true
             }
             if (
               mediaRecoveryEnabled &&
-              reactiveCompact?.isWithheldMediaSizeError(message)
+              reactiveCompact?.().isWithheldMediaSizeError(message)
             ) {
               withheld = true
             }
@@ -1082,7 +1100,7 @@ async function* queryLoop(
       // prevents a spiral and the error surfaces.
       const isWithheldMedia =
         mediaRecoveryEnabled &&
-        reactiveCompact?.isWithheldMediaSizeError(lastMessage)
+        reactiveCompact?.().isWithheldMediaSizeError(lastMessage)
       if (isWithheld413) {
         // First: drain all staged context-collapses. Gated on the PREVIOUS
         // transition not being collapse_drain_retry — if we already drained
@@ -1092,7 +1110,7 @@ async function* queryLoop(
           contextCollapse &&
           state.transition?.reason !== 'collapse_drain_retry'
         ) {
-          const drained = contextCollapse.recoverFromOverflow(
+          const drained = contextCollapse().recoverFromOverflow(
             messagesForQuery,
             querySource,
           )
@@ -1118,7 +1136,7 @@ async function* queryLoop(
         }
       }
       if ((isWithheld413 || isWithheldMedia) && reactiveCompact) {
-        const compacted = await reactiveCompact.tryReactiveCompact({
+        const compacted = await reactiveCompact().tryReactiveCompact({
           hasAttempted: hasAttemptedReactiveCompact,
           querySource,
           aborted: toolUseContext.abortController.signal.aborted,
@@ -1638,7 +1656,7 @@ async function* queryLoop(
     // (should be >98% at AKI@250ms / Haiku@573ms vs turn durations of 2-30s).
     if (skillPrefetch && pendingSkillPrefetch) {
       const skillAttachments =
-        await skillPrefetch.collectSkillDiscoveryPrefetch(pendingSkillPrefetch)
+        await skillPrefetch().collectSkillDiscoveryPrefetch(pendingSkillPrefetch)
       for (const att of skillAttachments) {
         const msg = createAttachmentMessage(att)
         yield msg
@@ -1704,9 +1722,9 @@ async function* queryLoop(
     if (feature('BG_SESSIONS')) {
       if (
         !toolUseContext.agentId &&
-        taskSummaryModule!.shouldGenerateTaskSummary()
+        taskSummaryModule!().shouldGenerateTaskSummary()
       ) {
-        taskSummaryModule!.maybeGenerateTaskSummary({
+        taskSummaryModule!().maybeGenerateTaskSummary({
           systemPrompt,
           userContext,
           systemContext,

@@ -446,6 +446,15 @@ export function parseUserSpecifiedModel(
   modelInput: ModelName | ModelAlias,
 ): ModelName {
   const modelInputTrimmed = modelInput.trim()
+
+  const separatorCount = (modelInputTrimmed.match(/::/g) || []).length
+  if (separatorCount >= 4) {
+    const parts = modelInputTrimmed.split('::')
+    if (parts.length >= 5) {
+      return parts[parts.length - 1] as ModelName
+    }
+  }
+
   const normalizedModel = modelInputTrimmed.toLowerCase()
 
   const has1mTag = has1mContext(normalizedModel)

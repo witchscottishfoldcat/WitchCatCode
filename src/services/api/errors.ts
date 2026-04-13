@@ -1,4 +1,4 @@
-﻿import {
+import {
   APIConnectionError,
   APIConnectionTimeoutError,
   APIError,
@@ -775,10 +775,6 @@ export function getAssistantMessageFromError(
     error instanceof Error &&
     error.message.includes('Your credit balance is too low')
   ) {
-    return createAssistantAPIErrorMessage({
-      content: CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE,
-      error: 'billing_error',
-    })
   }
   // "Organization has been disabled" — commonly a stale WITCHCAT_API_KEY
   // from a previous employer/project overriding subscription auth. Only handle
