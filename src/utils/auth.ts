@@ -1,4 +1,4 @@
-﻿import chalk from 'chalk'
+import chalk from 'chalk'
 import { exec } from 'child_process'
 import { execa } from 'execa'
 import { mkdir, stat } from 'fs/promises'
@@ -117,6 +117,16 @@ export function hasGeminiCustomAuth(): boolean {
   return false
 }
 
+export function hasCustomProviderAuth(): boolean {
+  const storage = readCustomApiStorage()
+  const provider = getActiveProviderConfig(storage)
+  if (!provider) return false
+  if (provider.kind === 'gemini-like') return hasGeminiCustomAuth()
+  if (provider.kind === 'glm-like' || provider.kind === 'openai-like') return !!provider.apiKey
+  if (provider.kind === 'anthropic-like') return !!provider.apiKey && !!provider.baseURL
+  return false
+}
+
 /** Whether we are supporting direct 1P auth. */
 // this code is closely related to getAuthTokenSource
 export function isAnthropicAuthEnabled(): boolean {
@@ -124,6 +134,8 @@ export function isAnthropicAuthEnabled(): boolean {
   if (isBareMode()) return false
 
   if (hasGeminiCustomAuth()) return false
+
+  if (hasCustomProviderAuth()) return false
 
   // `claude ssh` remote: ANTHROPIC_UNIX_SOCKET tunnels API calls through a
   // local auth-injecting proxy. The launcher sets CLAUDE_CODE_OAUTH_TOKEN as a
