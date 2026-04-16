@@ -1,10 +1,11 @@
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 const config = {
   aliases: ['settings'],
   type: 'local-jsx',
   name: 'config',
-  description: 'Open config panel',
+  description: t('command.config.description'),
   load: () => import('./config.js'),
 } satisfies Command
 

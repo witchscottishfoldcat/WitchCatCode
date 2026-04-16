@@ -6,6 +6,7 @@ import type { CodeSession } from 'src/utils/teleport/api.js';
 import { type TeleportSource, useTeleportResume } from '../hooks/useTeleportResume.js';
 import { Box, Text } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { ResumeTask } from './ResumeTask.js';
 import { Spinner } from './Spinner.js';
 interface TeleportResumeWrapperProps {
@@ -36,6 +37,7 @@ export function TeleportResumeWrapper(t0) {
     error,
     selectedSession
   } = useTeleportResume(source);
+  const { t } = useI18n();
   let t2;
   let t3;
   if ($[0] !== source) {
@@ -104,14 +106,14 @@ export function TeleportResumeWrapper(t0) {
   if (isResuming && selectedSession) {
     let t8;
     if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = <Box flexDirection="row"><Spinner /><Text bold={true}>Resuming session…</Text></Box>;
+      t8 = <Box flexDirection="row"><Spinner /><Text bold={true}>{t('teleportResume.resuming')}</Text></Box>;
       $[12] = t8;
     } else {
       t8 = $[12];
     }
     let t9;
     if ($[13] !== selectedSession.title) {
-      t9 = <Box flexDirection="column" padding={1}>{t8}<Text dimColor={true}>Loading "{selectedSession.title}"…</Text></Box>;
+      t9 = <Box flexDirection="column" padding={1}>{t8}<Text dimColor={true}>{t('teleportResume.loading', { title: selectedSession.title })}</Text></Box>;
       $[13] = selectedSession.title;
       $[14] = t9;
     } else {
@@ -137,7 +139,7 @@ export function TeleportResumeWrapper(t0) {
     }
     let t10;
     if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
-      t10 = <Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Esc</Text> to cancel</Text></Box>;
+      t10 = <Box marginTop={1}><Text dimColor={true}>{t('common.escToCancel')}</Text></Box>;
       $[18] = t10;
     } else {
       t10 = $[18];

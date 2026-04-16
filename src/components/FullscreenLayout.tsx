@@ -12,6 +12,7 @@ import type { Message } from '../types/message.js';
 import { openBrowser, openPath } from '../utils/browser.js';
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js';
 import { plural } from '../utils/stringUtils.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { isNullRenderingAttachment } from './messages/nullRenderingAttachments.js';
 import PromptInputFooterSuggestions from './PromptInput/PromptInputFooterSuggestions.js';
 import type { StickyPrompt } from './VirtualMessageList.js';
@@ -494,6 +495,7 @@ function NewMessagesPill(t0) {
     count,
     onClick
   } = t0;
+  const { t } = useI18n();
   const [hover, setHover] = useState(false);
   let t1;
   let t2;
@@ -507,19 +509,12 @@ function NewMessagesPill(t0) {
     t2 = $[1];
   }
   const t3 = hover ? "userMessageBackgroundHover" : "userMessageBackground";
-  let t4;
-  if ($[2] !== count) {
-    t4 = count > 0 ? `${count} new ${plural(count, "message")}` : "Jump to bottom";
-    $[2] = count;
-    $[3] = t4;
-  } else {
-    t4 = $[3];
-  }
+  const pillText = count > 0 ? t('fullscreen.newMessages', { count }) : t('fullscreen.jumpToBottom');
   let t5;
-  if ($[4] !== t3 || $[5] !== t4) {
-    t5 = <Text backgroundColor={t3} dimColor={true}>{" "}{t4}{" "}{figures.arrowDown}{" "}</Text>;
+  if ($[4] !== t3 || $[5] !== pillText) {
+    t5 = <Text backgroundColor={t3} dimColor={true}>{" "}{pillText}{" "}{figures.arrowDown}{" "}</Text>;
     $[4] = t3;
-    $[5] = t4;
+    $[5] = pillText;
     $[6] = t5;
   } else {
     t5 = $[6];

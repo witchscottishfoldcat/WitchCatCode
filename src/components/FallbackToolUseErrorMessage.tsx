@@ -8,6 +8,7 @@ import { Box, Text } from '../ink.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
 import { countCharInString } from '../utils/stringUtils.js';
 import { MessageResponse } from './MessageResponse.js';
+import { useI18n } from '../hooks/useI18n.js';
 const MAX_RENDERED_LINES = 10;
 type Props = {
   result: ToolResultBlockParam['content'];
@@ -19,6 +20,7 @@ export function FallbackToolUseErrorMessage(t0) {
     result,
     verbose
   } = t0;
+  const { t } = useI18n();
   const transcriptShortcut = useShortcutDisplay("app:toggleTranscript", "Global", "ctrl+o");
   let T0;
   let T1;
@@ -83,7 +85,7 @@ export function FallbackToolUseErrorMessage(t0) {
   }
   let t5;
   if ($[13] !== plusLines || $[14] !== transcriptShortcut || $[15] !== verbose) {
-    t5 = !verbose && plusLines > 0 && <Box><Text dimColor={true}>… +{plusLines} {plusLines === 1 ? "line" : "lines"} (</Text><Text dimColor={true} bold={true}>{transcriptShortcut}</Text><Text> </Text><Text dimColor={true}>to see all)</Text></Box>;
+    t5 = !verbose && plusLines > 0 && <Box><Text dimColor={true}>… +{plusLines} {plusLines === 1 ? t('common.line') : t('common.lines')} (</Text><Text dimColor={true} bold={true}>{transcriptShortcut}</Text><Text> </Text><Text dimColor={true}>{t('common.toSeeAll')}</Text></Box>;
     $[13] = plusLines;
     $[14] = transcriptShortcut;
     $[15] = verbose;

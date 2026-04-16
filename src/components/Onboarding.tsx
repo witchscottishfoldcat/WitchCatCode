@@ -1,8 +1,9 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSetup/terminalSetup.js';
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { Box, Link, Newline, Text, useTheme } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
 import { isAnthropicAuthEnabled } from '../utils/auth.js';
@@ -30,6 +31,7 @@ type Props = {
 export function Onboarding({
   onDone
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [skipOAuth, setSkipOAuth] = useState(false);
   const [oauthEnabled] = useState(() => isAnthropicAuthEnabled());
@@ -59,11 +61,11 @@ export function Onboarding({
 
   // Define all onboarding steps
   const themeStep = <Box marginX={1}>
-      <ThemePicker onThemeSelect={handleThemeSelection} showIntroText={true} helpText="To change this later, run /theme" hideEscToCancel={true} skipExitHandling={true} // Skip exit handling as Onboarding already handles it
+      <ThemePicker onThemeSelect={handleThemeSelection} showIntroText={true} helpText={t('onboarding.themeChangeHint')} hideEscToCancel={true} skipExitHandling={true} // Skip exit handling as Onboarding already handles it
     />
     </Box>;
   const securityStep = <Box flexDirection="column" gap={1} paddingLeft={1}>
-      <Text bold>Security notes:</Text>
+      <Text bold>{t('onboarding.securityNotes')}</Text>
       <Box flexDirection="column" width={70}>
         {/**
          * OrderedList misnumbers items when rendering conditionally,
@@ -71,20 +73,20 @@ export function Onboarding({
          */}
         <OrderedList>
           <OrderedList.Item>
-            <Text>Claude can make mistakes</Text>
+            <Text>{t('onboarding.claudeCanMakeMistakes')}</Text>
             <Text dimColor wrap="wrap">
-              You should always review Claude&apos;s responses, especially when
+              {t('onboarding.reviewResponses')}
               <Newline />
-              running code.
+              {t('onboarding.runningCode')}
               <Newline />
             </Text>
           </OrderedList.Item>
           <OrderedList.Item>
             <Text>
-              Due to prompt injection risks, only use it with code you trust
+              {t('onboarding.promptInjectionRisk')}
             </Text>
             <Text dimColor wrap="wrap">
-              For more details see:
+              {t('onboarding.moreDetails')}
               <Newline />
               <Link url="https://code.claude.com/docs/en/security" />
             </Text>
@@ -146,19 +148,18 @@ export function Onboarding({
     steps.push({
       id: 'terminal-setup',
       component: <Box flexDirection="column" gap={1} paddingLeft={1}>
-          <Text bold>Use Claude Code&apos;s terminal setup?</Text>
+          <Text bold>{t('onboarding.terminalSetupTitle')}</Text>
           <Box flexDirection="column" width={70} gap={1}>
             <Text>
-              For the optimal coding experience, enable the recommended settings
+              {t('onboarding.terminalSetupDesc')}
               <Newline />
-              for your terminal:{' '}
-              {env.terminal === 'Apple_Terminal' ? 'Option+Enter for newlines and visual bell' : 'Shift+Enter for newlines'}
+              {env.terminal === 'Apple_Terminal' ? t('onboarding.optionEnterForNewlines') : t('onboarding.shiftEnterForNewlines')}
             </Text>
             <Select options={[{
-            label: 'Yes, use recommended settings',
+            label: t('onboarding.yesRecommended'),
             value: 'install'
           }, {
-            label: 'No, maybe later with /terminal-setup',
+            label: t('onboarding.noMaybeLater'),
             value: 'no'
           }]} onChange={value => {
             if (value === 'install') {
@@ -169,7 +170,7 @@ export function Onboarding({
             }
           }} onCancel={() => goToNextStep()} />
             <Text dimColor>
-              {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to skip</>}
+              {exitState.pending ? <>{t('onboarding.pressToExit', { key: exitState.keyName })}</> : <>{t('onboarding.enterToConfirmEscToSkip')}</>}
             </Text>
           </Box>
         </Box>
@@ -206,7 +207,7 @@ export function Onboarding({
       <Box flexDirection="column" marginTop={1}>
         {currentStep?.component}
         {exitState.pending && <Box padding={1}>
-            <Text dimColor>Press {exitState.keyName} again to exit</Text>
+            <Text dimColor>{t('onboarding.pressToExit', { key: exitState.keyName })}</Text>
           </Box>}
       </Box>
     </Box>;

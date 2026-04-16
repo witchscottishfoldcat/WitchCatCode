@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import type { CommandResultDisplay } from '../../types/command.js';
 import type { SandboxDependencyCheck } from '../../utils/sandbox/sandbox-adapter.js';
@@ -25,6 +26,7 @@ export function SandboxSettings(t0) {
     onComplete,
     depCheck
   } = t0;
+  const { t } = useI18n();
   const [theme] = useTheme();
   const currentEnabled = SandboxManager.isSandboxingEnabled();
   const currentAutoAllow = SandboxManager.isAutoAllowBashIfSandboxedEnabled();
@@ -51,14 +53,14 @@ export function SandboxSettings(t0) {
   const currentMode = getCurrentMode();
   let t2;
   if ($[1] !== theme) {
-    t2 = color("success", theme)("(current)");
+    t2 = color("success", theme)(t('sandbox.currentIndicator'));
     $[1] = theme;
     $[2] = t2;
   } else {
     t2 = $[2];
   }
   const currentIndicator = t2;
-  const t3 = currentMode === "auto-allow" ? `Sandbox BashTool, with auto-allow ${currentIndicator}` : "Sandbox BashTool, with auto-allow";
+  const t3 = currentMode === "auto-allow" ? `${t('sandbox.mode.autoAllow')} ${currentIndicator}` : t('sandbox.mode.autoAllow');
   let t4;
   if ($[3] !== t3) {
     t4 = {
@@ -70,7 +72,7 @@ export function SandboxSettings(t0) {
   } else {
     t4 = $[4];
   }
-  const t5 = currentMode === "regular" ? `Sandbox BashTool, with regular permissions ${currentIndicator}` : "Sandbox BashTool, with regular permissions";
+  const t5 = currentMode === "regular" ? `${t('sandbox.mode.regular')} ${currentIndicator}` : t('sandbox.mode.regular');
   let t6;
   if ($[5] !== t5) {
     t6 = {
@@ -82,7 +84,7 @@ export function SandboxSettings(t0) {
   } else {
     t6 = $[6];
   }
-  const t7 = currentMode === "disabled" ? `No Sandbox ${currentIndicator}` : "No Sandbox";
+  const t7 = currentMode === "disabled" ? `${t('sandbox.mode.disabled')} ${currentIndicator}` : t('sandbox.mode.disabled');
   let t8;
   if ($[7] !== t7) {
     t8 = {
@@ -116,7 +118,7 @@ export function SandboxSettings(t0) {
               enabled: true,
               autoAllowBashIfSandboxed: true
             });
-            onComplete("\u2713 Sandbox enabled with auto-allow for bash commands");
+            onComplete(t('sandbox.message.enabledAutoAllow'));
             break bb33;
           }
         case "regular":
@@ -125,7 +127,7 @@ export function SandboxSettings(t0) {
               enabled: true,
               autoAllowBashIfSandboxed: false
             });
-            onComplete("\u2713 Sandbox enabled with regular bash permissions");
+            onComplete(t('sandbox.message.enabledRegular'));
             break bb33;
           }
         case "disabled":
@@ -134,7 +136,7 @@ export function SandboxSettings(t0) {
               enabled: false,
               autoAllowBashIfSandboxed: false
             });
-            onComplete("\u25CB Sandbox disabled");
+            onComplete(t('sandbox.message.disabled'));
           }
       }
     };
@@ -168,7 +170,7 @@ export function SandboxSettings(t0) {
   useKeybindings(t11, t12);
   let t13;
   if ($[18] !== handleSelect || $[19] !== onComplete || $[20] !== options || $[21] !== showSocketWarning) {
-    t13 = <Tab key="mode" title="Mode"><SandboxModeTab showSocketWarning={showSocketWarning} options={options} onSelect={handleSelect} onComplete={onComplete} /></Tab>;
+    t13 = <Tab key="mode" title={t('sandbox.tab.mode')}><SandboxModeTab showSocketWarning={showSocketWarning} options={options} onSelect={handleSelect} onComplete={onComplete} /></Tab>;
     $[18] = handleSelect;
     $[19] = onComplete;
     $[20] = options;
@@ -180,7 +182,7 @@ export function SandboxSettings(t0) {
   const modeTab = t13;
   let t14;
   if ($[23] !== onComplete) {
-    t14 = <Tab key="overrides" title="Overrides"><SandboxOverridesTab onComplete={onComplete} /></Tab>;
+    t14 = <Tab key="overrides" title={t('sandbox.tab.overrides')}><SandboxOverridesTab onComplete={onComplete} /></Tab>;
     $[23] = onComplete;
     $[24] = t14;
   } else {
@@ -189,7 +191,7 @@ export function SandboxSettings(t0) {
   const overridesTab = t14;
   let t15;
   if ($[25] === Symbol.for("react.memo_cache_sentinel")) {
-    t15 = <Tab key="config" title="Config"><SandboxConfigTab /></Tab>;
+    t15 = <Tab key="config" title={t('sandbox.tab.config')}><SandboxConfigTab /></Tab>;
     $[25] = t15;
   } else {
     t15 = $[25];
@@ -198,7 +200,7 @@ export function SandboxSettings(t0) {
   const hasErrors = depCheck.errors.length > 0;
   let t16;
   if ($[26] !== depCheck || $[27] !== hasErrors || $[28] !== hasWarnings || $[29] !== modeTab || $[30] !== overridesTab) {
-    t16 = hasErrors ? [<Tab key="dependencies" title="Dependencies"><SandboxDependenciesTab depCheck={depCheck} /></Tab>] : [modeTab, ...(hasWarnings ? [<Tab key="dependencies" title="Dependencies"><SandboxDependenciesTab depCheck={depCheck} /></Tab>] : []), overridesTab, configTab];
+    t16 = hasErrors ? [<Tab key="dependencies" title={t('sandbox.tab.dependencies')}><SandboxDependenciesTab depCheck={depCheck} /></Tab>] : [modeTab, ...(hasWarnings ? [<Tab key="dependencies" title={t('sandbox.tab.dependencies')}><SandboxDependenciesTab depCheck={depCheck} /></Tab>] : []), overridesTab, configTab];
     $[26] = depCheck;
     $[27] = hasErrors;
     $[28] = hasWarnings;
@@ -211,7 +213,7 @@ export function SandboxSettings(t0) {
   const tabs = t16;
   let t17;
   if ($[32] !== tabs) {
-    t17 = <Pane color="permission"><Tabs title="Sandbox:" color="permission" defaultTab="Mode">{tabs}</Tabs></Pane>;
+    t17 = <Pane color="permission"><Tabs title={t('sandbox.title')} color="permission" defaultTab={t('sandbox.tab.mode')}>{tabs}</Tabs></Pane>;
     $[32] = tabs;
     $[33] = t17;
   } else {
@@ -227,13 +229,14 @@ function SandboxModeTab(t0) {
     onSelect,
     onComplete
   } = t0;
+  const { t } = useI18n();
   const {
     headerFocused,
     focusHeader
   } = useTabHeaderFocus();
   let t1;
   if ($[0] !== showSocketWarning) {
-    t1 = showSocketWarning && <Box marginBottom={1}><Text color="warning">Cannot block unix domain sockets (see Dependencies tab)</Text></Box>;
+    t1 = showSocketWarning && <Box marginBottom={1}><Text color="warning">{t('sandbox.warning.cannotBlockSockets')}</Text></Box>;
     $[0] = showSocketWarning;
     $[1] = t1;
   } else {
@@ -241,7 +244,7 @@ function SandboxModeTab(t0) {
   }
   let t2;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box marginBottom={1}><Text bold={true}>Configure Mode:</Text></Box>;
+    t2 = <Box marginBottom={1}><Text bold={true}>{t('sandbox.configureMode')}</Text></Box>;
     $[2] = t2;
   } else {
     t2 = $[2];
@@ -270,14 +273,14 @@ function SandboxModeTab(t0) {
   }
   let t5;
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text dimColor={true}><Text bold={true} dimColor={true}>Auto-allow mode:</Text>{" "}Commands will try to run in the sandbox automatically, and attempts to run outside of the sandbox fallback to regular permissions. Explicit ask/deny rules are always respected.</Text>;
+    t5 = <Text dimColor={true}><Text bold={true} dimColor={true}>{t('sandbox.autoAllowMode.title')}</Text>{" "}{t('sandbox.autoAllowMode.description')}</Text>;
     $[11] = t5;
   } else {
     t5 = $[11];
   }
   let t6;
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Box flexDirection="column" marginTop={1} gap={1}>{t5}<Text dimColor={true}>Learn more:{" "}<Link url="https://code.claude.com/docs/en/sandboxing">code.claude.com/docs/en/sandboxing</Link></Text></Box>;
+    t6 = <Box flexDirection="column" marginTop={1} gap={1}>{t5}<Text dimColor={true}>{t('sandbox.learnMore')}{" "}<Link url="https://code.claude.com/docs/en/sandboxing">code.claude.com/docs/en/sandboxing</Link></Text></Box>;
     $[12] = t6;
   } else {
     t6 = $[12];

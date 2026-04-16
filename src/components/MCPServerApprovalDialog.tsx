@@ -4,6 +4,7 @@ import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEve
 import { getSettings_DEPRECATED, updateSettingsForSource } from '../utils/settings/settings.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { MCPServerDialogCopy } from './MCPServerDialogCopy.js';
 type Props = {
   serverName: string;
@@ -15,6 +16,7 @@ export function MCPServerApprovalDialog(t0) {
     serverName,
     onDone
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onDone || $[1] !== serverName) {
     t1 = function onChange(value) {
@@ -60,7 +62,7 @@ export function MCPServerApprovalDialog(t0) {
     t1 = $[2];
   }
   const onChange = t1;
-  const t2 = `New MCP server found in .mcp.json: ${serverName}`;
+  const t2 = t('mcp.approval.title', { name: serverName });
   let t3;
   if ($[3] !== onChange) {
     t3 = () => onChange("no");
@@ -76,16 +78,19 @@ export function MCPServerApprovalDialog(t0) {
   } else {
     t4 = $[5];
   }
+  const labelYesAll = t('mcp.approval.optionYesAll');
+  const labelYes = t('mcp.approval.optionYes');
+  const labelNo = t('mcp.approval.optionNo');
   let t5;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
     t5 = [{
-      label: "Use this and all future MCP servers in this project",
+      label: labelYesAll,
       value: "yes_all"
     }, {
-      label: "Use this MCP server",
+      label: labelYes,
       value: "yes"
     }, {
-      label: "Continue without using this MCP server",
+      label: labelNo,
       value: "no"
     }];
     $[6] = t5;

@@ -1,9 +1,10 @@
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 export default {
   type: 'local',
   name: 'add-model',
-  description: 'Add a custom model to the saved model list',
+  description: t('command.add-model.description'),
   supportsNonInteractive: false,
   load: () => import('./add-model.js'),
 } satisfies Command

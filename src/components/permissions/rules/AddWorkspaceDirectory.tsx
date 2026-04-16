@@ -16,6 +16,7 @@ import { Byline } from '../../design-system/Byline.js';
 import { Dialog } from '../../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../../design-system/KeyboardShortcutHint.js';
 import { PromptInputFooterSuggestions, type SuggestionItem } from '../../PromptInput/PromptInputFooterSuggestions.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 type Props = {
   onAddDirectory: (path: string, remember?: boolean) => void;
   onCancel: () => void;
@@ -23,24 +24,27 @@ type Props = {
   directoryPath?: string; // When directoryPath is provided, show selection options instead of input
 };
 type RememberDirectoryOption = 'yes-session' | 'yes-remember' | 'no';
-const REMEMBER_DIRECTORY_OPTIONS: Array<{
+function getRememberDirectoryOptions(t: (key: string) => string): Array<{
   value: RememberDirectoryOption;
   label: string;
-}> = [{
-  value: 'yes-session',
-  label: 'Yes, for this session'
-}, {
-  value: 'yes-remember',
-  label: 'Yes, and remember this directory'
-}, {
-  value: 'no',
-  label: 'No'
-}];
+}> {
+  return [{
+    value: 'yes-session',
+    label: t('permission.addDirectory.yesForSession')
+  }, {
+    value: 'yes-remember',
+    label: t('permission.addDirectory.yesAndRemember')
+  }, {
+    value: 'no',
+    label: t('common.no')
+  }];
+}
 function PermissionDescription() {
   const $ = _c(1);
+  const { t } = useI18n();
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = <Text dimColor={true}>Claude Code will be able to read files in this directory and make edits when auto-accept edits is on.</Text>;
+    t0 = <Text dimColor={true}>{t('permission.addDirectory.description')}</Text>;
     $[0] = t0;
   } else {
     t0 = $[0];
@@ -79,6 +83,7 @@ function DirectoryDisplay(t0) {
 }
 function DirectoryInput(t0) {
   const $ = _c(14);
+  const { t } = useI18n();
   const {
     value,
     onChange,
@@ -89,14 +94,14 @@ function DirectoryInput(t0) {
   } = t0;
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Text>Enter the path to the directory:</Text>;
+    t1 = <Text>{t('permission.addDirectory.enterPath')}</Text>;
     $[0] = t1;
   } else {
     t1 = $[0];
   }
   let t2;
   if ($[1] !== onChange || $[2] !== onSubmit || $[3] !== value) {
-    t2 = <Box borderDimColor={true} borderStyle="round" marginY={1} paddingLeft={1}><TextInput showCursor={true} placeholder={`Directory path${figures.ellipsis}`} value={value} onChange={onChange} onSubmit={onSubmit} columns={80} cursorOffset={value.length} onChangeCursorOffset={_temp} /></Box>;
+    t2 = <Box borderDimColor={true} borderStyle="round" marginY={1} paddingLeft={1}><TextInput showCursor={true} placeholder={t('permission.addDirectory.directoryPath')} value={value} onChange={onChange} onSubmit={onSubmit} columns={80} cursorOffset={value.length} onChangeCursorOffset={_temp} /></Box>;
     $[1] = onChange;
     $[2] = onSubmit;
     $[3] = value;
@@ -136,6 +141,7 @@ function DirectoryInput(t0) {
 function _temp() {}
 export function AddWorkspaceDirectory(t0) {
   const $ = _c(34);
+  const { t } = useI18n();
   const {
     onAddDirectory,
     onCancel,
@@ -301,7 +307,7 @@ export function AddWorkspaceDirectory(t0) {
   const t10 = directoryPath ? undefined : _temp2;
   let t11;
   if ($[19] !== directoryInput || $[20] !== directoryPath || $[21] !== error || $[22] !== handleSelect || $[23] !== handleSubmit || $[24] !== selectedSuggestion || $[25] !== suggestions) {
-    t11 = directoryPath ? <Box flexDirection="column" gap={1}><DirectoryDisplay path={directoryPath} /><Select options={REMEMBER_DIRECTORY_OPTIONS} onChange={handleSelect} onCancel={() => handleSelect("no")} /></Box> : <Box flexDirection="column" gap={1} marginX={2}><PermissionDescription /><DirectoryInput value={directoryInput} onChange={setDirectoryInput} onSubmit={handleSubmit} error={error} suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>;
+    t11 = directoryPath ? <Box flexDirection="column" gap={1}><DirectoryDisplay path={directoryPath} /><Select options={getRememberDirectoryOptions(t)} onChange={handleSelect} onCancel={() => handleSelect("no")} /></Box> : <Box flexDirection="column" gap={1} marginX={2}><PermissionDescription /><DirectoryInput value={directoryInput} onChange={setDirectoryInput} onSubmit={handleSubmit} error={error} suggestions={suggestions} selectedSuggestion={selectedSuggestion} /></Box>;
     $[19] = directoryInput;
     $[20] = directoryPath;
     $[21] = error;
@@ -315,7 +321,7 @@ export function AddWorkspaceDirectory(t0) {
   }
   let t12;
   if ($[27] !== onCancel || $[28] !== t10 || $[29] !== t11) {
-    t12 = <Dialog title="Add directory to workspace" onCancel={onCancel} color="permission" isCancelActive={false} inputGuide={t10}>{t11}</Dialog>;
+    t12 = <Dialog title={t('permission.addDirectory.title')} onCancel={onCancel} color="permission" isCancelActive={false} inputGuide={t10}>{t11}</Dialog>;
     $[27] = onCancel;
     $[28] = t10;
     $[29] = t11;
@@ -335,5 +341,6 @@ export function AddWorkspaceDirectory(t0) {
   return t13;
 }
 function _temp2(exitState) {
-  return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Tab" action="complete" /><KeyboardShortcutHint shortcut="Enter" action="add" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" /></Byline>;
+  const { t } = useI18n();
+  return exitState.pending ? <Text>{t('common.pressAgainToExit', { key: exitState.keyName })}</Text> : <Byline><KeyboardShortcutHint shortcut="Tab" action="complete" /><KeyboardShortcutHint shortcut="Enter" action="add" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" /></Byline>;
 }

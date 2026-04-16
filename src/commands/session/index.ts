@@ -1,11 +1,12 @@
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 const session = {
   type: 'local-jsx',
   name: 'session',
   aliases: ['remote'],
-  description: 'Show remote session URL and QR code',
+  description: t('command.session.description'),
   isEnabled: () => getIsRemoteMode(),
   get isHidden() {
     return !getIsRemoteMode()

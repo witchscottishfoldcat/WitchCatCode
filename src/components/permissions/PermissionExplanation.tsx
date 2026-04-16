@@ -7,13 +7,16 @@ import type { Message } from '../../types/message.js';
 import { generatePermissionExplanation, isPermissionExplainerEnabled, type PermissionExplanation as PermissionExplanationType, type RiskLevel } from '../../utils/permissions/permissionExplainer.js';
 import { ShimmerChar } from '../Spinner/ShimmerChar.js';
 import { useShimmerAnimation } from '../Spinner/useShimmerAnimation.js';
-const LOADING_MESSAGE = 'Loading explanation…';
+import { useI18n } from '../../hooks/useI18n.js';
+const LOADING_I18N_KEY = 'permission.explanation.loading';
 function ShimmerLoadingText() {
   const $ = _c(7);
-  const [ref, glimmerIndex] = useShimmerAnimation("responding", LOADING_MESSAGE, false);
+  const { t } = useI18n();
+  const loadingMessage = t(LOADING_I18N_KEY);
+  const [ref, glimmerIndex] = useShimmerAnimation("responding", loadingMessage, false);
   let t0;
   if ($[0] !== glimmerIndex) {
-    t0 = LOADING_MESSAGE.split("").map((char, index) => <ShimmerChar key={index} char={char} index={index} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="text" />);
+    t0 = loadingMessage.split("").map((char, index) => <ShimmerChar key={index} char={char} index={index} glimmerIndex={glimmerIndex} messageColor="inactive" shimmerColor="text" />);
     $[0] = glimmerIndex;
     $[1] = t0;
   } else {
@@ -48,14 +51,14 @@ function getRiskColor(riskLevel: RiskLevel): 'success' | 'warning' | 'error' {
       return 'error';
   }
 }
-function getRiskLabel(riskLevel: RiskLevel): string {
+function getRiskLabel(riskLevel: RiskLevel, t: (key: string) => string): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'Low risk';
+      return t('permission.explanation.riskLow');
     case 'MEDIUM':
-      return 'Med risk';
+      return t('permission.explanation.riskMed');
     case 'HIGH':
-      return 'High risk';
+      return t('permission.explanation.riskHigh');
   }
 }
 type PermissionExplanationProps = {
@@ -158,14 +161,17 @@ function ExplanationResult(t0) {
   const {
     promise
   } = t0;
+  const { t } = useI18n();
   const explanation = use(promise);
+  const unavailableText = t('permission.explanation.unavailable');
   if (!explanation) {
     let t1;
-    if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Box marginTop={1}><Text dimColor={true}>Explanation unavailable</Text></Box>;
-      $[0] = t1;
+    if ($[0] !== unavailableText) {
+      t1 = <Box marginTop={1}><Text dimColor={true}>{unavailableText}</Text></Box>;
+      $[0] = unavailableText;
+      $[1] = t1;
     } else {
-      t1 = $[0];
+      t1 = $[1];
     }
     return t1;
   }
@@ -195,7 +201,7 @@ function ExplanationResult(t0) {
   }
   let t4;
   if ($[7] !== explanation.riskLevel) {
-    t4 = getRiskLabel(explanation.riskLevel);
+    t4 = getRiskLabel(explanation.riskLevel, t);
     $[7] = explanation.riskLevel;
     $[8] = t4;
   } else {

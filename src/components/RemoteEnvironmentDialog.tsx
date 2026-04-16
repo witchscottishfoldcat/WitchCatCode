@@ -17,8 +17,7 @@ import { Byline } from './design-system/Byline.js';
 import { Dialog } from './design-system/Dialog.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { LoadingState } from './design-system/LoadingState.js';
-const DIALOG_TITLE = 'Select Remote Environment';
-const SETUP_HINT = `Configure environments at: https://claude.ai/code`;
+import { useI18n } from '../hooks/useI18n.js';
 type Props = {
   onDone: (message?: string) => void;
 };
@@ -28,6 +27,7 @@ export function RemoteEnvironmentDialog(t0) {
   const {
     onDone
   } = t0;
+  const { t } = useI18n();
   const [loadingState, setLoadingState] = useState("loading");
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -108,16 +108,16 @@ export function RemoteEnvironmentDialog(t0) {
   }
   const handleSelect = t4;
   if (loadingState === "loading") {
+    const loadingMsg = t('remoteEnv.loading');
     let t5;
     if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <LoadingState message={"Loading environments\u2026"} />;
-      $[6] = t5;
+      t5 = <LoadingState message={loadingMsg} />;
     } else {
       t5 = $[6];
     }
     let t6;
     if ($[7] !== onDone) {
-      t6 = <Dialog title={DIALOG_TITLE} onCancel={onDone} hideInputGuide={true}>{t5}</Dialog>;
+      t6 = <Dialog title={t('remoteEnv.title')} onCancel={onDone} hideInputGuide={true}>{t5}</Dialog>;
       $[7] = onDone;
       $[8] = t6;
     } else {
@@ -128,7 +128,7 @@ export function RemoteEnvironmentDialog(t0) {
   if (error) {
     let t5;
     if ($[9] !== error) {
-      t5 = <Text color="error">Error: {error}</Text>;
+      t5 = <Text color="error">{t('remoteEnv.error')}: {error}</Text>;
       $[9] = error;
       $[10] = t5;
     } else {
@@ -136,7 +136,7 @@ export function RemoteEnvironmentDialog(t0) {
     }
     let t6;
     if ($[11] !== onDone || $[12] !== t5) {
-      t6 = <Dialog title={DIALOG_TITLE} onCancel={onDone}>{t5}</Dialog>;
+      t6 = <Dialog title={t('remoteEnv.title')} onCancel={onDone}>{t5}</Dialog>;
       $[11] = onDone;
       $[12] = t5;
       $[13] = t6;
@@ -146,16 +146,16 @@ export function RemoteEnvironmentDialog(t0) {
     return t6;
   }
   if (!selectedEnvironment) {
+    const noEnvText = t('remoteEnv.noEnvironments');
     let t5;
     if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <Text>No remote environments available.</Text>;
-      $[14] = t5;
+      t5 = <Text>{noEnvText}</Text>;
     } else {
       t5 = $[14];
     }
     let t6;
     if ($[15] !== onDone) {
-      t6 = <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{t5}</Dialog>;
+      t6 = <Dialog title={t('remoteEnv.title')} subtitle={t('remoteEnv.setupHint')} onCancel={onDone}>{t5}</Dialog>;
       $[15] = onDone;
       $[16] = t6;
     } else {
@@ -195,6 +195,7 @@ function EnvironmentLabel(t0) {
   const {
     environment
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== environment.name) {
     t1 = <Text bold={true}>{environment.name}</Text>;
@@ -213,7 +214,7 @@ function EnvironmentLabel(t0) {
   }
   let t3;
   if ($[4] !== t1 || $[5] !== t2) {
-    t3 = <Text>{figures.tick} Using {t1}{" "}{t2}</Text>;
+    t3 = <Text>{figures.tick} {t('remoteEnv.using')} {t1}{" "}{t2}</Text>;
     $[4] = t1;
     $[5] = t2;
     $[6] = t3;
@@ -228,6 +229,7 @@ function SingleEnvironmentContent(t0) {
     environment,
     onDone
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = {
@@ -248,7 +250,7 @@ function SingleEnvironmentContent(t0) {
   }
   let t3;
   if ($[3] !== onDone || $[4] !== t2) {
-    t3 = <Dialog title={DIALOG_TITLE} subtitle={SETUP_HINT} onCancel={onDone}>{t2}</Dialog>;
+    t3 = <Dialog title={t('remoteEnv.title')} subtitle={t('remoteEnv.setupHint')} onCancel={onDone}>{t2}</Dialog>;
     $[3] = onDone;
     $[4] = t2;
     $[5] = t3;
@@ -267,6 +269,7 @@ function MultipleEnvironmentsContent(t0) {
     onSelect,
     onCancel
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== selectedEnvironmentSource) {
     t1 = selectedEnvironmentSource && selectedEnvironmentSource !== "localSettings" ? ` (from ${getSettingSourceName(selectedEnvironmentSource)} settings)` : "";
@@ -286,7 +289,7 @@ function MultipleEnvironmentsContent(t0) {
   }
   let t3;
   if ($[4] !== sourceSuffix || $[5] !== t2) {
-    t3 = <Text>Currently using: {t2}{sourceSuffix}</Text>;
+    t3 = <Text>{t('remoteEnv.currentlyUsing')} {t2}{sourceSuffix}</Text>;
     $[4] = sourceSuffix;
     $[5] = t2;
     $[6] = t3;
@@ -294,16 +297,17 @@ function MultipleEnvironmentsContent(t0) {
     t3 = $[6];
   }
   const subtitle = t3;
+  const setupHint = t('remoteEnv.setupHint');
   let t4;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <Text dimColor={true}>{SETUP_HINT}</Text>;
+    t4 = <Text dimColor={true}>{setupHint}</Text>;
     $[7] = t4;
   } else {
     t4 = $[7];
   }
   let t5;
   if ($[8] !== environments || $[9] !== loadingState || $[10] !== onSelect || $[11] !== selectedEnvironment.environment_id) {
-    t5 = loadingState === "updating" ? <LoadingState message={"Updating\u2026"} /> : <Select options={environments.map(_temp)} defaultValue={selectedEnvironment.environment_id} onChange={onSelect} onCancel={() => onSelect("cancel")} layout="compact-vertical" />;
+    t5 = loadingState === "updating" ? <LoadingState message={t('remoteEnv.updating')} /> : <Select options={environments.map(_temp)} defaultValue={selectedEnvironment.environment_id} onChange={onSelect} onCancel={() => onSelect("cancel")} layout="compact-vertical" />;
     $[8] = environments;
     $[9] = loadingState;
     $[10] = onSelect;
@@ -321,7 +325,7 @@ function MultipleEnvironmentsContent(t0) {
   }
   let t7;
   if ($[14] !== onCancel || $[15] !== subtitle || $[16] !== t5) {
-    t7 = <Dialog title={DIALOG_TITLE} subtitle={subtitle} onCancel={onCancel} hideInputGuide={true}>{t4}{t5}{t6}</Dialog>;
+    t7 = <Dialog title={t('remoteEnv.title')} subtitle={subtitle} onCancel={onCancel} hideInputGuide={true}>{t4}{t5}{t6}</Dialog>;
     $[14] = onCancel;
     $[15] = subtitle;
     $[16] = t5;

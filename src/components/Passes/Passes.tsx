@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { TEARDROP_ASTERISK } from '../../constants/figures.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { setClipboard } from '../../ink/termio/osc.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to copy link
 import { Box, Link, Text, useInput } from '../../ink.js';
@@ -25,16 +26,17 @@ type Props = {
 export function Passes({
   onDone
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [passStatuses, setPassStatuses] = useState<PassStatus[]>([]);
   const [isAvailable, setIsAvailable] = useState(false);
   const [referralLink, setReferralLink] = useState<string | null>(null);
   const [referrerReward, setReferrerReward] = useState<ReferrerRewardInfo | null | undefined>(undefined);
-  const exitState = useExitOnCtrlCDWithKeybindings(() => onDone('Guest passes dialog dismissed', {
-    display: 'system'
-  }));
+  const exitState = useExitOnCtrlCDWithKeybindings(() => onDone(t('passes.dialogDismissed'), {
+      display: 'system'
+    }));
   const handleCancel = useCallback(() => {
-    onDone('Guest passes dialog dismissed', {
+    onDone(t('passes.dialogDismissed'), {
       display: 'system'
     });
   }, [onDone]);
@@ -46,7 +48,7 @@ export function Passes({
       void setClipboard(referralLink).then(raw => {
         if (raw) process.stdout.write(raw);
         logEvent('tengu_guest_passes_link_copied', {});
-        onDone(`Referral link copied to clipboard!`);
+        onDone(t('passes.referralLinkCopied'));
       });
     }
   });
@@ -109,9 +111,9 @@ export function Passes({
   if (loading) {
     return <Pane>
         <Box flexDirection="column" gap={1}>
-          <Text dimColor>Loading guest pass information…</Text>
+          <Text dimColor>{t('passes.loadingInfo')}</Text>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}
+            {exitState.pending ? <>{t('passes.pressAgainToExit', { key: exitState.keyName })}</> : <>{t('passes.escToCancel')}</>}
           </Text>
         </Box>
       </Pane>;
@@ -119,9 +121,9 @@ export function Passes({
   if (!isAvailable) {
     return <Pane>
         <Box flexDirection="column" gap={1}>
-          <Text>Guest passes are not currently available.</Text>
+          <Text>{t('passes.notAvailable')}</Text>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Esc to cancel</>}
+            {exitState.pending ? <>{t('passes.pressAgainToExit', { key: exitState.keyName })}</> : <>{t('passes.escToCancel')}</>}
           </Text>
         </Box>
       </Pane>;
@@ -154,7 +156,7 @@ export function Passes({
   };
   return <Pane>
       <Box flexDirection="column" gap={1}>
-        <Text color="permission">Guest passes · {availableCount} left</Text>
+        <Text color="permission">{t('passes.title', { count: availableCount })}</Text>
 
         <Box flexDirection="row" marginLeft={2}>
           {sortedPasses.slice(0, 3).map(pass_0 => renderTicket(pass_0))}
@@ -166,16 +168,16 @@ export function Passes({
 
         <Box flexDirection="column" marginLeft={2}>
           <Text dimColor>
-            {referrerReward ? `Share a free week of Claude Code with friends. If they love it and subscribe, you'll get ${formatCreditAmount(referrerReward)} of extra usage to keep building. ` : 'Share a free week of Claude Code with friends. '}
+            {referrerReward ? t('passes.shareWithReward', { amount: formatCreditAmount(referrerReward) }) : t('passes.shareWithoutReward')}
             <Link url={referrerReward ? 'https://support.claude.com/en/articles/13456702-claude-code-guest-passes' : 'https://support.claude.com/en/articles/12875061-claude-code-guest-passes'}>
-              Terms apply.
+              {t('passes.termsApply')}
             </Link>
           </Text>
         </Box>
 
         <Box>
           <Text dimColor italic>
-            {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to copy link · Esc to cancel</>}
+            {exitState.pending ? <>{t('passes.pressAgainToExit', { key: exitState.keyName })}</> : <>{t('passes.enterToCopyEscToCancel')}</>}
           </Text>
         </Box>
       </Box>

@@ -1,9 +1,10 @@
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 const fuck = {
   type: 'local',
   name: 'fuck',
-  description: 'Wipe local Claude Code auth, custom API config, and session history',
+  description: t('command.fuck.description'),
   aliases: ['nuke', 'factory-reset'],
   supportsNonInteractive: false,
   load: () => import('./fuck'),

@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { SettingSource } from 'src/utils/settings/constants.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useMergedTools } from '../../hooks/useMergedTools.js';
 import { Box, Text } from '../../ink.js';
 import { useAppState, useSetAppState } from '../../state/AppState.js';
@@ -45,6 +46,19 @@ export function AgentsMenu(t0) {
     t1 = $[0];
   }
   const [modeState, setModeState] = useState(t1);
+  const { t } = useI18n();
+  const viewAgentLabel = t('agent.menu.viewAgent');
+  const editAgentLabel = t('agent.menu.editAgent');
+  const deleteAgentLabel = t('agent.menu.deleteAgent');
+  const backLabel = t('agent.menu.back');
+  const pressEnterToGoBackLabel = t('agent.menu.pressEnterToGoBack');
+  const yesDeleteLabel = t('agent.menu.yesDelete');
+  const noCancelLabel = t('agent.menu.noCancel');
+  const deleteConfirmLabel = t('agent.menu.deleteConfirm');
+  const sourceLabel = t('agent.menu.source');
+  const deleteAgentTitleLabel = t('agent.menu.deleteAgentTitle');
+  const navigationInstructionsLabel = t('agent.menu.navigationInstructions');
+  const editAgentTitleLabel = t('agent.menu.editAgentTitle');
   const agentDefinitions = useAppState(_temp);
   const mcpTools = useAppState(_temp2);
   const toolPermissionContext = useAppState(_temp3);
@@ -329,7 +343,7 @@ export function AgentsMenu(t0) {
         let t14;
         if ($[60] === Symbol.for("react.memo_cache_sentinel")) {
           t14 = {
-            label: "View agent",
+            label: viewAgentLabel,
             value: "view"
           };
           $[60] = t14;
@@ -339,10 +353,10 @@ export function AgentsMenu(t0) {
         let t15;
         if ($[61] !== isEditable) {
           t15 = isEditable ? [{
-            label: "Edit agent",
+            label: editAgentLabel,
             value: "edit"
           }, {
-            label: "Delete agent",
+            label: deleteAgentLabel,
             value: "delete"
           }] : [];
           $[61] = isEditable;
@@ -353,7 +367,7 @@ export function AgentsMenu(t0) {
         let t16;
         if ($[63] === Symbol.for("react.memo_cache_sentinel")) {
           t16 = {
-            label: "Back",
+            label: backLabel,
             value: "back"
           };
           $[63] = t16;
@@ -553,7 +567,7 @@ export function AgentsMenu(t0) {
         }
         let t18;
         if ($[109] === Symbol.for("react.memo_cache_sentinel")) {
-          t18 = <AgentNavigationFooter instructions="Press Enter or Esc to go back" />;
+          t18 = <AgentNavigationFooter instructions={pressEnterToGoBackLabel} />;
           $[109] = t18;
         } else {
           t18 = $[109];
@@ -573,10 +587,10 @@ export function AgentsMenu(t0) {
         let t13;
         if ($[112] === Symbol.for("react.memo_cache_sentinel")) {
           t13 = [{
-            label: "Yes, delete",
+            label: yesDeleteLabel,
             value: "yes"
           }, {
-            label: "No, cancel",
+            label: noCancelLabel,
             value: "no"
           }];
           $[112] = t13;
@@ -598,7 +612,7 @@ export function AgentsMenu(t0) {
         }
         let t15;
         if ($[115] !== modeState.agent.agentType) {
-          t15 = <Text>Are you sure you want to delete the agent{" "}<Text bold={true}>{modeState.agent.agentType}</Text>?</Text>;
+          t15 = <Text>{deleteConfirmLabel}{" "}<Text bold={true}>{modeState.agent.agentType}</Text>?</Text>;
           $[115] = modeState.agent.agentType;
           $[116] = t15;
         } else {
@@ -606,7 +620,7 @@ export function AgentsMenu(t0) {
         }
         let t16;
         if ($[117] !== modeState.agent.source) {
-          t16 = <Box marginTop={1}><Text dimColor={true}>Source: {modeState.agent.source}</Text></Box>;
+          t16 = <Box marginTop={1}><Text dimColor={true}>{sourceLabel}: {modeState.agent.source}</Text></Box>;
           $[117] = modeState.agent.source;
           $[118] = t16;
         } else {
@@ -652,7 +666,7 @@ export function AgentsMenu(t0) {
         }
         let t20;
         if ($[127] !== t14 || $[128] !== t15 || $[129] !== t16 || $[130] !== t19) {
-          t20 = <Dialog title="Delete agent" onCancel={t14} color="error">{t15}{t16}{t19}</Dialog>;
+          t20 = <Dialog title={deleteAgentTitleLabel} onCancel={t14} color="error">{t15}{t16}{t19}</Dialog>;
           $[127] = t14;
           $[128] = t15;
           $[129] = t16;
@@ -663,7 +677,7 @@ export function AgentsMenu(t0) {
         }
         let t21;
         if ($[132] === Symbol.for("react.memo_cache_sentinel")) {
-          t21 = <AgentNavigationFooter instructions={"Press \u2191\u2193 to navigate, Enter to select, Esc to cancel"} />;
+          t21 = <AgentNavigationFooter instructions={navigationInstructionsLabel} />;
           $[132] = t21;
         } else {
           t21 = $[132];
@@ -699,7 +713,7 @@ export function AgentsMenu(t0) {
         }
         const freshAgent = t13;
         const agentToEdit = freshAgent || modeState.agent;
-        const t14 = `Edit agent: ${agentToEdit.agentType}`;
+        const t14 = `${editAgentTitleLabel}: ${agentToEdit.agentType}`;
         let t15;
         if ($[140] !== modeState.previousMode) {
           t15 = () => setModeState(modeState.previousMode);

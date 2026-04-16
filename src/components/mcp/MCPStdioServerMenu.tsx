@@ -2,6 +2,7 @@ import figures from 'figures';
 import React, { useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, color, Text, useTheme } from '../../ink.js';
 import { getMcpConfigByName } from '../../services/mcp/config.js';
 import { useMcpReconnect, useMcpToggleEnabled } from '../../services/mcp/MCPConnectionManager.js';
@@ -35,6 +36,7 @@ export function MCPStdioServerMenu({
   onComplete,
   borderless = false
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const [theme] = useTheme();
   const exitState = useExitOnCtrlCDWithKeybindings();
   const mcp = useAppState(s => s.mcp);
@@ -61,7 +63,7 @@ export function MCPStdioServerMenu({
   // Only show "View tools" if server is not disabled and has tools
   if (server.client.type !== 'disabled' && serverToolsCount > 0) {
     menuOptions.push({
-      label: 'View tools',
+      label: t('mcpServer.viewTools'),
       value: 'tools'
     });
   }
@@ -69,61 +71,61 @@ export function MCPStdioServerMenu({
   // Only show reconnect option if the server is not disabled
   if (server.client.type !== 'disabled') {
     menuOptions.push({
-      label: 'Reconnect',
+      label: t('mcpServer.reconnect'),
       value: 'reconnectMcpServer'
     });
   }
   menuOptions.push({
-    label: server.client.type !== 'disabled' ? 'Disable' : 'Enable',
+    label: server.client.type !== 'disabled' ? t('mcpServer.disable') : t('mcpServer.enable'),
     value: 'toggle-enabled'
   });
 
   // If there are no other options, add a back option so Select handles escape
   if (menuOptions.length === 0) {
     menuOptions.push({
-      label: 'Back',
+      label: t('mcpServer.back'),
       value: 'back'
     });
   }
   if (isReconnecting) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="text">
-          Reconnecting to <Text bold>{server.name}</Text>
+          {t('mcpServer.reconnectingTo')} <Text bold>{server.name}</Text>
         </Text>
         <Box>
           <Spinner />
-          <Text> Restarting MCP server process</Text>
+          <Text> {t('mcpServer.restartingProcess')}</Text>
         </Box>
-        <Text dimColor>This may take a few moments.</Text>
+        <Text dimColor>{t('mcpServer.mayTakeMoments')}</Text>
       </Box>;
   }
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle={borderless ? undefined : 'round'}>
         <Box marginBottom={1}>
-          <Text bold>{capitalizedServerName} MCP Server</Text>
+          <Text bold>{capitalizedServerName} {t('mcpServer.title')}</Text>
         </Box>
 
         <Box flexDirection="column" gap={0}>
           <Box>
-            <Text bold>Status: </Text>
-            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : server.client.type === 'pending' ? <>
+            <Text bold>{t('mcpServer.status')} </Text>
+            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} {t('mcpServer.statusDisabled')}</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} {t('mcpServer.statusConnected')}</Text> : server.client.type === 'pending' ? <>
                 <Text dimColor>{figures.radioOff}</Text>
-                <Text> connecting…</Text>
-              </> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
+                <Text> {t('mcpServer.statusConnecting')}</Text>
+              </> : <Text>{color('error', theme)(figures.cross)} {t('mcpServer.statusFailed')}</Text>}
           </Box>
 
           <Box>
-            <Text bold>Command: </Text>
+            <Text bold>{t('mcpServer.command')} </Text>
             <Text dimColor>{server.config.command}</Text>
           </Box>
 
           {server.config.args && server.config.args.length > 0 && <Box>
-              <Text bold>Args: </Text>
+              <Text bold>{t('mcpServer.args')} </Text>
               <Text dimColor>{server.config.args.join(' ')}</Text>
             </Box>}
 
           <Box>
-            <Text bold>Config location: </Text>
+            <Text bold>{t('mcpServer.configLocation')} </Text>
             <Text dimColor>
               {describeMcpConfigFilePath(getMcpConfigByName(server.name)?.scope ?? 'dynamic')}
             </Text>
@@ -132,8 +134,8 @@ export function MCPStdioServerMenu({
           {server.client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
 
           {server.client.type === 'connected' && serverToolsCount > 0 && <Box>
-              <Text bold>Tools: </Text>
-              <Text dimColor>{serverToolsCount} tools</Text>
+              <Text bold>{t('mcpServer.tools')} </Text>
+              <Text dimColor>{serverToolsCount} {t('mcpServer.toolsCount')}</Text>
             </Box>}
         </Box>
 

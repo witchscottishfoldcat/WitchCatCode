@@ -1,10 +1,11 @@
 import type { Command } from '../../commands.js'
 import { isConsumerSubscriber } from '../../utils/auth.js'
+import { t } from '../../i18n/core.js'
 
 const privacySettings = {
   type: 'local-jsx',
   name: 'privacy-settings',
-  description: 'View and update your privacy settings',
+  description: t('command.privacy-settings.description'),
   isEnabled: () => {
     return isConsumerSubscriber()
   },

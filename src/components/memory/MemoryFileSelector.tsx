@@ -7,6 +7,7 @@ import * as React from 'react';
 import { use, useEffect, useState } from 'react';
 import { getOriginalCwd } from '../../bootstrap/state.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { getAutoMemPath, isAutoMemoryEnabled } from '../../memdir/paths.js';
@@ -47,6 +48,27 @@ export function MemoryFileSelector(t0) {
     onSelect,
     onCancel
   } = t0;
+  const { t } = useI18n();
+  const userMemoryLabel = t('memory.userMemory');
+  const projectMemoryLabel = t('memory.projectMemory');
+  const newLabel = t('memory.new');
+  const savedInClaudeMd = t('memory.savedInClaudeMd');
+  const checkedInAt = t('memory.checkedInAt');
+  const savedInLabel = t('memory.savedIn');
+  const atImported = t('memory.atImported');
+  const dynamicallyLoaded = t('memory.dynamicallyLoaded');
+  const openAutoMemoryFolder = t('memory.openAutoMemoryFolder');
+  const openTeamMemoryFolder = t('memory.openTeamMemoryFolder');
+  const openAgentMemory = t('memory.openAgentMemory');
+  const scopeLabel = t('memory.scope');
+  const autoMemoryLabel = t('memory.autoMemory');
+  const onLabel = t('memory.on');
+  const offLabel = t('memory.off');
+  const autoDreamLabel = t('memory.autoDream');
+  const runningLabel = t('memory.running');
+  const neverLabel = t('memory.never');
+  const lastRanLabel = t('memory.lastRan');
+  const dreamToRun = t('memory.dreamToRun');
   const existingMemoryFiles = use(getMemoryFiles());
   const userMemoryPath = join(getClaudeConfigHomeDir(), "CLAUDE.md");
   const projectMemoryPath = join(getOriginalCwd(), "CLAUDE.md");
@@ -66,16 +88,16 @@ export function MemoryFileSelector(t0) {
   const depths = new Map();
   const memoryOptions = allMemoryFiles.map(file => {
     const displayPath = getDisplayPath(file.path);
-    const existsLabel = file.exists ? "" : " (new)";
+    const existsLabel = file.exists ? "" : ` (${newLabel})`;
     const depth = file.parent ? (depths.get(file.parent) ?? 0) + 1 : 0;
     depths.set(file.path, depth);
     const indent = depth > 0 ? "  ".repeat(depth - 1) : "";
     let label;
     if (file.type === "User" && !file.isNested && file.path === userMemoryPath) {
-      label = "User memory";
+      label = userMemoryLabel;
     } else {
       if (file.type === "Project" && !file.isNested && file.path === projectMemoryPath) {
-        label = "Project memory";
+        label = projectMemoryLabel;
       } else {
         if (depth > 0) {
           label = `${indent}L ${displayPath}${existsLabel}`;
@@ -87,16 +109,16 @@ export function MemoryFileSelector(t0) {
     let description;
     const isGit = projectIsInGitRepo(getOriginalCwd());
     if (file.type === "User" && !file.isNested) {
-      description = "Saved in ~/.claude/CLAUDE.md";
+      description = savedInClaudeMd;
     } else {
       if (file.type === "Project" && !file.isNested && file.path === projectMemoryPath) {
-        description = `${isGit ? "Checked in at" : "Saved in"} ./CLAUDE.md`;
+        description = `${isGit ? checkedInAt : savedInLabel} ./CLAUDE.md`;
       } else {
         if (file.parent) {
-          description = "@-imported";
+          description = atImported;
         } else {
           if (file.isNested) {
-            description = "dynamically loaded";
+            description = dynamicallyLoaded;
           } else {
             description = "";
           }
@@ -115,7 +137,7 @@ export function MemoryFileSelector(t0) {
     let t1;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
       t1 = {
-        label: "Open auto-memory folder",
+        label: openAutoMemoryFolder,
         value: `${OPEN_FOLDER_PREFIX}${getAutoMemPath()}`,
         description: ""
       };
@@ -128,7 +150,7 @@ export function MemoryFileSelector(t0) {
       let t2;
       if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
         t2 = {
-          label: "Open team memory folder",
+          label: openTeamMemoryFolder,
           value: `${OPEN_FOLDER_PREFIX}${teamMemPaths.getTeamMemPath()}`,
           description: ""
         };
@@ -142,9 +164,9 @@ export function MemoryFileSelector(t0) {
       if (agent.memory) {
         const agentDir = getAgentMemoryDir(agent.agentType, agent.memory);
         folderOptions.push({
-          label: `Open ${chalk.bold(agent.agentType)} agent memory`,
+          label: `${openAgentMemory} ${chalk.bold(agent.agentType)}`,
           value: `${OPEN_FOLDER_PREFIX}${agentDir}`,
-          description: `${agent.memory} scope`
+          description: `${agent.memory} ${scopeLabel}`
         });
       }
     }
@@ -189,7 +211,7 @@ export function MemoryFileSelector(t0) {
   useEffect(t2, t3);
   let t4;
   if ($[9] !== isDreamRunning || $[10] !== lastDreamAt) {
-    t4 = isDreamRunning ? "running" : lastDreamAt === null ? "" : lastDreamAt === 0 ? "never" : `last ran ${formatRelativeTimeAgo(new Date(lastDreamAt))}`;
+    t4 = isDreamRunning ? runningLabel : lastDreamAt === null ? "" : lastDreamAt === 0 ? neverLabel : `${lastRanLabel} ${formatRelativeTimeAgo(new Date(lastDreamAt))}`;
     $[9] = isDreamRunning;
     $[10] = lastDreamAt;
     $[11] = t4;
@@ -321,10 +343,10 @@ export function MemoryFileSelector(t0) {
   }
   useKeybinding("select:previous", t12, t13);
   const t14 = focusedToggle === 0;
-  const t15 = autoMemoryOn ? "on" : "off";
+  const t15 = autoMemoryOn ? onLabel : offLabel;
   let t16;
   if ($[30] !== t15) {
-    t16 = <Text>Auto-memory: {t15}</Text>;
+    t16 = <Text>{autoMemoryLabel}: {t15}</Text>;
     $[30] = t15;
     $[31] = t16;
   } else {
@@ -341,7 +363,7 @@ export function MemoryFileSelector(t0) {
   }
   let t18;
   if ($[35] !== autoDreamOn || $[36] !== dreamStatus || $[37] !== focusedToggle || $[38] !== isDreamRunning || $[39] !== showDreamRow) {
-    t18 = showDreamRow && <ListItem isFocused={focusedToggle === 1} styled={false}><Text color={focusedToggle === 1 ? "suggestion" : undefined}>Auto-dream: {autoDreamOn ? "on" : "off"}{dreamStatus && <Text dimColor={true}> · {dreamStatus}</Text>}{!isDreamRunning && autoDreamOn && <Text dimColor={true}> · /dream to run</Text>}</Text></ListItem>;
+    t18 = showDreamRow && <ListItem isFocused={focusedToggle === 1} styled={false}><Text color={focusedToggle === 1 ? "suggestion" : undefined}>{autoDreamLabel}: {autoDreamOn ? onLabel : offLabel}{dreamStatus && <Text dimColor={true}> · {dreamStatus}</Text>}{!isDreamRunning && autoDreamOn && <Text dimColor={true}> · {dreamToRun}</Text>}</Text></ListItem>;
     $[35] = autoDreamOn;
     $[36] = dreamStatus;
     $[37] = focusedToggle;

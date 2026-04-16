@@ -5,6 +5,7 @@ import { useElapsedTime } from '../../hooks/useElapsedTime.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { getEmptyToolPermissionContext } from '../../Tool.js';
 import type { LocalAgentTaskState } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
 import { getTools } from '../../tools.js';
@@ -40,6 +41,14 @@ export function AsyncAgentDetailDialog(t0) {
   }
   const tools = t1;
   const elapsedTime = useElapsedTime(agent.startTime, agent.status === "running", 1000, agent.totalPausedMs ?? 0);
+  const { t } = useI18n();
+  const defaultDescription = t('task.asyncAgent.defaultDescription');
+  const completedText = t('task.asyncAgent.completed');
+  const failedText = t('task.asyncAgent.failed');
+  const stoppedText = t('task.asyncAgent.stopped');
+  const progressLabel = t('task.asyncAgent.progress');
+  const promptLabel = t('task.asyncAgent.prompt');
+  const errorLabel = t('task.asyncAgent.error');
   let t2;
   if ($[1] !== onDone) {
     t2 = {
@@ -100,7 +109,7 @@ export function AsyncAgentDetailDialog(t0) {
   const tokenCount = agent.result?.totalTokens ?? agent.progress?.tokenCount;
   const toolUseCount = agent.result?.totalToolUseCount ?? agent.progress?.toolUseCount;
   const t6 = agent.selectedAgent?.agentType ?? "agent";
-  const t7 = agent.description || "Async agent";
+  const t7 = agent.description || defaultDescription;
   let t8;
   if ($[11] !== t6 || $[12] !== t7) {
     t8 = <Text>{t6} ›{" "}{t7}</Text>;
@@ -113,7 +122,7 @@ export function AsyncAgentDetailDialog(t0) {
   const title = t8;
   let t9;
   if ($[14] !== agent.status) {
-    t9 = agent.status !== "running" && <Text color={getTaskStatusColor(agent.status)}>{getTaskStatusIcon(agent.status)}{" "}{agent.status === "completed" ? "Completed" : agent.status === "failed" ? "Failed" : "Stopped"}{" \xB7 "}</Text>;
+    t9 = agent.status !== "running" && <Text color={getTaskStatusColor(agent.status)}>{getTaskStatusIcon(agent.status)}{" "}{agent.status === "completed" ? completedText : agent.status === "failed" ? failedText : stoppedText}{" \xB7 "}</Text>;
     $[14] = agent.status;
     $[15] = t9;
   } else {
@@ -121,7 +130,7 @@ export function AsyncAgentDetailDialog(t0) {
   }
   let t10;
   if ($[16] !== tokenCount) {
-    t10 = tokenCount !== undefined && tokenCount > 0 && <> · {formatNumber(tokenCount)} tokens</>;
+    t10 = tokenCount !== undefined && tokenCount > 0 && <> · {formatNumber(tokenCount)} {t('task.asyncAgent.tokens')}</>;
     $[16] = tokenCount;
     $[17] = t10;
   } else {
@@ -129,7 +138,7 @@ export function AsyncAgentDetailDialog(t0) {
   }
   let t11;
   if ($[18] !== toolUseCount) {
-    t11 = toolUseCount !== undefined && toolUseCount > 0 && <>{" "}· {toolUseCount} {toolUseCount === 1 ? "tool" : "tools"}</>;
+    t11 = toolUseCount !== undefined && toolUseCount > 0 && <>{" "}· {toolUseCount} {toolUseCount === 1 ? t('task.asyncAgent.tool') : t('task.asyncAgent.tools')}</>;
     $[18] = toolUseCount;
     $[19] = t11;
   } else {
@@ -167,7 +176,7 @@ export function AsyncAgentDetailDialog(t0) {
   }
   let t15;
   if ($[31] !== agent.progress || $[32] !== agent.status || $[33] !== theme) {
-    t15 = agent.status === "running" && agent.progress?.recentActivities && agent.progress.recentActivities.length > 0 && <Box flexDirection="column"><Text bold={true} dimColor={true}>Progress</Text>{agent.progress.recentActivities.map((activity, i) => <Text key={i} dimColor={i < agent.progress.recentActivities.length - 1} wrap="truncate-end">{i === agent.progress.recentActivities.length - 1 ? "\u203A " : "  "}{renderToolActivity(activity, tools, theme)}</Text>)}</Box>;
+    t15 = agent.status === "running" && agent.progress?.recentActivities && agent.progress.recentActivities.length > 0 && <Box flexDirection="column"><Text bold={true} dimColor={true}>{progressLabel}</Text>{agent.progress.recentActivities.map((activity, i) => <Text key={i} dimColor={i < agent.progress.recentActivities.length - 1} wrap="truncate-end">{i === agent.progress.recentActivities.length - 1 ? "\u203A " : "  "}{renderToolActivity(activity, tools, theme)}</Text>)}</Box>;
     $[31] = agent.progress;
     $[32] = agent.status;
     $[33] = theme;
@@ -177,7 +186,7 @@ export function AsyncAgentDetailDialog(t0) {
   }
   let t16;
   if ($[35] !== displayPrompt || $[36] !== planContent) {
-    t16 = planContent ? <Box marginTop={1}><UserPlanMessage addMargin={false} planContent={planContent} /></Box> : <Box flexDirection="column" marginTop={1}><Text bold={true} dimColor={true}>Prompt</Text><Text wrap="wrap">{displayPrompt}</Text></Box>;
+    t16 = planContent ? <Box marginTop={1}><UserPlanMessage addMargin={false} planContent={planContent} /></Box> : <Box flexDirection="column" marginTop={1}><Text bold={true} dimColor={true}>{promptLabel}</Text><Text wrap="wrap">{displayPrompt}</Text></Box>;
     $[35] = displayPrompt;
     $[36] = planContent;
     $[37] = t16;
@@ -186,7 +195,7 @@ export function AsyncAgentDetailDialog(t0) {
   }
   let t17;
   if ($[38] !== agent.error || $[39] !== agent.status) {
-    t17 = agent.status === "failed" && agent.error && <Box flexDirection="column" marginTop={1}><Text bold={true} color="error">Error</Text><Text color="error" wrap="wrap">{agent.error}</Text></Box>;
+    t17 = agent.status === "failed" && agent.error && <Box flexDirection="column" marginTop={1}><Text bold={true} color="error">{errorLabel}</Text><Text color="error" wrap="wrap">{agent.error}</Text></Box>;
     $[38] = agent.error;
     $[39] = agent.status;
     $[40] = t17;

@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import type { Base64ImageSource, ImageBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs';
 import React, { Suspense, use, useCallback, useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../../hooks/useSettings.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { useTerminalSize } from '../../../hooks/useTerminalSize.js';
 import { stringWidth } from '../../../ink/stringWidth.js';
 import { useTheme } from '../../../ink.js';
@@ -103,6 +104,9 @@ function AskUserQuestionPermissionRequestBody(t0) {
     rows: terminalRows
   } = useTerminalSize();
   const [theme] = useTheme();
+  const { t } = useI18n();
+  const _pastedImage = t('permission.askUserQuestion.pastedImage');
+  const _imageAttached = t('permission.askUserQuestion.imageAttached');
   let maxHeight = 0;
   let maxWidth = 0;
   const maxAllowedHeight = Math.max(MIN_CONTENT_HEIGHT, terminalRows - CONTENT_CHROME_OVERHEAD);
@@ -180,7 +184,7 @@ function AskUserQuestionPermissionRequestBody(t0) {
         type: "image",
         content: base64Image,
         mediaType: mediaType || "image/png",
-        filename: filename || "Pasted image",
+        filename: filename || _pastedImage,
         dimensions
       };
       cacheImagePath(newContent);
@@ -429,11 +433,11 @@ Questions asked and answers provided:\n${questionsWithAnswers_0}`;
       } else {
         if (textInput) {
           const questionImages = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(_temp5);
-          answer_2 = questionImages.length > 0 ? `${textInput} (Image attached)` : textInput;
+          answer_2 = questionImages.length > 0 ? `${textInput} (${_imageAttached})` : textInput;
         } else {
           if (label === "__other__") {
             const questionImages_0 = Object.values(pastedContentsByQuestion[questionText_1] ?? {}).filter(_temp6);
-            answer_2 = questionImages_0.length > 0 ? "(Image attached)" : label;
+            answer_2 = questionImages_0.length > 0 ? `(${_imageAttached})` : label;
           } else {
             answer_2 = label;
           }

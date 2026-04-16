@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { isAutoMemoryEnabled } from '../../../memdir/paths.js';
 import type { Tools } from '../../../Tool.js';
 import type { AgentDefinition } from '../../../tools/AgentTool/loadAgentsDir.js';
@@ -31,6 +32,8 @@ export function CreateAgentWizard(t0) {
     onComplete,
     onCancel
   } = t0;
+  const { t } = useI18n();
+  const _title = t('agent.wizard.createAgent.title');
   let t1;
   if ($[0] !== existingAgents) {
     t1 = () => <TypeStep existingAgents={existingAgents} />;
@@ -84,7 +87,7 @@ export function CreateAgentWizard(t0) {
   }
   let t7;
   if ($[14] !== onCancel || $[15] !== steps) {
-    t7 = <WizardProvider steps={steps} initialData={t6} onComplete={_temp} onCancel={onCancel} title="Create new agent" showStepCounter={false} />;
+    t7 = <WizardProvider steps={steps} initialData={t6} onComplete={_temp} onCancel={onCancel} title={_title} showStepCounter={false} />;
     $[14] = onCancel;
     $[15] = steps;
     $[16] = t7;

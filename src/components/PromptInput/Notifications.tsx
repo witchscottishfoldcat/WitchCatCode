@@ -12,6 +12,8 @@ import type { IDESelection } from '../../hooks/useIdeSelection.js';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
 import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js';
 import { Box, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
+import { t as tFn } from '../../i18n/core.js';
 import { useClaudeAiLimits } from '../../services/claudeAiLimitsHook.js';
 import { calculateTokenWarningState } from '../../services/compact/autoCompact.js';
 import type { MCPServerConnection } from '../../services/mcp/types.js';
@@ -153,7 +155,7 @@ export function Notifications(t0) {
         logEvent("tengu_external_editor_hint_shown", {});
         addNotification({
           key: "external-editor-hint",
-          jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={`edit in ${toIDEDisplayName(editor)}`} /></Text>,
+          jsx: <Text dimColor={true}><ConfigurableShortcutHint action="chat:externalEditor" context="Chat" fallback="ctrl+g" description={tFn('notification.editInEditor', { editor: toIDEDisplayName(editor) })} /></Text>,
           priority: "immediate",
           timeoutMs: 5000
         });
@@ -278,6 +280,8 @@ function NotificationContent({
   // biome-ignore lint/correctness/useHookAtTopLevel: feature() is a compile-time constant
   useAppState(s_1 => s_1.isBriefOnly) : false;
 
+  const { t } = useI18n();
+
   // When voice is actively recording or processing, replace all
   // notifications with just the voice indicator.
   if (feature('VOICE_MODE') && voiceEnabled && (voiceState === 'recording' || voiceState === 'processing')) {
@@ -292,12 +296,12 @@ function NotificationContent({
           </Text>)}
       {isInOverageMode && !isTeamOrEnterprise && <Box>
           <Text dimColor wrap="truncate">
-            Now using extra usage
+            {t('notification.extraUsage')}
           </Text>
         </Box>}
       {apiKeyHelperSlow && <Box>
           <Text color="warning" wrap="truncate">
-            apiKeyHelper is taking a while{' '}
+            {t('notification.apiKeyHelperSlow')}{' '}
           </Text>
           <Text dimColor wrap="truncate">
             ({apiKeyHelperSlow})
@@ -305,17 +309,17 @@ function NotificationContent({
         </Box>}
       {(apiKeyStatus === 'invalid' || apiKeyStatus === 'missing') && <Box>
           <Text color="error" wrap="truncate">
-            {isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) ? 'Authentication error · Try again' : 'Not logged in · Run /login'}
+            {isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) ? t('notification.authenticationError') : t('notification.notLoggedIn')}
           </Text>
         </Box>}
       {debug && <Box>
           <Text color="warning" wrap="truncate">
-            Debug mode
+            {t('notification.debugMode')}
           </Text>
         </Box>}
       {apiKeyStatus !== 'invalid' && apiKeyStatus !== 'missing' && verbose && <Box>
           <Text dimColor wrap="truncate">
-            {tokenUsage} tokens
+            {t('notification.tokenCount', { tokenUsage })}
           </Text>
         </Box>}
       {!isBriefOnly && <TokenWarning tokenUsage={tokenUsage} model={mainLoopModel} />}

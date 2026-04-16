@@ -6,6 +6,7 @@ import figures from 'figures';
 import React, { Suspense, use, useCallback, useEffect, useMemo, useState } from 'react';
 import stripAnsi from 'strip-ansi';
 import type { CommandResultDisplay } from '../commands.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { applyColor } from '../ink/colorize.js';
 import { stringWidth as getStringWidth } from '../ink/stringWidth.js';
@@ -45,10 +46,10 @@ type StatsResult = {
 } | {
   type: 'empty';
 };
-const DATE_RANGE_LABELS: Record<StatsDateRange, string> = {
-  '7d': 'Last 7 days',
-  '30d': 'Last 30 days',
-  all: 'All time'
+const DATE_RANGE_KEYS: Record<StatsDateRange, string> = {
+  '7d': 'stats.dateRange.last7Days',
+  '30d': 'stats.dateRange.last30Days',
+  all: 'stats.dateRange.allTime'
 };
 const DATE_RANGE_ORDER: StatsDateRange[] = ['all', '7d', '30d'];
 function getNextDateRange(current: StatsDateRange): StatsDateRange {
@@ -84,6 +85,8 @@ export function Stats(t0) {
   const {
     onClose
   } = t0;
+  const { t } = useI18n();
+  const loadingText = t('stats.loading');
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = createAllTimeStatsPromise();
@@ -93,19 +96,20 @@ export function Stats(t0) {
   }
   const allTimePromise = t1;
   let t2;
-  if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box marginTop={1}><Spinner /><Text> Loading your Claude Code stats…</Text></Box>;
-    $[1] = t2;
+  if ($[1] !== loadingText) {
+    t2 = <Box marginTop={1}><Spinner /><Text> {loadingText}</Text></Box>;
+    $[1] = loadingText;
+    $[2] = t2;
   } else {
-    t2 = $[1];
+    t2 = $[2];
   }
   let t3;
-  if ($[2] !== onClose) {
+  if ($[3] !== onClose) {
     t3 = <Suspense fallback={t2}><StatsContent allTimePromise={allTimePromise} onClose={onClose} /></Suspense>;
-    $[2] = onClose;
-    $[3] = t3;
+    $[3] = onClose;
+    $[4] = t3;
   } else {
-    t3 = $[3];
+    t3 = $[4];
   }
   return t3;
 }
@@ -124,8 +128,18 @@ function StatsContent(t0) {
     allTimePromise,
     onClose
   } = t0;
+  const { t } = useI18n();
   const allTimeResult = use(allTimePromise);
   const [dateRange, setDateRange] = useState("all");
+
+  // Pre-translate strings that appear inside cache blocks
+  const i18nFailedToLoad = t('stats.failedToLoad');
+  const i18nNoStatsAvailable = t('stats.noStatsAvailable');
+  const i18nLoadingStats = t('stats.loadingStats');
+  const i18nOverview = t('stats.tabOverview');
+  const i18nModels = t('stats.tabModels');
+  const i18nFooterHint = t('stats.footerHint');
+
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = {};
@@ -216,7 +230,7 @@ function StatsContent(t0) {
         setDateRange(getNextDateRange(dateRange));
       }
       if (key.ctrl && input === "s" && displayStats) {
-        handleScreenshot(displayStats, activeTab, setCopyStatus);
+        handleScreenshot(displayStats, activeTab, setCopyStatus, t);
       }
     };
     $[8] = activeTab;
@@ -230,82 +244,88 @@ function StatsContent(t0) {
   useInput(t6);
   if (allTimeResult.type === "error") {
     let t7;
-    if ($[13] !== allTimeResult.message) {
-      t7 = <Box marginTop={1}><Text color="error">Failed to load stats: {allTimeResult.message}</Text></Box>;
+    if ($[13] !== allTimeResult.message || $[14] !== i18nFailedToLoad) {
+      t7 = <Box marginTop={1}><Text color="error">{i18nFailedToLoad}: {allTimeResult.message}</Text></Box>;
       $[13] = allTimeResult.message;
-      $[14] = t7;
-    } else {
-      t7 = $[14];
-    }
-    return t7;
-  }
-  if (allTimeResult.type === "empty") {
-    let t7;
-    if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-      t7 = <Box marginTop={1}><Text color="warning">No stats available yet. Start using Claude Code!</Text></Box>;
+      $[14] = i18nFailedToLoad;
       $[15] = t7;
     } else {
       t7 = $[15];
     }
     return t7;
   }
+  if (allTimeResult.type === "empty") {
+    let t7;
+    if ($[16] !== i18nNoStatsAvailable) {
+      t7 = <Box marginTop={1}><Text color="warning">{i18nNoStatsAvailable}</Text></Box>;
+      $[16] = i18nNoStatsAvailable;
+      $[17] = t7;
+    } else {
+      t7 = $[17];
+    }
+    return t7;
+  }
   if (!displayStats || !allTimeStats) {
     let t7;
-    if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t7 = <Box marginTop={1}><Spinner /><Text> Loading stats…</Text></Box>;
-      $[16] = t7;
+    if ($[18] !== i18nLoadingStats) {
+      t7 = <Box marginTop={1}><Spinner /><Text> {i18nLoadingStats}</Text></Box>;
+      $[18] = i18nLoadingStats;
+      $[19] = t7;
     } else {
-      t7 = $[16];
+      t7 = $[19];
     }
     return t7;
   }
   let t7;
-  if ($[17] !== allTimeStats || $[18] !== dateRange || $[19] !== displayStats || $[20] !== isLoadingFiltered) {
-    t7 = <Tab title="Overview"><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
-    $[17] = allTimeStats;
-    $[18] = dateRange;
-    $[19] = displayStats;
-    $[20] = isLoadingFiltered;
-    $[21] = t7;
+  if ($[20] !== allTimeStats || $[21] !== dateRange || $[22] !== displayStats || $[23] !== isLoadingFiltered || $[24] !== i18nOverview) {
+    t7 = <Tab title={i18nOverview}><OverviewTab stats={displayStats} allTimeStats={allTimeStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
+    $[20] = allTimeStats;
+    $[21] = dateRange;
+    $[22] = displayStats;
+    $[23] = isLoadingFiltered;
+    $[24] = i18nOverview;
+    $[25] = t7;
   } else {
-    t7 = $[21];
+    t7 = $[25];
   }
   let t8;
-  if ($[22] !== dateRange || $[23] !== displayStats || $[24] !== isLoadingFiltered) {
-    t8 = <Tab title="Models"><ModelsTab stats={displayStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
-    $[22] = dateRange;
-    $[23] = displayStats;
-    $[24] = isLoadingFiltered;
-    $[25] = t8;
+  if ($[26] !== dateRange || $[27] !== displayStats || $[28] !== isLoadingFiltered || $[29] !== i18nModels) {
+    t8 = <Tab title={i18nModels}><ModelsTab stats={displayStats} dateRange={dateRange} isLoading={isLoadingFiltered} /></Tab>;
+    $[26] = dateRange;
+    $[27] = displayStats;
+    $[28] = isLoadingFiltered;
+    $[29] = i18nModels;
+    $[30] = t8;
   } else {
-    t8 = $[25];
+    t8 = $[30];
   }
   let t9;
-  if ($[26] !== t7 || $[27] !== t8) {
-    t9 = <Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="claude" defaultTab="Overview">{t7}{t8}</Tabs></Box>;
-    $[26] = t7;
-    $[27] = t8;
-    $[28] = t9;
+  if ($[31] !== t7 || $[32] !== t8) {
+    t9 = <Box flexDirection="row" gap={1} marginBottom={1}><Tabs title="" color="claude" defaultTab={i18nOverview}>{t7}{t8}</Tabs></Box>;
+    $[31] = t7;
+    $[32] = t8;
+    $[33] = t9;
   } else {
-    t9 = $[28];
+    t9 = $[33];
   }
   const t10 = copyStatus ? ` · ${copyStatus}` : "";
   let t11;
-  if ($[29] !== t10) {
-    t11 = <Box paddingLeft={2}><Text dimColor={true}>Esc to cancel · r to cycle dates · ctrl+s to copy{t10}</Text></Box>;
-    $[29] = t10;
-    $[30] = t11;
+  if ($[34] !== i18nFooterHint || $[35] !== t10) {
+    t11 = <Box paddingLeft={2}><Text dimColor={true}>{i18nFooterHint}{t10}</Text></Box>;
+    $[34] = i18nFooterHint;
+    $[35] = t10;
+    $[36] = t11;
   } else {
-    t11 = $[30];
+    t11 = $[36];
   }
   let t12;
-  if ($[31] !== t11 || $[32] !== t9) {
+  if ($[37] !== t11 || $[38] !== t9) {
     t12 = <Pane color="claude">{t9}{t11}</Pane>;
-    $[31] = t11;
-    $[32] = t9;
-    $[33] = t12;
+    $[37] = t11;
+    $[38] = t9;
+    $[39] = t12;
   } else {
-    t12 = $[33];
+    t12 = $[39];
   }
   return t12;
 }
@@ -318,9 +338,10 @@ function DateRangeSelector(t0) {
     dateRange,
     isLoading
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== dateRange) {
-    t1 = DATE_RANGE_ORDER.map((range, i) => <Text key={range}>{i > 0 && <Text dimColor={true}> · </Text>}{range === dateRange ? <Text bold={true} color="claude">{DATE_RANGE_LABELS[range]}</Text> : <Text dimColor={true}>{DATE_RANGE_LABELS[range]}</Text>}</Text>);
+    t1 = DATE_RANGE_ORDER.map((range, i) => <Text key={range}>{i > 0 && <Text dimColor={true}> · </Text>}{range === dateRange ? <Text bold={true} color="claude">{t(DATE_RANGE_KEYS[range])}</Text> : <Text dimColor={true}>{t(DATE_RANGE_KEYS[range])}</Text>}</Text>);
     $[0] = dateRange;
     $[1] = t1;
   } else {
@@ -364,6 +385,7 @@ function OverviewTab({
   dateRange: StatsDateRange;
   isLoading: boolean;
 }): React.ReactNode {
+  const { t } = useI18n();
   const {
     columns: terminalWidth
   } = useTerminalSize();
@@ -374,7 +396,7 @@ function OverviewTab({
   const totalTokens = modelEntries.reduce((sum, [, usage]) => sum + usage.inputTokens + usage.outputTokens, 0);
 
   // Memoize the factoid so it doesn't change when switching tabs
-  const factoid = useMemo(() => generateFunFactoid(stats, totalTokens), [stats, totalTokens]);
+  const factoid = useMemo(() => generateFunFactoid(stats, totalTokens, t), [stats, totalTokens, t]);
 
   // Calculate range days based on selected date range
   const rangeDays = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : stats.totalDays;
@@ -405,19 +427,19 @@ function OverviewTab({
       shotStatsData = {
         avgShots: (totalShots / total).toFixed(1),
         buckets: [{
-          label: '1-shot',
+          label: t('stats.shot.1shot'),
           count: b1,
           pct: pct(b1)
         }, {
-          label: '2\u20135 shot',
+          label: t('stats.shot.2to5shot'),
           count: b2_5,
           pct: pct(b2_5)
         }, {
-          label: '6\u201310 shot',
+          label: t('stats.shot.6to10shot'),
           count: b6_10,
           pct: pct(b6_10)
         }, {
-          label: '11+ shot',
+          label: t('stats.shot.11plusShot'),
           count: b11,
           pct: pct(b11)
         }]
@@ -441,7 +463,7 @@ function OverviewTab({
       <Box flexDirection="row" gap={4} marginBottom={1}>
         <Box flexDirection="column" width={28}>
           {favoriteModel && <Text wrap="truncate">
-              Favorite model:{' '}
+              {t('stats.favoriteModel')}{' '}
               <Text color="claude" bold>
                 {renderModelName(favoriteModel[0])}
               </Text>
@@ -449,7 +471,7 @@ function OverviewTab({
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Total tokens:{' '}
+            {t('stats.totalTokens')}{' '}
             <Text color="claude">{formatNumber(totalTokens)}</Text>
           </Text>
         </Box>
@@ -459,13 +481,13 @@ function OverviewTab({
       <Box flexDirection="row" gap={4}>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Sessions:{' '}
+            {t('stats.sessions')}{' '}
             <Text color="claude">{formatNumber(stats.totalSessions)}</Text>
           </Text>
         </Box>
         <Box flexDirection="column" width={28}>
           {stats.longestSession && <Text wrap="truncate">
-              Longest session:{' '}
+              {t('stats.longestSession')}{' '}
               <Text color="claude">
                 {formatDuration(stats.longestSession.duration)}
               </Text>
@@ -477,17 +499,17 @@ function OverviewTab({
       <Box flexDirection="row" gap={4}>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Active days: <Text color="claude">{stats.activeDays}</Text>
+            {t('stats.activeDays')} <Text color="claude">{stats.activeDays}</Text>
             <Text color="subtle">/{rangeDays}</Text>
           </Text>
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Longest streak:{' '}
+            {t('stats.longestStreak')}{' '}
             <Text color="claude" bold>
               {stats.streaks.longestStreak}
             </Text>{' '}
-            {stats.streaks.longestStreak === 1 ? 'day' : 'days'}
+            {stats.streaks.longestStreak === 1 ? t('stats.day') : t('stats.days')}
           </Text>
         </Box>
       </Box>
@@ -496,17 +518,17 @@ function OverviewTab({
       <Box flexDirection="row" gap={4}>
         <Box flexDirection="column" width={28}>
           {stats.peakActivityDay && <Text wrap="truncate">
-              Most active day:{' '}
+              {t('stats.mostActiveDay')}{' '}
               <Text color="claude">{formatPeakDay(stats.peakActivityDay)}</Text>
             </Text>}
         </Box>
         <Box flexDirection="column" width={28}>
           <Text wrap="truncate">
-            Current streak:{' '}
+            {t('stats.currentStreak')}{' '}
             <Text color="claude" bold>
               {allTimeStats.streaks.currentStreak}
             </Text>{' '}
-            {allTimeStats.streaks.currentStreak === 1 ? 'day' : 'days'}
+            {allTimeStats.streaks.currentStreak === 1 ? t('stats.day') : t('stats.days')}
           </Text>
         </Box>
       </Box>
@@ -515,7 +537,7 @@ function OverviewTab({
       {"external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0 && <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
               <Text wrap="truncate">
-                Speculation saved:{' '}
+                {t('stats.speculationSaved')}{' '}
                 <Text color="claude">
                   {formatDuration(stats.totalSpeculationTimeSavedMs)}
                 </Text>
@@ -526,7 +548,7 @@ function OverviewTab({
       {/* Shot stats (ant-only) */}
       {shotStatsData && <>
           <Box marginTop={1}>
-            <Text>Shot distribution</Text>
+            <Text>{t('stats.shotDistribution')}</Text>
           </Box>
           <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
@@ -563,7 +585,7 @@ function OverviewTab({
           <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
               <Text wrap="truncate">
-                Avg/session:{' '}
+                {t('stats.shot.avgPerSession')}{' '}
                 <Text color="claude">{shotStatsData.avgShots}</Text>
               </Text>
             </Box>
@@ -685,16 +707,16 @@ const TIME_COMPARISONS = [{
   name: 'a full night of sleep',
   minutes: 480
 }];
-function generateFunFactoid(stats: ClaudeCodeStats, totalTokens: number): string {
+function generateFunFactoid(stats: ClaudeCodeStats, totalTokens: number, t: (key: string, params?: Record<string, unknown>) => string): string {
   const factoids: string[] = [];
   if (totalTokens > 0) {
     const matchingBooks = BOOK_COMPARISONS.filter(book => totalTokens >= book.tokens);
     for (const book of matchingBooks) {
       const times = totalTokens / book.tokens;
       if (times >= 2) {
-        factoids.push(`You've used ~${Math.floor(times)}x more tokens than ${book.name}`);
+        factoids.push(t('stats.factoid.tokensTimesMore', { times: Math.floor(times), bookName: book.name }));
       } else {
-        factoids.push(`You've used the same number of tokens as ${book.name}`);
+        factoids.push(t('stats.factoid.tokensSameAs', { bookName: book.name }));
       }
     }
   }
@@ -703,7 +725,7 @@ function generateFunFactoid(stats: ClaudeCodeStats, totalTokens: number): string
     for (const comparison of TIME_COMPARISONS) {
       const ratio = sessionMinutes / comparison.minutes;
       if (ratio >= 2) {
-        factoids.push(`Your longest session is ~${Math.floor(ratio)}x longer than ${comparison.name}`);
+        factoids.push(t('stats.factoid.sessionLongerThan', { times: Math.floor(ratio), comparisonName: comparison.name }));
       }
     }
   }
@@ -720,6 +742,7 @@ function ModelsTab(t0) {
     dateRange,
     isLoading
   } = t0;
+  const { t } = useI18n();
   const {
     headerFocused,
     focusHeader
@@ -729,6 +752,14 @@ function ModelsTab(t0) {
     columns: terminalWidth
   } = useTerminalSize();
   const modelEntries = Object.entries(stats.modelUsage).sort(_temp7);
+
+  // Pre-translate strings for cache blocks
+  const i18nNoModelData = t('stats.noModelData');
+  const i18nTokensPerDay = t('stats.tokensPerDay');
+  const i18nScrollHint = t('stats.scrollHint');
+  const i18nFavorite = t('stats.favorite');
+  const i18nTotalTokens = t('stats.totalTokens');
+
   const t1 = !headerFocused;
   let t2;
   if ($[0] !== t1) {
@@ -754,11 +785,12 @@ function ModelsTab(t0) {
   }, t2);
   if (modelEntries.length === 0) {
     let t3;
-    if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <Box><Text color="subtle">No model usage data available</Text></Box>;
-      $[2] = t3;
+    if ($[2] !== i18nNoModelData) {
+      t3 = <Box><Text color="subtle">{i18nNoModelData}</Text></Box>;
+      $[2] = i18nNoModelData;
+      $[3] = t3;
     } else {
-      t3 = $[2];
+      t3 = $[3];
     }
     return t3;
   }
@@ -797,18 +829,19 @@ function ModelsTab(t0) {
     t9 = $[8];
   }
   let t10;
-  if ($[9] !== canScrollDown || $[10] !== canScrollUp || $[11] !== modelEntries || $[12] !== scrollOffset || $[13] !== showScrollHint) {
-    t10 = showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {scrollOffset + 1}-{Math.min(scrollOffset + 4, modelEntries.length)} of{" "}{modelEntries.length} models (↑↓ to scroll)</Text></Box>;
+  if ($[9] !== canScrollDown || $[10] !== canScrollUp || $[11] !== modelEntries || $[12] !== scrollOffset || $[13] !== showScrollHint || $[14] !== i18nScrollHint) {
+    t10 = showScrollHint && <Box marginTop={1}><Text color="subtle">{canScrollUp ? figures.arrowUp : " "}{" "}{canScrollDown ? figures.arrowDown : " "} {i18nScrollHint({ from: scrollOffset + 1, to: Math.min(scrollOffset + 4, modelEntries.length), total: modelEntries.length })}</Text></Box>;
     $[9] = canScrollDown;
     $[10] = canScrollUp;
     $[11] = modelEntries;
     $[12] = scrollOffset;
     $[13] = showScrollHint;
-    $[14] = t10;
+    $[14] = i18nScrollHint;
+    $[15] = t10;
   } else {
-    t10 = $[14];
+    t10 = $[15];
   }
-  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>Tokens per Day</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map(_temp1)}</Box></Box>}{t3}<Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(t4 => {
+  return <Box flexDirection="column" marginTop={1}>{chartOutput && <Box flexDirection="column" marginBottom={1}><Text bold={true}>{i18nTokensPerDay}</Text><Ansi>{chartOutput.chart}</Ansi><Text color="subtle">{chartOutput.xAxisLabels}</Text><Box>{chartOutput.legend.map(_temp1)}</Box></Box>}{t3}<Box flexDirection="row" gap={4}><Box flexDirection="column" width={36}>{leftModels.map(t4 => {
           const [model_0, usage_0] = t4;
           return <ModelEntry key={model_0} model={model_0} usage={usage_0} totalTokens={totalTokens} />;
         })}</Box>{t9}</Box>{t10}</Box>;
@@ -848,6 +881,9 @@ function ModelEntry(t0) {
     usage,
     totalTokens
   } = t0;
+  const { t } = useI18n();
+  const i18nIn = t('stats.in');
+  const i18nOut = t('stats.out');
   const modelTokens = usage.inputTokens + usage.outputTokens;
   const t1 = modelTokens / totalTokens * 100;
   let t2;
@@ -909,13 +945,15 @@ function ModelEntry(t0) {
     t8 = $[14];
   }
   let t9;
-  if ($[15] !== t7 || $[16] !== t8) {
-    t9 = <Text color="subtle">{"  "}In: {t7} · Out:{" "}{t8}</Text>;
+  if ($[15] !== t7 || $[16] !== t8 || $[17] !== i18nIn || $[18] !== i18nOut) {
+    t9 = <Text color="subtle">{"  "}{i18nIn}: {t7} · {i18nOut}:{" "}{t8}</Text>;
     $[15] = t7;
     $[16] = t8;
-    $[17] = t9;
+    $[17] = i18nIn;
+    $[18] = i18nOut;
+    $[19] = t9;
   } else {
-    t9 = $[17];
+    t9 = $[19];
   }
   let t10;
   if ($[18] !== t6 || $[19] !== t9) {
@@ -1056,21 +1094,21 @@ function generateXAxisLabels(data: DailyModelTokens[], _chartWidth: number, yAxi
 }
 
 // Screenshot functionality
-async function handleScreenshot(stats: ClaudeCodeStats, activeTab: 'Overview' | 'Models', setStatus: (status: string | null) => void): Promise<void> {
-  setStatus('copying…');
-  const ansiText = renderStatsToAnsi(stats, activeTab);
+async function handleScreenshot(stats: ClaudeCodeStats, activeTab: 'Overview' | 'Models', setStatus: (status: string | null) => void, t: (key: string, params?: Record<string, unknown>) => string): Promise<void> {
+  setStatus(t('stats.copying'));
+  const ansiText = renderStatsToAnsi(stats, activeTab, t);
   const result = await copyAnsiToClipboard(ansiText);
-  setStatus(result.success ? 'copied!' : 'copy failed');
+  setStatus(result.success ? t('stats.copied') : t('stats.copyFailed'));
 
   // Clear status after 2 seconds
   setTimeout(setStatus, 2000, null);
 }
-function renderStatsToAnsi(stats: ClaudeCodeStats, activeTab: 'Overview' | 'Models'): string {
+function renderStatsToAnsi(stats: ClaudeCodeStats, activeTab: 'Overview' | 'Models', t: (key: string, params?: Record<string, unknown>) => string): string {
   const lines: string[] = [];
   if (activeTab === 'Overview') {
-    lines.push(...renderOverviewToAnsi(stats));
+    lines.push(...renderOverviewToAnsi(stats, t));
   } else {
-    lines.push(...renderModelsToAnsi(stats));
+    lines.push(...renderModelsToAnsi(stats, t));
   }
 
   // Trim trailing empty lines
@@ -1092,7 +1130,7 @@ function renderStatsToAnsi(stats: ClaudeCodeStats, activeTab: 'Overview' | 'Mode
   }
   return lines.join('\n');
 }
-function renderOverviewToAnsi(stats: ClaudeCodeStats): string[] {
+function renderOverviewToAnsi(stats: ClaudeCodeStats, t: (key: string, params?: Record<string, unknown>) => string): string[] {
   const lines: string[] = [];
   const theme = getTheme(resolveThemeSetting(getGlobalConfig().theme));
   const h = (text: string) => applyColor(text, theme.claude as Color);
@@ -1133,26 +1171,26 @@ function renderOverviewToAnsi(stats: ClaudeCodeStats): string[] {
 
   // Row 1: Favorite model | Total tokens
   if (favoriteModel) {
-    lines.push(row('Favorite model', renderModelName(favoriteModel[0]), 'Total tokens', formatNumber(totalTokens)));
+    lines.push(row(t('stats.favoriteModel'), renderModelName(favoriteModel[0]), t('stats.totalTokens'), formatNumber(totalTokens)));
   }
   lines.push('');
 
   // Row 2: Sessions | Longest session
-  lines.push(row('Sessions', formatNumber(stats.totalSessions), 'Longest session', stats.longestSession ? formatDuration(stats.longestSession.duration) : 'N/A'));
+  lines.push(row(t('stats.sessions'), formatNumber(stats.totalSessions), t('stats.longestSession'), stats.longestSession ? formatDuration(stats.longestSession.duration) : 'N/A'));
 
   // Row 3: Current streak | Longest streak
-  const currentStreakVal = `${stats.streaks.currentStreak} ${stats.streaks.currentStreak === 1 ? 'day' : 'days'}`;
-  const longestStreakVal = `${stats.streaks.longestStreak} ${stats.streaks.longestStreak === 1 ? 'day' : 'days'}`;
-  lines.push(row('Current streak', currentStreakVal, 'Longest streak', longestStreakVal));
+  const currentStreakVal = `${stats.streaks.currentStreak} ${stats.streaks.currentStreak === 1 ? t('stats.day') : t('stats.days')}`;
+  const longestStreakVal = `${stats.streaks.longestStreak} ${stats.streaks.longestStreak === 1 ? t('stats.day') : t('stats.days')}`;
+  lines.push(row(t('stats.currentStreak'), currentStreakVal, t('stats.longestStreak'), longestStreakVal));
 
   // Row 4: Active days | Peak hour
   const activeDaysVal = `${stats.activeDays}/${stats.totalDays}`;
   const peakHourVal = stats.peakActivityHour !== null ? `${stats.peakActivityHour}:00-${stats.peakActivityHour + 1}:00` : 'N/A';
-  lines.push(row('Active days', activeDaysVal, 'Peak hour', peakHourVal));
+  lines.push(row(t('stats.activeDays'), activeDaysVal, t('stats.peakHour'), peakHourVal));
 
   // Speculation time saved (ant-only)
   if ("external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0) {
-    const label = 'Speculation saved:'.padEnd(COL1_LABEL_WIDTH);
+    const label = (t('stats.speculationSaved') + ':').padEnd(COL1_LABEL_WIDTH);
     lines.push(label + h(formatDuration(stats.totalSpeculationTimeSavedMs)));
   }
 
@@ -1174,25 +1212,25 @@ function renderOverviewToAnsi(stats: ClaudeCodeStats): string[] {
       const b6_10 = bucket(6, 10);
       const b11 = bucket(11);
       lines.push('');
-      lines.push('Shot distribution');
-      lines.push(row('1-shot', fmtBucket(b1, pct(b1)), '2\u20135 shot', fmtBucket(b2_5, pct(b2_5))));
-      lines.push(row('6\u201310 shot', fmtBucket(b6_10, pct(b6_10)), '11+ shot', fmtBucket(b11, pct(b11))));
-      lines.push(`${'Avg/session:'.padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`);
+      lines.push(t('stats.shotDistribution'));
+      lines.push(row(t('stats.shot.1shot'), fmtBucket(b1, pct(b1)), t('stats.shot.2to5shot'), fmtBucket(b2_5, pct(b2_5))));
+      lines.push(row(t('stats.shot.6to10shot'), fmtBucket(b6_10, pct(b6_10)), t('stats.shot.11plusShot'), fmtBucket(b11, pct(b11))));
+      lines.push(`${(t('stats.shot.avgPerSession') + ':').padEnd(COL1_LABEL_WIDTH)}${h(avgShots)}`);
     }
   }
   lines.push('');
 
   // Fun factoid
-  const factoid = generateFunFactoid(stats, totalTokens);
+  const factoid = generateFunFactoid(stats, totalTokens, t);
   lines.push(h(factoid));
-  lines.push(chalk.gray(`Stats from the last ${stats.totalDays} days`));
+  lines.push(chalk.gray(t('stats.statsFromLastDays', { days: stats.totalDays })));
   return lines;
 }
-function renderModelsToAnsi(stats: ClaudeCodeStats): string[] {
+function renderModelsToAnsi(stats: ClaudeCodeStats, t: (key: string, params?: Record<string, unknown>) => string): string[] {
   const lines: string[] = [];
   const modelEntries = Object.entries(stats.modelUsage).sort(([, a], [, b]) => b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens));
   if (modelEntries.length === 0) {
-    lines.push(chalk.gray('No model usage data available'));
+    lines.push(chalk.gray(t('stats.noModelData')));
     return lines;
   }
   const favoriteModel = modelEntries[0];
@@ -1202,7 +1240,7 @@ function renderModelsToAnsi(stats: ClaudeCodeStats): string[] {
   const chartOutput = generateTokenChart(stats.dailyModelTokens, modelEntries.map(([model]) => model), 80 // Fixed width for screenshot
   );
   if (chartOutput) {
-    lines.push(chalk.bold('Tokens per Day'));
+    lines.push(chalk.bold(t('stats.tokensPerDay')));
     lines.push(chartOutput.chart);
     lines.push(chalk.gray(chartOutput.xAxisLabels));
     // Legend - use pre-colored bullets from chart output
@@ -1212,7 +1250,7 @@ function renderModelsToAnsi(stats: ClaudeCodeStats): string[] {
   }
 
   // Summary
-  lines.push(`${figures.star} Favorite: ${chalk.magenta.bold(renderModelName(favoriteModel?.[0] || ''))} · ${figures.circle} Total: ${chalk.magenta(formatNumber(totalTokens))} tokens`);
+  lines.push(`${figures.star} ${t('stats.favorite')}: ${chalk.magenta.bold(renderModelName(favoriteModel?.[0] || ''))} · ${figures.circle} ${t('stats.totalTokens')}: ${chalk.magenta(formatNumber(totalTokens))} ${t('stats.tokens')}`);
   lines.push('');
 
   // Model breakdown - only show top 3 for screenshot
@@ -1221,7 +1259,7 @@ function renderModelsToAnsi(stats: ClaudeCodeStats): string[] {
     const modelTokens = usage.inputTokens + usage.outputTokens;
     const percentage = (modelTokens / totalTokens * 100).toFixed(1);
     lines.push(`${figures.bullet} ${chalk.bold(renderModelName(model))} ${chalk.gray(`(${percentage}%)`)}`);
-    lines.push(chalk.dim(`  In: ${formatNumber(usage.inputTokens)} · Out: ${formatNumber(usage.outputTokens)}`));
+    lines.push(chalk.dim(`  ${t('stats.in')}: ${formatNumber(usage.inputTokens)} · ${t('stats.out')}: ${formatNumber(usage.outputTokens)}`));
   }
   return lines;
 }

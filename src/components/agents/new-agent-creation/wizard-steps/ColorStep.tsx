@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { Box } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import type { AgentColorName } from '../../../../tools/AgentTool/agentColorManager.js';
@@ -18,6 +19,9 @@ export function ColorStep() {
     updateWizardData,
     wizardData
   } = useWizard();
+  const { t } = useI18n();
+  const _subtitle = t('agent.wizard.color.subtitle');
+  const _fallbackName = t('agent.wizard.color.fallbackName');
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t0 = {
@@ -69,10 +73,10 @@ export function ColorStep() {
   } else {
     t2 = $[10];
   }
-  const t3 = wizardData.agentType || "agent";
+  const t3 = wizardData.agentType || _fallbackName;
   let t4;
   if ($[11] !== handleConfirm || $[12] !== t3) {
-    t4 = <WizardDialogLayout subtitle="Choose background color" footerText={t2}><Box><ColorPicker agentName={t3} currentColor="automatic" onConfirm={handleConfirm} /></Box></WizardDialogLayout>;
+    t4 = <WizardDialogLayout subtitle={_subtitle} footerText={t2}><Box><ColorPicker agentName={t3} currentColor="automatic" onConfirm={handleConfirm} /></Box></WizardDialogLayout>;
     $[11] = handleConfirm;
     $[12] = t3;
     $[13] = t4;

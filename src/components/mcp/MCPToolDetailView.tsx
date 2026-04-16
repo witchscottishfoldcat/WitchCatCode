@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, Text } from '../../ink.js';
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js';
 import type { Tool } from '../../Tool.js';
@@ -12,12 +13,13 @@ type Props = {
   onBack: () => void;
 };
 export function MCPToolDetailView(t0) {
-  const $ = _c(44);
+  const $ = _c(50);
   const {
     tool,
     server,
     onBack
   } = t0;
+  const { t } = useI18n();
   const [toolDescription, setToolDescription] = React.useState("");
   let t1;
   let toolName;
@@ -81,7 +83,7 @@ export function MCPToolDetailView(t0) {
           });
           setToolDescription(desc);
         } catch {
-          setToolDescription("Failed to load description");
+          setToolDescription(t('mcp.toolDetail.loadDescriptionFailed'));
         }
       };
       loadDescription();
@@ -97,7 +99,7 @@ export function MCPToolDetailView(t0) {
   React.useEffect(t5, t6);
   let t7;
   if ($[13] !== isReadOnly) {
-    t7 = isReadOnly && <Text color="success"> [read-only]</Text>;
+    t7 = isReadOnly && <Text color="success"> [{t('mcp.toolDetail.readOnly')}]</Text>;
     $[13] = isReadOnly;
     $[14] = t7;
   } else {
@@ -105,7 +107,7 @@ export function MCPToolDetailView(t0) {
   }
   let t8;
   if ($[15] !== isDestructive) {
-    t8 = isDestructive && <Text color="error"> [destructive]</Text>;
+    t8 = isDestructive && <Text color="error"> [{t('mcp.toolDetail.destructive')}]</Text>;
     $[15] = isDestructive;
     $[16] = t8;
   } else {
@@ -113,7 +115,7 @@ export function MCPToolDetailView(t0) {
   }
   let t9;
   if ($[17] !== isOpenWorld) {
-    t9 = isOpenWorld && <Text dimColor={true}> [open-world]</Text>;
+    t9 = isOpenWorld && <Text dimColor={true}> [{t('mcp.toolDetail.openWorld')}]</Text>;
     $[17] = isOpenWorld;
     $[18] = t9;
   } else {
@@ -131,81 +133,90 @@ export function MCPToolDetailView(t0) {
     t10 = $[23];
   }
   const titleContent = t10;
+  const toolNameLabel = t('mcp.toolDetail.toolName');
   let t11;
-  if ($[24] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = <Text bold={true}>Tool name: </Text>;
-    $[24] = t11;
+  if ($[24] !== toolNameLabel) {
+    t11 = <Text bold={true}>{toolNameLabel}: </Text>;
+    $[24] = toolNameLabel;
+    $[25] = t11;
   } else {
-    t11 = $[24];
+    t11 = $[25];
   }
   let t12;
-  if ($[25] !== toolName) {
+  if ($[26] !== toolName) {
     t12 = <Box>{t11}<Text dimColor={true}>{toolName}</Text></Box>;
-    $[25] = toolName;
-    $[26] = t12;
+    $[26] = toolName;
+    $[27] = t12;
   } else {
-    t12 = $[26];
+    t12 = $[27];
   }
+  const fullNameLabel = t('mcp.toolDetail.fullName');
   let t13;
-  if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = <Text bold={true}>Full name: </Text>;
-    $[27] = t13;
+  if ($[28] !== fullNameLabel) {
+    t13 = <Text bold={true}>{fullNameLabel}: </Text>;
+    $[28] = fullNameLabel;
+    $[29] = t13;
   } else {
-    t13 = $[27];
+    t13 = $[29];
   }
   let t14;
-  if ($[28] !== tool.name) {
+  if ($[30] !== tool.name) {
     t14 = <Box>{t13}<Text dimColor={true}>{tool.name}</Text></Box>;
-    $[28] = tool.name;
-    $[29] = t14;
+    $[30] = tool.name;
+    $[31] = t14;
   } else {
-    t14 = $[29];
+    t14 = $[31];
   }
+  const descriptionLabel = t('mcp.toolDetail.description');
   let t15;
-  if ($[30] !== toolDescription) {
-    t15 = toolDescription && <Box flexDirection="column" marginTop={1}><Text bold={true}>Description:</Text><Text wrap="wrap">{toolDescription}</Text></Box>;
-    $[30] = toolDescription;
-    $[31] = t15;
+  if ($[32] !== descriptionLabel || $[33] !== toolDescription) {
+    t15 = toolDescription && <Box flexDirection="column" marginTop={1}><Text bold={true}>{descriptionLabel}:</Text><Text wrap="wrap">{toolDescription}</Text></Box>;
+    $[32] = descriptionLabel;
+    $[33] = toolDescription;
+    $[34] = t15;
   } else {
-    t15 = $[31];
+    t15 = $[34];
   }
+  const parametersLabel = t('mcp.toolDetail.parameters');
+  const requiredLabel = t('mcp.toolDetail.required');
   let t16;
-  if ($[32] !== tool.inputJSONSchema) {
-    t16 = tool.inputJSONSchema && tool.inputJSONSchema.properties && Object.keys(tool.inputJSONSchema.properties).length > 0 && <Box flexDirection="column" marginTop={1}><Text bold={true}>Parameters:</Text><Box marginLeft={2} flexDirection="column">{Object.entries(tool.inputJSONSchema.properties).map(t17 => {
+  if ($[35] !== parametersLabel || $[36] !== requiredLabel || $[37] !== tool.inputJSONSchema) {
+    t16 = tool.inputJSONSchema && tool.inputJSONSchema.properties && Object.keys(tool.inputJSONSchema.properties).length > 0 && <Box flexDirection="column" marginTop={1}><Text bold={true}>{parametersLabel}:</Text><Box marginLeft={2} flexDirection="column">{Object.entries(tool.inputJSONSchema.properties).map(t17 => {
           const [key, value] = t17;
           const required = tool.inputJSONSchema?.required as string[] | undefined;
           const isRequired = required?.includes(key);
-          return <Text key={key}>• {key}{isRequired && <Text dimColor={true}> (required)</Text>}:{" "}<Text dimColor={true}>{typeof value === "object" && value && "type" in value ? String(value.type) : "unknown"}</Text>{typeof value === "object" && value && "description" in value && <Text dimColor={true}> - {String(value.description)}</Text>}</Text>;
+          return <Text key={key}>• {key}{isRequired && <Text dimColor={true}> ({requiredLabel})</Text>}:{" "}<Text dimColor={true}>{typeof value === "object" && value && "type" in value ? String(value.type) : "unknown"}</Text>{typeof value === "object" && value && "description" in value && <Text dimColor={true}> - {String(value.description)}</Text>}</Text>;
         })}</Box></Box>;
-    $[32] = tool.inputJSONSchema;
-    $[33] = t16;
+    $[35] = parametersLabel;
+    $[36] = requiredLabel;
+    $[37] = tool.inputJSONSchema;
+    $[38] = t16;
   } else {
-    t16 = $[33];
+    t16 = $[38];
   }
   let t17;
-  if ($[34] !== t12 || $[35] !== t14 || $[36] !== t15 || $[37] !== t16) {
+  if ($[39] !== t12 || $[40] !== t14 || $[41] !== t15 || $[42] !== t16) {
     t17 = <Box flexDirection="column">{t12}{t14}{t15}{t16}</Box>;
-    $[34] = t12;
-    $[35] = t14;
-    $[36] = t15;
-    $[37] = t16;
-    $[38] = t17;
+    $[39] = t12;
+    $[40] = t14;
+    $[41] = t15;
+    $[42] = t16;
+    $[43] = t17;
   } else {
-    t17 = $[38];
+    t17 = $[43];
   }
+  const pressAgainText = t('mcp.remote.pressAgainToExit');
   let t18;
-  if ($[39] !== onBack || $[40] !== server.name || $[41] !== t17 || $[42] !== titleContent) {
-    t18 = <Dialog title={titleContent} subtitle={server.name} onCancel={onBack} inputGuide={_temp}>{t17}</Dialog>;
-    $[39] = onBack;
-    $[40] = server.name;
-    $[41] = t17;
-    $[42] = titleContent;
-    $[43] = t18;
+  if ($[44] !== onBack || $[45] !== pressAgainText || $[46] !== server.name || $[47] !== t17 || $[48] !== titleContent) {
+    t18 = <Dialog title={titleContent} subtitle={server.name} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>{pressAgainText}</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />}>{t17}</Dialog>;
+    $[44] = onBack;
+    $[45] = pressAgainText;
+    $[46] = server.name;
+    $[47] = t17;
+    $[48] = titleContent;
+    $[49] = t18;
   } else {
-    t18 = $[43];
+    t18 = $[49];
   }
   return t18;
-}
-function _temp(exitState) {
-  return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />;
 }

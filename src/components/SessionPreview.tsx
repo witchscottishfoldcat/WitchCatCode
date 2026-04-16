@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import type { UUID } from 'crypto';
 import React, { useCallback } from 'react';
 import { Box, Text } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { getAllBaseTools } from '../tools.js';
 import type { LogOption } from '../types/logs.js';
@@ -18,12 +19,13 @@ type Props = {
   onSelect: (log: LogOption) => void;
 };
 export function SessionPreview(t0) {
-  const $ = _c(33);
+  const $ = _c(35);
   const {
     log,
     onExit,
     onSelect
   } = t0;
+  const { t } = useI18n();
   const [fullLog, setFullLog] = React.useState(null);
   let t1;
   let t2;
@@ -98,7 +100,7 @@ export function SessionPreview(t0) {
   if (isLoading) {
     let t8;
     if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = <LoadingState message={"Loading session\u2026"} />;
+      t8 = <LoadingState message={t('sessionPreview.loading')} />;
       $[12] = t8;
     } else {
       t8 = $[12];
@@ -157,7 +159,7 @@ export function SessionPreview(t0) {
   const t14 = displayLog.gitBranch ? ` · ${displayLog.gitBranch}` : "";
   let t15;
   if ($[23] !== displayLog.messageCount || $[24] !== t13 || $[25] !== t14) {
-    t15 = <Text>{t13} ·{" "}{displayLog.messageCount} messages{t14}</Text>;
+    t15 = <Text>{t13} ·{" "}{displayLog.messageCount} {t('sessionPreview.messages')}{t14}</Text>;
     $[23] = displayLog.messageCount;
     $[24] = t13;
     $[25] = t14;

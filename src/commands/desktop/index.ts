@@ -1,4 +1,5 @@
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 function isSupportedPlatform(): boolean {
   if (process.platform === 'darwin') {
@@ -14,7 +15,7 @@ const desktop = {
   type: 'local-jsx',
   name: 'desktop',
   aliases: ['app'],
-  description: 'Continue the current session in Claude Desktop',
+  description: t('command.desktop.description'),
   availability: ['claude-ai'],
   isEnabled: isSupportedPlatform,
   get isHidden() {

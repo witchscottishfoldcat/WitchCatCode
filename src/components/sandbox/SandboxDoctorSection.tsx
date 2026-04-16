@@ -1,15 +1,22 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js';
 export function SandboxDoctorSection() {
   const $ = _c(2);
+  const { t } = useI18n();
   if (!SandboxManager.isSupportedPlatform()) {
     return null;
   }
   if (!SandboxManager.isSandboxEnabledInSettings()) {
     return null;
   }
+  const sandboxTitle = t('sandbox.title');
+  const statusLabel = t('sandbox.status');
+  const missingDeps = t('sandbox.missingDeps');
+  const availableWarnings = t('sandbox.availableWithWarnings');
+  const installInstructions = t('sandbox.installInstructions');
   let t0;
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -23,8 +30,8 @@ export function SandboxDoctorSection() {
         break bb0;
       }
       const statusColor = hasErrors ? "error" as const : "warning" as const;
-      const statusText = hasErrors ? "Missing dependencies" : "Available (with warnings)";
-      t0 = <Box flexDirection="column"><Text bold={true}>Sandbox</Text><Text>└ Status: <Text color={statusColor}>{statusText}</Text></Text>{depCheck.errors.map(_temp)}{depCheck.warnings.map(_temp2)}{hasErrors && <Text dimColor={true}>└ Run /sandbox for install instructions</Text>}</Box>;
+      const statusText = hasErrors ? missingDeps : availableWarnings;
+      t0 = <Box flexDirection="column"><Text bold={true}>{sandboxTitle}</Text><Text>└ {statusLabel} <Text color={statusColor}>{statusText}</Text></Text>{depCheck.errors.map(_temp)}{depCheck.warnings.map(_temp2)}{hasErrors && <Text dimColor={true}>└ {installInstructions}</Text>}</Box>;
     }
     $[0] = t0;
     $[1] = t1;

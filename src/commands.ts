@@ -1,4 +1,4 @@
-﻿// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import addDir from './commands/add-dir/index.js'
 import addModel from './commands/add-model/index.js'
 import importCodex from './commands/import-codex/index.js'
@@ -59,6 +59,7 @@ import bughunter from './commands/bughunter/index.js'
 import terminalSetup from './commands/terminalSetup/index.js'
 import usage from './commands/usage/index.js'
 import theme from './commands/theme/index.js'
+import i18nCmd from './commands/i18n/index.js'
 import vim from './commands/vim/index.js'
 import { feature } from 'bun:bundle'
 // Dead code elimination: conditional imports
@@ -329,6 +330,8 @@ const COMMANDS = memoize((): Command[] => [
   usage,
   usageReport,
   vim,
+  theme,
+  i18nCmd,
   ...(webCmd ? [webCmd] : []),
   ...(forkCmd ? [forkCmd] : []),
   ...(buddy ? [buddy] : []),

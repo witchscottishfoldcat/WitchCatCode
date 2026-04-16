@@ -3,6 +3,7 @@ import { useTerminalSize } from 'src/hooks/useTerminalSize.js';
 import { type CodeSession, fetchCodeSessionsFromSessionsAPI } from 'src/utils/teleport/api.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow list navigation
 import { Box, Text, useInput } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { useShortcutDisplay } from '../keybindings/useShortcutDisplay.js';
 import { logForDebugging } from '../utils/debug.js';
@@ -27,6 +28,7 @@ export function ResumeTask({
   onCancel,
   isEmbedded = false
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const {
     rows
   } = useTerminalSize();
@@ -119,36 +121,35 @@ export function ResumeTask({
     return <Box flexDirection="column" padding={1}>
         <Box flexDirection="row">
           <Spinner />
-          <Text bold>Loading Claude Code sessions…</Text>
+          <Text bold>{t('resumeTask.loadingSessions')}</Text>
         </Box>
         <Text dimColor>
-          {retrying ? 'Retrying…' : 'Fetching your Claude Code sessions…'}
+          {retrying ? t('resumeTask.retrying') : t('resumeTask.fetchingSessions')}
         </Text>
       </Box>;
   }
   if (loadErrorType) {
     return <Box flexDirection="column" padding={1}>
         <Text bold color="error">
-          Error loading Claude Code sessions
+          {t('resumeTask.errorLoading')}
         </Text>
 
-        {renderErrorSpecificGuidance(loadErrorType)}
+        {renderErrorSpecificGuidance(loadErrorType, t)}
 
         <Text dimColor>
-          Press <Text bold>Ctrl+R</Text> to retry · Press{' '}
-          <Text bold>{escKey}</Text> to cancel
+          {t('resumeTask.pressRetryCancel', { escKey })}
         </Text>
       </Box>;
   }
   if (sessions.length === 0) {
     return <Box flexDirection="column" padding={1}>
         <Text bold>
-          No Claude Code sessions found
-          {currentRepo && <Text> for {currentRepo}</Text>}
+          {t('resumeTask.noSessions')}
+          {currentRepo && <Text> {t('resumeTask.forRepo', { repo: currentRepo })}</Text>}
         </Text>
         <Box marginTop={1}>
           <Text dimColor>
-            Press <Text bold>{escKey}</Text> to cancel
+            {t('resumeTask.pressToCancel', { escKey })}
           </Text>
         </Box>
       </Box>;
@@ -182,10 +183,10 @@ export function ResumeTask({
   const showScrollPosition = sessions.length > maxVisibleOptions;
   return <Box flexDirection="column" padding={1} height={maxHeight}>
       <Text bold>
-        Select a session to resume
+        {t('resumeTask.selectSession')}
         {showScrollPosition && <Text dimColor>
             {' '}
-            ({focusedIndex} of {sessions.length})
+            {t('resumeTask.scrollPosition', { current: focusedIndex, total: sessions.length })}
           </Text>}
         {currentRepo && <Text dimColor> ({currentRepo})</Text>}:
       </Text>
@@ -194,7 +195,7 @@ export function ResumeTask({
           <Text bold>
             {UPDATED_STRING.padEnd(maxTimeStringLength, ' ')}
             {SPACE_BETWEEN_TABLE_COLUMNS}
-            {'Session Title'}
+            {t('resumeTask.sessionTitle')}
           </Text>
         </Box>
         <Select visibleOptionCount={maxVisibleOptions} options={options} onChange={value => {
@@ -241,27 +242,26 @@ function determineErrorType(errorMessage: string): LoadErrorType {
 /**
  * Renders error-specific troubleshooting guidance
  */
-function renderErrorSpecificGuidance(errorType: LoadErrorType): React.ReactNode {
+function renderErrorSpecificGuidance(errorType: LoadErrorType, t: (key: string, params?: Record<string, unknown>) => string): React.ReactNode {
   switch (errorType) {
     case 'network':
       return <Box marginY={1} flexDirection="column">
-          <Text dimColor>Check your internet connection</Text>
+          <Text dimColor>{t('resumeTask.errorNetwork')}</Text>
         </Box>;
     case 'auth':
       return <Box marginY={1} flexDirection="column">
-          <Text dimColor>Teleport requires a Claude account</Text>
+          <Text dimColor>{t('resumeTask.errorAuth')}</Text>
           <Text dimColor>
-            Run <Text bold>/login</Text> and select &quot;Claude account with
-            subscription&quot;
+            {t('resumeTask.errorAuthHint')}
           </Text>
         </Box>;
     case 'api':
       return <Box marginY={1} flexDirection="column">
-          <Text dimColor>Sorry, Claude encountered an error</Text>
+          <Text dimColor>{t('resumeTask.errorApi')}</Text>
         </Box>;
     case 'other':
       return <Box marginY={1} flexDirection="row">
-          <Text dimColor>Sorry, Claude Code encountered an error</Text>
+          <Text dimColor>{t('resumeTask.errorOther')}</Text>
         </Box>;
   }
 }

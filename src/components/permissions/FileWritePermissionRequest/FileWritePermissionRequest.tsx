@@ -10,6 +10,7 @@ import { readFileSync } from '../../../utils/fileRead.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
 import { createSingleEditDiffConfig, type FileEdit, type IDEDiffSupport } from '../FilePermissionDialog/ideDiffConfig.js';
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { FileWriteToolDiff } from './FileWriteToolDiff.js';
 type FileWriteToolInput = z.infer<typeof FileWriteTool.inputSchema>;
 const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
@@ -37,6 +38,7 @@ const ideDiffSupport: IDEDiffSupport<FileWriteToolInput> = {
 };
 export function FileWritePermissionRequest(props) {
   const $ = _c(30);
+  const { t } = useI18n();
   const parseInput = _temp;
   let t0;
   if ($[0] !== props.toolUseConfirm.input) {
@@ -85,13 +87,13 @@ export function FileWritePermissionRequest(props) {
     fileExists,
     oldContent
   } = t1;
-  const actionText = fileExists ? "overwrite" : "create";
+  const actionText = fileExists ? t('permission.fileWrite.overwrite') : t('permission.fileWrite.create');
   const t2 = props.toolUseConfirm;
   const t3 = props.toolUseContext;
   const t4 = props.onDone;
   const t5 = props.onReject;
   const t6 = props.workerBadge;
-  const t7 = fileExists ? "Overwrite file" : "Create file";
+  const t7 = fileExists ? t('permission.fileWrite.overwriteTitle') : t('permission.fileWrite.createTitle');
   let t8;
   if ($[5] !== file_path) {
     t8 = relative(getCwd(), file_path);
@@ -118,7 +120,7 @@ export function FileWritePermissionRequest(props) {
   }
   let t11;
   if ($[11] !== actionText || $[12] !== t10) {
-    t11 = <Text>Do you want to {actionText} {t10}?</Text>;
+    t11 = <Text>{t('permission.fileWrite.confirm', { action: actionText })} {t10}?</Text>;
     $[11] = actionText;
     $[12] = t10;
     $[13] = t11;

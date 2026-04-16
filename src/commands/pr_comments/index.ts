@@ -1,8 +1,9 @@
 import { createMovedToPluginCommand } from '../createMovedToPluginCommand.js'
+import { t } from '../../i18n/core.js'
 
 export default createMovedToPluginCommand({
   name: 'pr-comments',
-  description: 'Get comments from a GitHub pull request',
+  description: t('command.pr_comments.description'),
   progressMessage: 'fetching PR comments',
   pluginName: 'pr-comments',
   pluginCommand: 'pr-comments',

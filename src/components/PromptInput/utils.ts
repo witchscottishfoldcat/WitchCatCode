@@ -3,6 +3,7 @@ import {
   isShiftEnterKeyBindingInstalled,
 } from '../../commands/terminalSetup/terminalSetup.js'
 import type { Key } from '../../ink.js'
+import { t } from '../../i18n/core.js'
 import { getGlobalConfig } from '../../utils/config.js'
 import { env } from '../../utils/env.js'
 /**
@@ -17,18 +18,18 @@ export function isVimModeEnabled(): boolean {
 export function getNewlineInstructions(): string {
   // Apple Terminal on macOS uses native modifier key detection for Shift+Enter
   if (env.terminal === 'Apple_Terminal' && process.platform === 'darwin') {
-    return 'shift + ⏎ for newline'
+    return t('promptInput.utils.shiftEnterNewline')
   }
 
   // For iTerm2 and VSCode, show Shift+Enter instructions if installed
   if (isShiftEnterKeyBindingInstalled()) {
-    return 'shift + ⏎ for newline'
+    return t('promptInput.utils.shiftEnterNewline')
   }
 
   // Otherwise show backslash+return instructions
   return hasUsedBackslashReturn()
-    ? '\\⏎ for newline'
-    : 'backslash (\\) + return (⏎) for newline'
+    ? t('promptInput.utils.backslashEnterNewline')
+    : t('promptInput.utils.backslashReturnNewline')
 }
 
 /**

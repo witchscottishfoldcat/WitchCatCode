@@ -3,6 +3,7 @@ import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { Suspense, useState } from 'react';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { useIsInsideModal, useModalOrTerminalSize } from '../../context/modalContext.js';
@@ -37,6 +38,7 @@ export function Settings(t0) {
   const contentHeight = insideModal ? rows + 1 : Math.max(15, Math.min(Math.floor(rows * 0.8), 30));
   const [diagnosticsPromise] = useState(_temp2);
   useExitOnCtrlCDWithKeybindings();
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onClose || $[1] !== tabsHidden) {
     t1 = () => {
@@ -69,7 +71,7 @@ export function Settings(t0) {
   useKeybinding("confirm:no", handleEscape, t3);
   let t4;
   if ($[5] !== context || $[6] !== diagnosticsPromise) {
-    t4 = <Tab key="status" title="Status"><Status context={context} diagnosticsPromise={diagnosticsPromise} /></Tab>;
+    t4 = <Tab key="status" title={t('settings.tabs.status')}><Status context={context} diagnosticsPromise={diagnosticsPromise} /></Tab>;
     $[5] = context;
     $[6] = diagnosticsPromise;
     $[7] = t4;
@@ -78,7 +80,7 @@ export function Settings(t0) {
   }
   let t5;
   if ($[8] !== contentHeight || $[9] !== context || $[10] !== onClose) {
-    t5 = <Tab key="config" title="Config"><Suspense fallback={null}><Config context={context} onClose={onClose} setTabsHidden={setTabsHidden} onIsSearchModeChange={setConfigOwnsEsc} contentHeight={contentHeight} /></Suspense></Tab>;
+    t5 = <Tab key="config" title={t('settings.tabs.config')}><Suspense fallback={null}><Config context={context} onClose={onClose} setTabsHidden={setTabsHidden} onIsSearchModeChange={setConfigOwnsEsc} contentHeight={contentHeight} /></Suspense></Tab>;
     $[8] = contentHeight;
     $[9] = context;
     $[10] = onClose;
@@ -95,7 +97,7 @@ export function Settings(t0) {
   }
   let t7;
   if ($[13] !== contentHeight) {
-    t7 = false ? [<Tab key="gates" title="Gates"><Gates onOwnsEscChange={setGatesOwnsEsc} contentHeight={contentHeight} /></Tab>] : [];
+    t7 = false ? [<Tab key="gates" title={t('settings.tabs.gates')}><Gates onOwnsEscChange={setGatesOwnsEsc} contentHeight={contentHeight} /></Tab>] : [];
     $[13] = contentHeight;
     $[14] = t7;
   } else {

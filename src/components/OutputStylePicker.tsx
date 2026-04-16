@@ -8,15 +8,14 @@ import { getCwd } from '../utils/cwd.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
 import { Select } from './CustomSelect/select.js';
 import { Dialog } from './design-system/Dialog.js';
-const DEFAULT_OUTPUT_STYLE_LABEL = 'Default';
-const DEFAULT_OUTPUT_STYLE_DESCRIPTION = 'Claude completes coding tasks efficiently and provides concise responses';
+import { useI18n } from '../hooks/useI18n.js';
 function mapConfigsToOptions(styles: {
   [styleName: string]: OutputStyleConfig | null;
-}): OptionWithDescription[] {
+}, t: (key: string, params?: Record<string, string>) => string): OptionWithDescription[] {
   return Object.entries(styles).map(([style, config]) => ({
-    label: config?.name ?? DEFAULT_OUTPUT_STYLE_LABEL,
+    label: config?.name ?? t('outputStyle.defaultLabel'),
     value: style,
-    description: config?.description ?? DEFAULT_OUTPUT_STYLE_DESCRIPTION
+    description: config?.description ?? t('outputStyle.defaultDescription')
   }));
 }
 export type OutputStylePickerProps = {
@@ -33,6 +32,7 @@ export function OutputStylePicker(t0) {
     onCancel,
     isStandaloneCommand
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = [];
@@ -47,11 +47,11 @@ export function OutputStylePicker(t0) {
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
     t2 = () => {
       getAllOutputStyles(getCwd()).then(allStyles => {
-        const options = mapConfigsToOptions(allStyles);
+        const options = mapConfigsToOptions(allStyles, t);
         setStyleOptions(options);
         setIsLoading(false);
       }).catch(() => {
-        const builtInOptions = mapConfigsToOptions(OUTPUT_STYLE_CONFIG);
+        const builtInOptions = mapConfigsToOptions(OUTPUT_STYLE_CONFIG, t);
         setStyleOptions(builtInOptions);
         setIsLoading(false);
       });
@@ -76,18 +76,12 @@ export function OutputStylePicker(t0) {
     t4 = $[4];
   }
   const handleStyleSelect = t4;
-  const t5 = !isStandaloneCommand;
-  const t6 = !isStandaloneCommand;
-  let t7;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = <Box marginTop={1}><Text dimColor={true}>This changes how Claude Code communicates with you</Text></Box>;
-    $[5] = t7;
-  } else {
-    t7 = $[5];
-  }
+  const hideInputGuide = !isStandaloneCommand;
+  const hideBorder = !isStandaloneCommand;
+  const hintElement = <Box marginTop={1}><Text dimColor={true}>{t('outputStyle.hint')}</Text></Box>;
   let t8;
   if ($[6] !== handleStyleSelect || $[7] !== initialStyle || $[8] !== isLoading || $[9] !== styleOptions) {
-    t8 = <Box flexDirection="column" gap={1}>{t7}{isLoading ? <Text dimColor={true}>Loading output styles…</Text> : <Select options={styleOptions} onChange={handleStyleSelect} visibleOptionCount={10} defaultValue={initialStyle} />}</Box>;
+    t8 = <Box flexDirection="column" gap={1}>{hintElement}{isLoading ? <Text dimColor={true}>{t('outputStyle.loading')}</Text> : <Select options={styleOptions} onChange={handleStyleSelect} visibleOptionCount={10} defaultValue={initialStyle} />}</Box>;
     $[6] = handleStyleSelect;
     $[7] = initialStyle;
     $[8] = isLoading;
@@ -97,11 +91,11 @@ export function OutputStylePicker(t0) {
     t8 = $[10];
   }
   let t9;
-  if ($[11] !== onCancel || $[12] !== t5 || $[13] !== t6 || $[14] !== t8) {
-    t9 = <Dialog title="Preferred output style" onCancel={onCancel} hideInputGuide={t5} hideBorder={t6}>{t8}</Dialog>;
+  if ($[11] !== onCancel || $[12] !== hideInputGuide || $[13] !== hideBorder || $[14] !== t8) {
+    t9 = <Dialog title={t('outputStyle.title')} onCancel={onCancel} hideInputGuide={hideInputGuide} hideBorder={hideBorder}>{t8}</Dialog>;
     $[11] = onCancel;
-    $[12] = t5;
-    $[13] = t6;
+    $[12] = hideInputGuide;
+    $[13] = hideBorder;
     $[14] = t8;
     $[15] = t9;
   } else {

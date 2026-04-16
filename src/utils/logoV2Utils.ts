@@ -1,4 +1,5 @@
 import { getDirectConnectServerUrl, getSessionId } from '../bootstrap/state.js'
+import { t } from '../i18n/core.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import type { LogOption } from '../types/logs.js'
 import { getSubscriptionName, isClaudeAISubscriber } from './auth.js'
@@ -96,9 +97,9 @@ export function calculateOptimalLeftWidth(
  */
 export function formatWelcomeMessage(username: string | null): string {
   if (!username || username.length > MAX_USERNAME_LENGTH) {
-    return 'Welcome back!'
+    return t('logo.welcomeBack')
   }
-  return `Welcome back ${username}!`
+  return t('logo.welcomeBackUser', { username })
 }
 
 /**
@@ -255,7 +256,7 @@ export function getLogoDisplayData(): {
     : displayPath
   const billingType = isClaudeAISubscriber()
     ? getSubscriptionName()
-    : 'API Usage FREE!'
+    : t('logo.apiUsageFree')
   const agentName = getInitialSettings().agent
 
   return {

@@ -9,6 +9,7 @@ import { FileEditTool } from '../../../tools/FileEditTool/FileEditTool.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
 import { createSingleEditDiffConfig, type FileEdit, type IDEDiffSupport } from '../FilePermissionDialog/ideDiffConfig.js';
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 type FileEditInput = z.infer<typeof FileEditTool.inputSchema>;
 const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
   getConfig: (input: FileEditInput) => createSingleEditDiffConfig(input.file_path, input.old_string, input.new_string, input.replace_all),
@@ -27,6 +28,7 @@ const ideDiffSupport: IDEDiffSupport<FileEditInput> = {
 };
 export function FileEditPermissionRequest(props) {
   const $ = _c(51);
+  const { t } = useI18n();
   const parseInput = _temp;
   let T0;
   let T1;
@@ -60,10 +62,10 @@ export function FileEditPermissionRequest(props) {
     t6 = props.onDone;
     t7 = props.onReject;
     t8 = props.workerBadge;
-    t9 = "Edit file";
+    t9 = t('permission.fileEdit.title');
     t10 = relative(getCwd(), file_path);
     T1 = Text;
-    t2 = "Do you want to make this edit to";
+    t2 = t('permission.fileEdit.doYouWantToMakeEdit');
     t3 = " ";
     T0 = Text;
     t0 = true;

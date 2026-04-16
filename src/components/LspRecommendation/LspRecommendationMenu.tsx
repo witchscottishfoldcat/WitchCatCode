@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Select } from '../CustomSelect/select.js';
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
 type Props = {
@@ -15,6 +16,7 @@ export function LspRecommendationMenu({
   fileExtension,
   onResponse
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   // Use ref to avoid timer reset when onResponse changes
   const onResponseRef = React.useRef(onResponse);
   onResponseRef.current = onResponse;
@@ -42,42 +44,41 @@ export function LspRecommendationMenu({
   }
   const options = [{
     label: <Text>
-          Yes, install <Text bold>{pluginName}</Text>
+          {t('lspRecommendation.yesInstall')} <Text bold>{pluginName}</Text>
         </Text>,
     value: 'yes'
   }, {
-    label: 'No, not now',
+    label: t('lspRecommendation.noNotNow'),
     value: 'no'
   }, {
     label: <Text>
-          Never for <Text bold>{pluginName}</Text>
+          {t('lspRecommendation.neverFor')} <Text bold>{pluginName}</Text>
         </Text>,
     value: 'never'
   }, {
-    label: 'Disable all LSP recommendations',
+    label: t('lspRecommendation.disableAll'),
     value: 'disable'
   }];
-  return <PermissionDialog title="LSP Plugin Recommendation">
+  return <PermissionDialog title={t('lspRecommendation.title')}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Box marginBottom={1}>
           <Text dimColor>
-            LSP provides code intelligence like go-to-definition and error
-            checking
+            {t('lspRecommendation.description')}
           </Text>
         </Box>
         <Box>
-          <Text dimColor>Plugin:</Text>
+          <Text dimColor>{t('lspRecommendation.plugin')}:</Text>
           <Text> {pluginName}</Text>
         </Box>
         {pluginDescription && <Box>
             <Text dimColor>{pluginDescription}</Text>
           </Box>}
         <Box>
-          <Text dimColor>Triggered by:</Text>
-          <Text> {fileExtension} files</Text>
+          <Text dimColor>{t('lspRecommendation.triggeredBy')}:</Text>
+          <Text> {fileExtension} {t('lspRecommendation.files')}</Text>
         </Box>
         <Box marginTop={1}>
-          <Text>Would you like to install this LSP plugin?</Text>
+          <Text>{t('lspRecommendation.wouldYouLike')}</Text>
         </Box>
         <Box>
           <Select options={options} onChange={onSelect} onCancel={() => onResponse('no')} />

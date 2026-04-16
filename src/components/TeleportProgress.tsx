@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Root } from '../ink.js';
 import { Box, Text, useAnimationFrame } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { AppStateProvider } from '../state/AppState.js';
 import { checkOutTeleportedSessionBranch, processMessagesForTeleportResume, type TeleportProgressStep, type TeleportResult, teleportResumeCodeSession } from '../utils/teleport.js';
 type Props = {
@@ -11,30 +12,31 @@ type Props = {
   sessionId?: string;
 };
 const SPINNER_FRAMES = ['◐', '◓', '◑', '◒'];
-const STEPS: {
-  key: TeleportProgressStep;
-  label: string;
-}[] = [{
-  key: 'validating',
-  label: 'Validating session'
-}, {
-  key: 'fetching_logs',
-  label: 'Fetching session logs'
-}, {
-  key: 'fetching_branch',
-  label: 'Getting branch info'
-}, {
-  key: 'checking_out',
-  label: 'Checking out branch'
-}];
+function getStepLabels(t: (key: string, params?: Record<string, unknown>) => string): { key: TeleportProgressStep; label: string }[] {
+  return [{
+    key: 'validating',
+    label: t('teleport.progress.validating')
+  }, {
+    key: 'fetching_logs',
+    label: t('teleport.progress.fetchingLogs')
+  }, {
+    key: 'fetching_branch',
+    label: t('teleport.progress.fetchingBranch')
+  }, {
+    key: 'checking_out',
+    label: t('teleport.progress.checkingOut')
+  }];
+}
 export function TeleportProgress(t0) {
-  const $ = _c(16);
+  const $ = _c(17);
   const {
     currentStep,
     sessionId
   } = t0;
+  const { t, locale } = useI18n();
   const [ref, time] = useAnimationFrame(100);
   const frame = Math.floor(time / 100) % SPINNER_FRAMES.length;
+  const STEPS = getStepLabels(t);
   let t1;
   if ($[0] !== currentStep) {
     t1 = s => s.key === currentStep;
@@ -46,23 +48,24 @@ export function TeleportProgress(t0) {
   const currentStepIndex = STEPS.findIndex(t1);
   const t2 = SPINNER_FRAMES[frame];
   let t3;
-  if ($[2] !== t2) {
-    t3 = <Box marginBottom={1}><Text bold={true} color="claude">{t2} Teleporting session…</Text></Box>;
-    $[2] = t2;
-    $[3] = t3;
+  if ($[2] !== locale || $[3] !== t2) {
+    t3 = <Box marginBottom={1}><Text bold={true} color="claude">{t2} {t('teleport.progress.teleporting')}</Text></Box>;
+    $[2] = locale;
+    $[3] = t2;
+    $[4] = t3;
   } else {
-    t3 = $[3];
+    t3 = $[4];
   }
   let t4;
-  if ($[4] !== sessionId) {
+  if ($[5] !== sessionId) {
     t4 = sessionId && <Box marginBottom={1}><Text dimColor={true}>{sessionId}</Text></Box>;
-    $[4] = sessionId;
-    $[5] = t4;
+    $[5] = sessionId;
+    $[6] = t4;
   } else {
-    t4 = $[5];
+    t4 = $[6];
   }
   let t5;
-  if ($[6] !== currentStepIndex || $[7] !== frame) {
+  if ($[7] !== currentStepIndex || $[8] !== frame) {
     t5 = STEPS.map((step, index) => {
       const isComplete = index < currentStepIndex;
       const isCurrent = index === currentStepIndex;
@@ -83,30 +86,30 @@ export function TeleportProgress(t0) {
       }
       return <Box key={step.key} flexDirection="row"><Box width={2}><Text color={color as never} dimColor={isPending}>{icon}</Text></Box><Text dimColor={isPending} bold={isCurrent}>{step.label}</Text></Box>;
     });
-    $[6] = currentStepIndex;
-    $[7] = frame;
-    $[8] = t5;
+    $[7] = currentStepIndex;
+    $[8] = frame;
+    $[9] = t5;
   } else {
-    t5 = $[8];
+    t5 = $[9];
   }
   let t6;
-  if ($[9] !== t5) {
+  if ($[10] !== t5) {
     t6 = <Box flexDirection="column" marginLeft={2}>{t5}</Box>;
-    $[9] = t5;
-    $[10] = t6;
+    $[10] = t5;
+    $[11] = t6;
   } else {
-    t6 = $[10];
+    t6 = $[11];
   }
   let t7;
-  if ($[11] !== ref || $[12] !== t3 || $[13] !== t4 || $[14] !== t6) {
+  if ($[12] !== ref || $[13] !== t3 || $[14] !== t4 || $[15] !== t6) {
     t7 = <Box ref={ref} flexDirection="column" paddingX={1} paddingY={1}>{t3}{t4}{t6}</Box>;
-    $[11] = ref;
-    $[12] = t3;
-    $[13] = t4;
-    $[14] = t6;
-    $[15] = t7;
+    $[12] = ref;
+    $[13] = t3;
+    $[14] = t4;
+    $[15] = t6;
+    $[16] = t7;
   } else {
-    t7 = $[15];
+    t7 = $[16];
   }
   return t7;
 }

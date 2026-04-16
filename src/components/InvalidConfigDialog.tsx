@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { useI18n } from '../hooks/useI18n.js';
 import { Box, render, Text } from '../ink.js';
 import { KeybindingSetup } from '../keybindings/KeybindingProviderSetup.js';
 import { AppStateProvider } from '../state/AppState.js';
@@ -23,13 +24,14 @@ interface InvalidConfigDialogProps {
  * Dialog shown when the Claude config file contains invalid JSON
  */
 function InvalidConfigDialog(t0) {
-  const $ = _c(19);
+  const $ = _c(20);
   const {
     filePath,
     errorDescription,
     onExit,
     onReset
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onExit || $[1] !== onReset) {
     t1 = value => {
@@ -48,7 +50,7 @@ function InvalidConfigDialog(t0) {
   const handleSelect = t1;
   let t2;
   if ($[3] !== filePath) {
-    t2 = <Text>The configuration file at <Text bold={true}>{filePath}</Text> contains invalid JSON.</Text>;
+    t2 = <Text>{t('invalidConfig.description', { filePath })}</Text>;
     $[3] = filePath;
     $[4] = t2;
   } else {
@@ -73,7 +75,7 @@ function InvalidConfigDialog(t0) {
   }
   let t5;
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text bold={true}>Choose an option:</Text>;
+    t5 = <Text bold={true}>{t('invalidConfig.chooseOption')}</Text>;
     $[10] = t5;
   } else {
     t5 = $[10];
@@ -81,10 +83,10 @@ function InvalidConfigDialog(t0) {
   let t6;
   if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = [{
-      label: "Exit and fix manually",
+      label: t('invalidConfig.exitAndFix'),
       value: "exit"
     }, {
-      label: "Reset with default configuration",
+      label: t('invalidConfig.resetWithDefault'),
       value: "reset"
     }];
     $[11] = t6;
@@ -102,7 +104,7 @@ function InvalidConfigDialog(t0) {
   }
   let t8;
   if ($[15] !== onExit || $[16] !== t4 || $[17] !== t7) {
-    t8 = <Dialog title="Configuration Error" color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
+    t8 = <Dialog title={t('invalidConfig.title')} color="error" onCancel={onExit}>{t4}{t7}</Dialog>;
     $[15] = onExit;
     $[16] = t4;
     $[17] = t7;

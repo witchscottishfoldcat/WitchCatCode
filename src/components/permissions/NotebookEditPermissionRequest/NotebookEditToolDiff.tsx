@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import { relative } from 'path';
 import * as React from 'react';
 import { Suspense, use, useMemo } from 'react';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { Box, NoSelect, Text } from '../../../ink.js';
 import type { NotebookCellType, NotebookContent } from '../../../types/notebook.js';
 import { intersperse } from '../../../utils/array.js';
@@ -75,6 +76,11 @@ function NotebookEditToolDiffInner(t0) {
   } = t0;
   const edit_mode = t1 === undefined ? "replace" : t1;
   const notebookData = use(promise);
+  const { t } = useI18n();
+  const _insertNewCell = t('permission.notebookDiff.insertNewCell');
+  const _deleteCell = t('permission.notebookDiff.deleteCell');
+  const _replaceCellContents = t('permission.notebookDiff.replaceCellContents');
+  const _forCell = t('permission.notebookDiff.forCell');
   let t2;
   if ($[0] !== cell_id || $[1] !== notebookData) {
     bb0: {
@@ -154,17 +160,17 @@ function NotebookEditToolDiffInner(t0) {
   bb2: switch (edit_mode) {
     case "insert":
       {
-        editTypeDescription = "Insert new cell";
+        editTypeDescription = _insertNewCell;
         break bb2;
       }
     case "delete":
       {
-        editTypeDescription = "Delete cell";
+        editTypeDescription = _deleteCell;
         break bb2;
       }
     default:
       {
-        editTypeDescription = "Replace cell contents";
+        editTypeDescription = _replaceCellContents;
       }
   }
   let t4;
@@ -187,7 +193,7 @@ function NotebookEditToolDiffInner(t0) {
   const t6 = cell_type ? ` (${cell_type})` : "";
   let t7;
   if ($[16] !== cell_id || $[17] !== editTypeDescription || $[18] !== t6) {
-    t7 = <Text dimColor={true}>{editTypeDescription} for cell {cell_id}{t6}</Text>;
+    t7 = <Text dimColor={true}>{editTypeDescription} {_forCell} {cell_id}{t6}</Text>;
     $[16] = cell_id;
     $[17] = editTypeDescription;
     $[18] = t6;

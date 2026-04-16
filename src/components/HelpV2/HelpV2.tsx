@@ -4,6 +4,7 @@ import { useExitOnCtrlCDWithKeybindings } from 'src/hooks/useExitOnCtrlCDWithKey
 import { useShortcutDisplay } from 'src/keybindings/useShortcutDisplay.js';
 import { builtInCommandNames, type Command, type CommandResultDisplay, INTERNAL_ONLY_COMMANDS } from '../../commands.js';
 import { useIsInsideModal } from '../../context/modalContext.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { Box, Link, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -23,6 +24,7 @@ export function HelpV2(t0) {
     onClose,
     commands
   } = t0;
+  const { t } = useI18n();
   const {
     rows,
     columns
@@ -31,7 +33,7 @@ export function HelpV2(t0) {
   const insideModal = useIsInsideModal();
   let t1;
   if ($[0] !== onClose) {
-    t1 = () => onClose("Help dialog dismissed", {
+    t1 = () => onClose(t('help.dialogDismissed'), {
       display: "system"
     });
     $[0] = onClose;
@@ -79,7 +81,7 @@ export function HelpV2(t0) {
   const customCommands = t3;
   let t4;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <Tab key="general" title="general"><General /></Tab>;
+    t4 = <Tab key="general" title={t('help.tab.general')}><General /></Tab>;
     $[8] = t4;
   } else {
     t4 = $[8];
@@ -89,7 +91,7 @@ export function HelpV2(t0) {
     tabs = [t4];
     let t5;
     if ($[16] !== builtinCommands || $[17] !== close || $[18] !== columns || $[19] !== maxHeight) {
-      t5 = <Tab key="commands" title="commands"><Commands commands={builtinCommands} maxHeight={maxHeight} columns={columns} title="Browse default commands:" onCancel={close} /></Tab>;
+      t5 = <Tab key="commands" title={t('help.tab.commands')}><Commands commands={builtinCommands} maxHeight={maxHeight} columns={columns} title={t('help.browseDefaultCommands')} onCancel={close} /></Tab>;
       $[16] = builtinCommands;
       $[17] = close;
       $[18] = columns;
@@ -101,7 +103,7 @@ export function HelpV2(t0) {
     tabs.push(t5);
     let t6;
     if ($[21] !== close || $[22] !== columns || $[23] !== customCommands || $[24] !== maxHeight) {
-      t6 = <Tab key="custom" title="custom-commands"><Commands commands={customCommands} maxHeight={maxHeight} columns={columns} title="Browse custom commands:" emptyMessage="No custom commands found" onCancel={close} /></Tab>;
+      t6 = <Tab key="custom" title={t('help.tab.customCommands')}><Commands commands={customCommands} maxHeight={maxHeight} columns={columns} title={t('help.browseCustomCommands')} emptyMessage={t('help.noCustomCommands')} onCancel={close} /></Tab>;
       $[21] = close;
       $[22] = columns;
       $[23] = customCommands;
@@ -114,7 +116,7 @@ export function HelpV2(t0) {
     if (false && antOnlyCommands.length > 0) {
       let t7;
       if ($[26] !== antOnlyCommands || $[27] !== close || $[28] !== columns || $[29] !== maxHeight) {
-        t7 = <Tab key="ant-only" title="[ant-only]"><Commands commands={antOnlyCommands} maxHeight={maxHeight} columns={columns} title="Browse ant-only commands:" onCancel={close} /></Tab>;
+        t7 = <Tab key="ant-only" title={t('help.tab.antOnly')}><Commands commands={antOnlyCommands} maxHeight={maxHeight} columns={columns} title={t('help.browseAntOnlyCommands')} onCancel={close} /></Tab>;
         $[26] = antOnlyCommands;
         $[27] = close;
         $[28] = columns;
@@ -138,7 +140,7 @@ export function HelpV2(t0) {
   const t5 = insideModal ? undefined : maxHeight;
   let t6;
   if ($[31] !== tabs) {
-    t6 = <Tabs title={false ? "/help" : `Claude Code v${MACRO.VERSION}`} color="professionalBlue" defaultTab="general">{tabs}</Tabs>;
+    t6 = <Tabs title={false ? "/help" : t('help.title', { version: MACRO.VERSION })} color="professionalBlue" defaultTab="general">{tabs}</Tabs>;
     $[31] = tabs;
     $[32] = t6;
   } else {
@@ -146,14 +148,14 @@ export function HelpV2(t0) {
   }
   let t7;
   if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = <Box marginTop={1}><Text>For more help:{" "}<Link url="https://code.claude.com/docs/en/overview" /></Text></Box>;
+    t7 = <Box marginTop={1}><Text>{t('help.forMoreHelp')}{" "}<Link url="https://code.claude.com/docs/en/overview" /></Text></Box>;
     $[33] = t7;
   } else {
     t7 = $[33];
   }
   let t8;
   if ($[34] !== dismissShortcut || $[35] !== exitState.keyName || $[36] !== exitState.pending) {
-    t8 = <Box marginTop={1}><Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Text italic={true}>{dismissShortcut} to cancel</Text>}</Text></Box>;
+    t8 = <Box marginTop={1}><Text dimColor={true}>{exitState.pending ? <>{t('help.pressAgainToExit', { key: exitState.keyName })}</> : <Text italic={true}>{t('help.shortcutToCancel', { shortcut: dismissShortcut })}</Text>}</Text></Box>;
     $[34] = dismissShortcut;
     $[35] = exitState.keyName;
     $[36] = exitState.pending;

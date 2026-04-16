@@ -6,6 +6,8 @@ import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
 import { useSetAppState } from '../../state/AppState.js';
 import { type OptionWithDescription, Select } from '../CustomSelect/select.js';
+import { useI18n } from '../../hooks/useI18n.js';
+import { t } from '../../i18n/core.js';
 export type FeedbackType = 'accept' | 'reject';
 export type PermissionPromptOption<T extends string> = {
   value: T;
@@ -28,8 +30,8 @@ export type PermissionPromptProps<T extends string> = {
   toolAnalyticsContext?: ToolAnalyticsContext;
 };
 const DEFAULT_PLACEHOLDERS: Record<FeedbackType, string> = {
-  accept: 'tell Claude what to do next',
-  reject: 'tell Claude what to do differently'
+  accept: t('permissionPrompt.acceptPlaceholder'),
+  reject: t('permissionPrompt.rejectPlaceholder')
 };
 
 /**
@@ -51,7 +53,8 @@ export function PermissionPrompt(t0) {
     question: t1,
     toolAnalyticsContext
   } = t0;
-  const question = t1 === undefined ? "Do you want to proceed?" : t1;
+  const { t: tFn } = useI18n();
+  const question = t1 === undefined ? tFn('permissionPrompt.defaultQuestion') : t1;
   const setAppState = useSetAppState();
   const [acceptFeedback, setAcceptFeedback] = useState("");
   const [rejectFeedback, setRejectFeedback] = useState("");
@@ -303,10 +306,10 @@ export function PermissionPrompt(t0) {
   } else {
     t10 = $[47];
   }
-  const t11 = showTabHint && " \xB7 Tab to amend";
+  const t11 = showTabHint && ` \xB7 ${tFn('permissionPrompt.tabToAmend')}`;
   let t12;
   if ($[48] !== t11) {
-    t12 = <Box marginTop={1}><Text dimColor={true}>Esc to cancel{t11}</Text></Box>;
+    t12 = <Box marginTop={1}><Text dimColor={true}>{tFn('permissionPrompt.escToCancel')}{t11}</Text></Box>;
     $[48] = t11;
     $[49] = t12;
   } else {

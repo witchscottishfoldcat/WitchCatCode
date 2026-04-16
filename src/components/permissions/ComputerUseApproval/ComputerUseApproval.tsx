@@ -11,6 +11,7 @@ import { plural } from '../../../utils/stringUtils.js';
 import type { OptionWithDescription } from '../../CustomSelect/select.js';
 import { Select } from '../../CustomSelect/select.js';
 import { Dialog } from '../../design-system/Dialog.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 type ComputerUseApprovalProps = {
   request: CuPermissionRequest;
   onDone: (response: CuPermissionResponse) => void;
@@ -50,6 +51,7 @@ export function ComputerUseApproval(t0) {
 type TccOption = 'open_accessibility' | 'open_screen_recording' | 'retry';
 function ComputerUseTccPanel(t0) {
   const $ = _c(26);
+  const { t } = useI18n();
   const {
     tccState,
     onDone
@@ -61,7 +63,7 @@ function ComputerUseTccPanel(t0) {
       let t1;
       if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
         t1 = {
-          label: "Open System Settings \u2192 Accessibility",
+          label: t('permission.computerUse.openAccessibility'),
           value: "open_accessibility"
         };
         $[3] = t1;
@@ -74,7 +76,7 @@ function ComputerUseTccPanel(t0) {
       let t1;
       if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
         t1 = {
-          label: "Open System Settings \u2192 Screen Recording",
+          label: t('permission.computerUse.openScreenRecording'),
           value: "open_screen_recording"
         };
         $[4] = t1;
@@ -86,7 +88,7 @@ function ComputerUseTccPanel(t0) {
     let t1;
     if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
       t1 = {
-        label: "Try again",
+        label: t('common.tryAgain'),
         value: "retry"
       };
       $[5] = t1;
@@ -132,19 +134,19 @@ function ComputerUseTccPanel(t0) {
     t1 = $[7];
   }
   const onChange = t1;
-  const t2 = tccState.accessibility ? `${figures.tick} granted` : `${figures.cross} not granted`;
+  const t2 = tccState.accessibility ? `${figures.tick} ${t('permission.computerUse.granted')}` : `${figures.cross} ${t('permission.computerUse.notGranted')}`;
   let t3;
   if ($[8] !== t2) {
-    t3 = <Text>Accessibility:{" "}{t2}</Text>;
+    t3 = <Text>{t('permission.computerUse.accessibility')}{" "}{t2}</Text>;
     $[8] = t2;
     $[9] = t3;
   } else {
     t3 = $[9];
   }
-  const t4 = tccState.screenRecording ? `${figures.tick} granted` : `${figures.cross} not granted`;
+  const t4 = tccState.screenRecording ? `${figures.tick} ${t('permission.computerUse.granted')}` : `${figures.cross} ${t('permission.computerUse.notGranted')}`;
   let t5;
   if ($[10] !== t4) {
-    t5 = <Text>Screen Recording:{" "}{t4}</Text>;
+    t5 = <Text>{t('permission.computerUse.screenRecording')}{" "}{t4}</Text>;
     $[10] = t4;
     $[11] = t5;
   } else {
@@ -161,7 +163,7 @@ function ComputerUseTccPanel(t0) {
   }
   let t7;
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = <Text dimColor={true}>Grant the missing permissions in System Settings, then select "Try again". macOS may require you to restart Claude Code after granting Screen Recording.</Text>;
+    t7 = <Text dimColor={true}>{t('permission.computerUse.grantPermissionsHint')}</Text>;
     $[15] = t7;
   } else {
     t7 = $[15];
@@ -187,7 +189,7 @@ function ComputerUseTccPanel(t0) {
   }
   let t10;
   if ($[23] !== onDone || $[24] !== t9) {
-    t10 = <Dialog title="Computer Use needs macOS permissions" onCancel={onDone}>{t9}</Dialog>;
+    t10 = <Dialog title={t('permission.computerUse.needsMacOSPermissions')} onCancel={onDone}>{t9}</Dialog>;
     $[23] = onDone;
     $[24] = t9;
     $[25] = t10;
@@ -200,13 +202,16 @@ function ComputerUseTccPanel(t0) {
 // ── App allowlist panel ───────────────────────────────────────────────────
 
 type AppListOption = 'allow_all' | 'deny';
-const SENTINEL_WARNING: Record<NonNullable<ReturnType<typeof getSentinelCategory>>, string> = {
-  shell: 'equivalent to shell access',
-  filesystem: 'can read/write any file',
-  system_settings: 'can change system settings'
-};
+function getSentinelWarning(t: (key: string) => string): Record<NonNullable<ReturnType<typeof getSentinelCategory>>, string> {
+  return {
+    shell: t('permission.computerUse.equivalentToShell'),
+    filesystem: t('permission.computerUse.canReadWriteAnyFile'),
+    system_settings: t('permission.computerUse.canChangeSystemSettings')
+  };
+}
 function ComputerUseAppListPanel(t0) {
   const $ = _c(48);
+  const { t } = useI18n();
   const {
     request,
     onDone
@@ -246,7 +251,7 @@ function ComputerUseAppListPanel(t0) {
   } else {
     t5 = $[6];
   }
-  const t6 = `Allow for this session (${t4} ${t5})`;
+  const t6 = t('permission.computerUse.allowForSession', { count: t4, apps: t5 });
   let t7;
   if ($[7] !== t6) {
     t7 = {
@@ -261,7 +266,7 @@ function ComputerUseAppListPanel(t0) {
   let t8;
   if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
     t8 = {
-      label: <Text>Deny, and tell Claude what to do differently <Text bold={true}>(esc)</Text></Text>,
+      label: <Text>{t('permission.computerUse.denyAndTellClaude')}</Text>,
       value: "deny"
     };
     $[9] = t8;
@@ -333,13 +338,14 @@ function ComputerUseAppListPanel(t0) {
       t14 = a_3 => {
         const resolved = a_3.resolved;
         if (!resolved) {
-          return <Text key={a_3.requestedName} dimColor={true}>{"  "}{figures.circle} {a_3.requestedName}{" "}<Text dimColor={true}>(not installed)</Text></Text>;
+          return <Text key={a_3.requestedName} dimColor={true}>{"  "}{figures.circle} {a_3.requestedName}{" "}<Text dimColor={true}>{t('permission.computerUse.notInstalled')}</Text></Text>;
         }
         if (a_3.alreadyGranted) {
-          return <Text key={resolved.bundleId} dimColor={true}>{"  "}{figures.tick} {resolved.displayName}{" "}<Text dimColor={true}>(already granted)</Text></Text>;
+          return <Text key={resolved.bundleId} dimColor={true}>{"  "}{figures.tick} {resolved.displayName}{" "}<Text dimColor={true}>{t('permission.computerUse.alreadyGranted')}</Text></Text>;
         }
         const sentinel = getSentinelCategory(resolved.bundleId);
         const isChecked = checked.has(resolved.bundleId);
+        const SENTINEL_WARNING = getSentinelWarning(t);
         return <Box key={resolved.bundleId} flexDirection="column"><Text>{"  "}{isChecked ? figures.circleFilled : figures.circle}{" "}{resolved.displayName}</Text>{sentinel ? <Text bold={true}>{"    "}{figures.warning} {SENTINEL_WARNING[sentinel]}</Text> : null}</Box>;
       };
       $[24] = checked;
@@ -364,7 +370,7 @@ function ComputerUseAppListPanel(t0) {
   }
   let t15;
   if ($[28] !== requestedFlagKeys) {
-    t15 = requestedFlagKeys.length > 0 ? <Box flexDirection="column"><Text dimColor={true}>Also requested:</Text>{requestedFlagKeys.map(_temp4)}</Box> : null;
+    t15 = requestedFlagKeys.length > 0 ? <Box flexDirection="column"><Text dimColor={true}>{t('permission.computerUse.alsoRequested')}</Text>{requestedFlagKeys.map(_temp4)}</Box> : null;
     $[28] = requestedFlagKeys;
     $[29] = t15;
   } else {
@@ -372,7 +378,7 @@ function ComputerUseAppListPanel(t0) {
   }
   let t16;
   if ($[30] !== request.willHide) {
-    t16 = request.willHide && request.willHide.length > 0 ? <Text dimColor={true}>{request.willHide.length} other{" "}{plural(request.willHide.length, "app")} will be hidden while Claude works.</Text> : null;
+    t16 = request.willHide && request.willHide.length > 0 ? <Text dimColor={true}>{t('permission.computerUse.appsWillBeHidden', { count: request.willHide.length, apps: plural(request.willHide.length, "app") })}</Text> : null;
     $[30] = request.willHide;
     $[31] = t16;
   } else {
@@ -414,7 +420,7 @@ function ComputerUseAppListPanel(t0) {
   }
   let t21;
   if ($[45] !== t11 || $[46] !== t20) {
-    t21 = <Dialog title="Computer Use wants to control these apps" onCancel={t11}>{t20}</Dialog>;
+    t21 = <Dialog title={t('permission.computerUse.controlApps')} onCancel={t11}>{t20}</Dialog>;
     $[45] = t11;
     $[46] = t20;
     $[47] = t21;

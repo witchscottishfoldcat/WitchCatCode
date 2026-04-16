@@ -11,6 +11,7 @@ import { BashTool } from '../../../tools/BashTool/BashTool.js';
 import { applySedSubstitution, type SedEditInfo } from '../../../tools/BashTool/sedEditParser.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
 import type { PermissionRequestProps } from '../PermissionRequest.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 type SedEditPermissionRequestProps = PermissionRequestProps & {
   sedInfo: SedEditInfo;
 };
@@ -78,6 +79,7 @@ function _temp(e) {
 }
 function SedEditPermissionRequestInner(t0) {
   const $ = _c(35);
+  const { t } = useI18n();
   let contentPromise;
   let props;
   let sedInfo;
@@ -145,10 +147,10 @@ function SedEditPermissionRequestInner(t0) {
   let t3;
   bb1: {
     if (!fileExists) {
-      t3 = "File does not exist";
+      t3 = t('permission.sedEdit.fileDoesNotExist');
       break bb1;
     }
-    t3 = "Pattern did not match any content";
+    t3 = t('permission.sedEdit.patternDidNotMatch');
   }
   const noChangesMessage = t3;
   let t4;
@@ -192,7 +194,7 @@ function SedEditPermissionRequestInner(t0) {
   }
   let t11;
   if ($[18] !== t10) {
-    t11 = <Text>Do you want to make this edit to{" "}<Text bold={true}>{t10}</Text>?</Text>;
+    t11 = <Text>{t('permission.fileEdit.doYouWantToMakeEdit')}{" "}<Text bold={true}>{t10}</Text>?</Text>;
     $[18] = t10;
     $[19] = t11;
   } else {
@@ -210,7 +212,7 @@ function SedEditPermissionRequestInner(t0) {
   }
   let t13;
   if ($[24] !== filePath || $[25] !== parseInput || $[26] !== props.onDone || $[27] !== props.onReject || $[28] !== props.toolUseConfirm || $[29] !== props.toolUseContext || $[30] !== props.workerBadge || $[31] !== t11 || $[32] !== t12 || $[33] !== t9) {
-    t13 = <FilePermissionDialog toolUseConfirm={t5} toolUseContext={t6} onDone={t7} onReject={t8} title="Edit file" subtitle={t9} question={t11} content={t12} path={filePath} completionType="str_replace_single" parseInput={parseInput} workerBadge={props.workerBadge} />;
+    t13 = <FilePermissionDialog toolUseConfirm={t5} toolUseContext={t6} onDone={t7} onReject={t8} title={t('permission.fileEdit.title')} subtitle={t9} question={t11} content={t12} path={filePath} completionType="str_replace_single" parseInput={parseInput} workerBadge={props.workerBadge} />;
     $[24] = filePath;
     $[25] = parseInput;
     $[26] = props.onDone;

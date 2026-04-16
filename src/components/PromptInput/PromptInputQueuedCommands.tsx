@@ -6,6 +6,7 @@ import { useAppState } from 'src/state/AppState.js';
 import { STATUS_TAG, SUMMARY_TAG, TASK_NOTIFICATION_TAG } from '../../constants/xml.js';
 import { QueuedMessageProvider } from '../../context/QueuedMessageContext.js';
 import { useCommandQueue } from '../../hooks/useCommandQueue.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import type { QueuedCommand } from '../../types/textInputTypes.js';
 import { isQueuedCommandVisible } from '../../utils/messageQueueManager.js';
 import { createUserMessage, EMPTY_LOOKUPS, normalizeMessages } from '../../utils/messages.js';
@@ -32,9 +33,9 @@ const MAX_VISIBLE_NOTIFICATIONS = 3;
 /**
  * Create a synthetic overflow notification message for capped task notifications.
  */
-function createOverflowNotificationMessage(count: number): string {
+function createOverflowNotificationMessage(count: number, t: (key: string, params?: Record<string, string | number>) => string): string {
   return `<${TASK_NOTIFICATION_TAG}>
-<${SUMMARY_TAG}>+${count} more tasks completed</${SUMMARY_TAG}>
+<${SUMMARY_TAG}>${t('promptInput.moreTasksCompleted', { count })}</${SUMMARY_TAG}>
 <${STATUS_TAG}>completed</${STATUS_TAG}>
 </${TASK_NOTIFICATION_TAG}>`;
 }
@@ -44,7 +45,7 @@ function createOverflowNotificationMessage(count: number): string {
  * Other command types are always shown in full.
  * Idle notifications are filtered out entirely.
  */
-function processQueuedCommands(queuedCommands: QueuedCommand[]): QueuedCommand[] {
+function processQueuedCommands(queuedCommands: QueuedCommand[], t: (key: string, params?: Record<string, string | number>) => string): QueuedCommand[] {
   // Filter out idle notifications - they are processed silently
   const filteredCommands = queuedCommands.filter(cmd => typeof cmd.value !== 'string' || !isIdleNotification(cmd.value));
 
@@ -63,7 +64,7 @@ function processQueuedCommands(queuedCommands: QueuedCommand[]): QueuedCommand[]
 
   // Create synthetic overflow message
   const overflowCommand: QueuedCommand = {
-    value: createOverflowNotificationMessage(overflowCount),
+    value: createOverflowNotificationMessage(overflowCount, t),
     mode: 'task-notification'
   };
   return [...otherCommands, ...visibleNotifications, overflowCommand];
@@ -71,6 +72,7 @@ function processQueuedCommands(queuedCommands: QueuedCommand[]): QueuedCommand[]
 function PromptInputQueuedCommandsImpl(): React.ReactNode {
   const queuedCommands = useCommandQueue();
   const viewingAgent = useAppState(s => !!s.viewingAgentTaskId);
+  const { t } = useI18n();
   // Brief layout: dim queue items + skip the paddingX (brief messages
   // already indent themselves). Gate mirrors the brief-spinner/message
   // check elsewhere — no teammate-view override needed since this
@@ -89,7 +91,7 @@ function PromptInputQueuedCommandsImpl(): React.ReactNode {
     // user sees what arrived.
     const visibleCommands = queuedCommands.filter(isQueuedCommandVisible);
     if (visibleCommands.length === 0) return null;
-    const processedCommands = processQueuedCommands(visibleCommands);
+    const processedCommands = processQueuedCommands(visibleCommands, t);
     return normalizeMessages(processedCommands.map(cmd => {
       let content = cmd.value;
       if (cmd.mode === 'bash' && typeof content === 'string') {
@@ -101,7 +103,7 @@ function PromptInputQueuedCommandsImpl(): React.ReactNode {
         content
       });
     }));
-  }, [queuedCommands]);
+  }, [queuedCommands, t]);
 
   // Don't show leader's queued commands when viewing any agent's transcript
   if (viewingAgent || messages === null) {

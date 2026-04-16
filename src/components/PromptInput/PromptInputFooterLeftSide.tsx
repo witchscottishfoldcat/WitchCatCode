@@ -36,6 +36,8 @@ import { VoiceWarmupHint } from './VoiceIndicator.js';
 import { useVoiceEnabled } from '../../hooks/useVoiceEnabled.js';
 import { useVoiceState } from '../../context/voice.js';
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
+import { useI18n } from '../../hooks/useI18n.js';
+import { t as staticT } from '../../i18n/core.js';
 import { isXtermJs } from '../../ink/terminal.js';
 import { useHasSelection, useSelection } from '../../ink/hooks/use-selection.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
@@ -73,6 +75,7 @@ type Props = {
 };
 function ProactiveCountdown() {
   const $ = _c(7);
+  const { t } = useI18n();
   const nextTickAt = useSyncExternalStore(proactiveModule?.subscribeToProactiveChanges ?? NO_OP_SUBSCRIBE, proactiveModule?.getNextTickAt ?? NULL, NULL);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
   let t0;
@@ -116,7 +119,7 @@ function ProactiveCountdown() {
   }
   let t4;
   if ($[5] !== t3) {
-    t4 = <Text dimColor={true}>waiting{" "}{t3}</Text>;
+    t4 = <Text dimColor={true}>{t('promptInput.footerLeft.waiting', { duration: t3 })}</Text>;
     $[5] = t3;
     $[6] = t4;
   } else {
@@ -144,10 +147,11 @@ export function PromptInputFooterLeftSide(t0) {
     historyFailedMatch,
     onOpenTasksDialog
   } = t0;
+  const { t } = useI18n();
   if (exitMessage.show) {
     let t1;
     if ($[0] !== exitMessage.key) {
-      t1 = <Text dimColor={true} key="exit-message">Press {exitMessage.key} again to exit</Text>;
+      t1 = <Text dimColor={true} key="exit-message">{t('promptInput.footerLeft.pressAgainToExit', { key: exitMessage.key })}</Text>;
       $[0] = exitMessage.key;
       $[1] = t1;
     } else {
@@ -158,7 +162,7 @@ export function PromptInputFooterLeftSide(t0) {
   if (isPasting) {
     let t1;
     if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true} key="pasting-message">Pasting text…</Text>;
+      t1 = <Text dimColor={true} key="pasting-message">{t('promptInput.footerLeft.pastingText')}</Text>;
       $[2] = t1;
     } else {
       t1 = $[2];
@@ -188,7 +192,7 @@ export function PromptInputFooterLeftSide(t0) {
   }
   let t3;
   if ($[11] !== showVim) {
-    t3 = showVim ? <Text dimColor={true} key="vim-insert">-- INSERT --</Text> : null;
+    t3 = showVim ? <Text dimColor={true} key="vim-insert">{t('promptInput.footerLeft.vimInsert')}</Text> : null;
     $[11] = showVim;
     $[12] = t3;
   } else {
@@ -245,6 +249,7 @@ function ModeIndicator({
   teammateFooterIndex,
   onOpenTasksDialog
 }: ModeIndicatorProps): React.ReactNode {
+  const { t } = useI18n();
   const {
     columns
   } = useTerminalSize();
@@ -315,7 +320,7 @@ function ModeIndicator({
   // In-process mode uses Shift+Down/Up navigation, not footer teams menu
   const hasTeams = isAgentSwarmsEnabled() && !isInProcessEnabled() && teamContext !== undefined && count(Object.values(teamContext.teammates), t_0 => t_0.name !== 'team-lead') > 0;
   if (mode === 'bash') {
-    return <Text color="bashBorder">! for bash mode</Text>;
+    return <Text color="bashBorder">{t('promptInput.footerLeft.bashMode')}</Text>;
   }
   const currentMode = toolPermissionContext?.mode;
   const hasActiveMode = !isDefaultMode(currentMode);
@@ -347,10 +352,10 @@ function ModeIndicator({
   // doesn't push the mode indicator off-screen.
   const modePart = currentMode && hasActiveMode && !getIsRemoteMode() ? <Text color={getModeColor(currentMode)} key="mode">
         {permissionModeSymbol(currentMode)}{' '}
-        {permissionModeTitle(currentMode).toLowerCase()} on
+        {t('promptInput.footerLeft.modeOn', { mode: permissionModeTitle(currentMode).toLowerCase() })}
         {shouldShowModeHint && <Text dimColor>
             {' '}
-            <KeyboardShortcutHint shortcut={modeCycleShortcut} action="cycle" parens />
+            <KeyboardShortcutHint shortcut={modeCycleShortcut} action={t('promptInput.footerLeft.cycle')} parens />
           </Text>}
       </Text> : null;
 
@@ -359,7 +364,7 @@ function ModeIndicator({
   const parts = [
   // Remote session indicator
   ...(remoteSessionUrl ? [<Link url={remoteSessionUrl} key="remote">
-            <Text color="ide">{figures.circleDouble} remote</Text>
+            <Text color="ide">{figures.circleDouble} {t('promptInput.footerLeft.remote')}</Text>
           </Link>] : []),
   // BackgroundTaskStatus is NOT in parts — it renders as a Box sibling so
   // its click-target Box isn't nested inside the <Text wrap="truncate">
@@ -375,7 +380,7 @@ function ModeIndicator({
   const hintParts = showHint ? getSpinnerHintParts(isLoading, escShortcut, todosShortcut, killAgentsShortcut, hasTaskItems, expandedView, hasAnyInProcessTeammates, hasRunningAgentTasks, isKillAgentsConfirmShowing) : [];
   if (isViewingCompletedTeammate) {
     parts.push(<Text dimColor key="esc-return">
-        <KeyboardShortcutHint shortcut={escShortcut} action="return to team lead" />
+        <KeyboardShortcutHint shortcut={escShortcut} action={t('promptInput.footerLeft.returnToTeamLead')} />
       </Text>);
   } else if ((feature('PROACTIVE') || feature('KAIROS')) && hasNextTick) {
     parts.push(<ProactiveCountdown key="proactive" />);
@@ -408,7 +413,7 @@ function ModeIndicator({
   const tasksPart = hasBackgroundTasks && !hasTeammatePills && !shouldHideTasksFooter(tasks, showSpinnerTree) ? <BackgroundTaskStatus tasksSelected={tasksSelected} isViewingTeammate={isViewingTeammate} teammateFooterIndex={teammateFooterIndex} isLeaderIdle={!isLoading} onOpenDialog={onOpenTasksDialog} /> : null;
   if (parts.length === 0 && !tasksPart && !modePart && showHint) {
     parts.push(<Text dimColor key="shortcuts-hint">
-        ? for shortcuts
+        {t('promptInput.footerLeft.shortcutsHint')}
       </Text>);
   }
 
@@ -438,18 +443,18 @@ function ModeIndicator({
     const altClickFailed = isMac && (selGetState()?.lastPressHadAlt ?? false);
     parts.push(<Text dimColor key="selection-copy">
         <Byline>
-          {!copyOnSelect && <KeyboardShortcutHint shortcut="ctrl+c" action="copy" />}
-          {isXtermJs() && (altClickFailed ? <Text>set macOptionClickForcesSelection in VS Code settings</Text> : <KeyboardShortcutHint shortcut={isMac ? 'option+click' : 'shift+click'} action="native select" />)}
+          {!copyOnSelect && <KeyboardShortcutHint shortcut="ctrl+c" action={t('promptInput.footerLeft.copy')} />}
+          {isXtermJs() && (altClickFailed ? <Text>{t('promptInput.footerLeft.macOptionSetting')}</Text> : <KeyboardShortcutHint shortcut={isMac ? 'option+click' : 'shift+click'} action={t('promptInput.footerLeft.nativeSelect')} />)}
         </Byline>
       </Text>);
   } else if (feature('VOICE_MODE') && parts.length > 0 && showHint && voiceEnabled && voiceState === 'idle' && hintParts.length === 0 && voiceHintUnderCap) {
     parts.push(<Text dimColor key="voice-hint">
-        hold {voiceKeyShortcut} to speak
+        {t('promptInput.footerLeft.holdToSpeak', { shortcut: voiceKeyShortcut })}
       </Text>);
   }
   if ((tasksPart || hasCoordinatorTasks) && showHint && !hasTeams) {
     parts.push(<Text dimColor key="manage-tasks">
-        {tasksSelected ? <KeyboardShortcutHint shortcut="Enter" action="view tasks" /> : <KeyboardShortcutHint shortcut="↓" action="manage" />}
+        {tasksSelected ? <KeyboardShortcutHint shortcut="Enter" action={t('promptInput.footerLeft.viewTasks')} /> : <KeyboardShortcutHint shortcut="↓" action={t('promptInput.footerLeft.manage')} />}
       </Text>);
   }
 
@@ -487,26 +492,26 @@ function getSpinnerHintParts(isLoading: boolean, escShortcut: string, todosShort
     // Cycling: none → tasks → teammates → none
     switch (expandedView) {
       case 'none':
-        toggleAction = 'show tasks';
+        toggleAction = staticT('promptInput.footerLeft.showTasks');
         break;
       case 'tasks':
-        toggleAction = 'show teammates';
+        toggleAction = staticT('promptInput.footerLeft.showTeammates');
         break;
       case 'teammates':
-        toggleAction = 'hide';
+        toggleAction = staticT('promptInput.footerLeft.hide');
         break;
     }
   } else {
-    toggleAction = expandedView === 'tasks' ? 'hide tasks' : 'show tasks';
+    toggleAction = expandedView === 'tasks' ? staticT('promptInput.footerLeft.hideTasks') : staticT('promptInput.footerLeft.showTasks');
   }
 
   // Show the toggle hint only when there are task items to display or
   // teammates to cycle to
   const showToggleHint = hasTaskItems || hasTeammates;
   return [...(isLoading ? [<Text dimColor key="esc">
-            <KeyboardShortcutHint shortcut={escShortcut} action="interrupt" />
+            <KeyboardShortcutHint shortcut={escShortcut} action={staticT('promptInput.footerLeft.interrupt')} />
           </Text>] : []), ...(!isLoading && hasRunningAgentTasks && !isKillAgentsConfirmShowing ? [<Text dimColor key="kill-agents">
-            <KeyboardShortcutHint shortcut={killAgentsShortcut} action="stop agents" />
+            <KeyboardShortcutHint shortcut={killAgentsShortcut} action={staticT('promptInput.footerLeft.stopAgents')} />
           </Text>] : []), ...(showToggleHint ? [<Text dimColor key="toggle-tasks">
             <KeyboardShortcutHint shortcut={todosShortcut} action={toggleAction} />
           </Text>] : [])];

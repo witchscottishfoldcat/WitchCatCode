@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, Text, useTheme } from 'src/ink.js';
+import { t } from '../../i18n/core.js';
 import { env } from '../../utils/env.js';
 const WELCOME_V2_WIDTH = 58;
 export function WelcomeV2() {
@@ -9,7 +10,7 @@ export function WelcomeV2() {
   if (env.terminal === "Apple_Terminal") {
     let t0;
     if ($[0] !== theme) {
-      t0 = <AppleTerminalWelcomeV2 theme={theme} welcomeMessage="Welcome to WitchcatCode" />;
+      t0 = <AppleTerminalWelcomeV2 theme={theme} welcomeMessage={t('welcome.title')} />;
       $[0] = theme;
       $[1] = t0;
     } else {
@@ -28,7 +29,7 @@ export function WelcomeV2() {
     let t7;
     let t8;
     if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t0 = <Text><Text color="claude">{"Welcome to WitchcatCode"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>;
+      t0 = <Text><Text color="claude">{t('welcome.title')} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>;
       t1 = <Text>{"\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026"}</Text>;
       t2 = <Text>{"                                                          "}</Text>;
       t3 = <Text>{"                                                          "}</Text>;
@@ -91,7 +92,7 @@ export function WelcomeV2() {
     }
     let t14;
     if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t14 = <Text>{"      "}<Text color="clawd_body">   > ^ <   </Text>{"                          \u2591          \u2592   "}</Text>;
+      t14 = <Text>{"      "}<Text color="clawd_body">{'   > ^ <   '}</Text>{"                          \u2591          \u2592   "}</Text>;
       $[16] = t14;
     } else {
       t14 = $[16];
@@ -113,7 +114,7 @@ export function WelcomeV2() {
   let t5;
   let t6;
   if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = <Text><Text color="claude">{"Welcome to WitchcatCode"} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>;
+    t0 = <Text><Text color="claude">{t('welcome.title')} </Text><Text dimColor={true}>v{MACRO.VERSION} </Text></Text>;
     t1 = <Text>{"\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026\u2026"}</Text>;
     t2 = <Text>{"                                                          "}</Text>;
     t3 = <Text>{"     *                                       \u2588\u2588\u2588\u2588\u2588\u2593\u2593\u2591     "}</Text>;
@@ -182,7 +183,7 @@ export function WelcomeV2() {
   }
   let t15;
   if ($[33] === Symbol.for("react.memo_cache_sentinel")) {
-    t15 = <Text>{"      "}<Text color="clawd_body">   > ^ <   </Text>{"     *                                   "}</Text>;
+    t15 = <Text>{"      "}<Text color="clawd_body">{'   > ^ <   '}</Text>{"     *                                   "}</Text>;
     $[33] = t15;
   } else {
     t15 = $[33];

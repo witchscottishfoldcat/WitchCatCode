@@ -4,6 +4,7 @@ import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEve
 import type { CommandResultDisplay } from '../../commands.js';
 import { getOauthConfig } from '../../constants/oauth.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { setClipboard } from '../../ink/termio/osc.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw j/k/arrow menu navigation
@@ -47,6 +48,7 @@ export function MCPRemoteServerMenu({
   borderless = false
 }: Props): React.ReactNode {
   const [theme] = useTheme();
+  const { t } = useI18n();
   const exitState = useExitOnCtrlCDWithKeybindings();
   const {
     columns: terminalColumns
@@ -100,11 +102,11 @@ export function MCPRemoteServerMenu({
         success
       });
       if (success) {
-        onComplete?.(`Authentication successful. Connected to ${server.name}.`);
+        onComplete?.(t('mcp.remote.authSuccessConnected', { serverName: server.name }));
       } else if (result.client.type === 'needs-auth') {
-        onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart Claude Code.');
+        onComplete?.(t('mcp.remote.authSuccessStillNeedsAuth'));
       } else {
-        onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart Claude Code for the changes to take effect.');
+        onComplete?.(t('mcp.remote.authSuccessReconnectFailed'));
       }
     } catch (err) {
       logEvent('tengu_claudeai_mcp_auth_completed', {
@@ -140,7 +142,7 @@ export function MCPRemoteServerMenu({
       };
     });
     logEvent('tengu_claudeai_mcp_clear_auth_completed', {});
-    onComplete?.(`Disconnected from ${server.name}.`);
+    onComplete?.(t('mcp.remote.claudeAIDisconnected', { serverName: server.name }));
     setIsClaudeAIClearingAuth(false);
     setClaudeAIClearAuthUrl(null);
     setClaudeAIClearAuthBrowserOpened(false);
@@ -250,7 +252,7 @@ export function MCPRemoteServerMenu({
       onCancel();
     } catch (err_0) {
       const action = wasEnabled ? 'disable' : 'enable';
-      onComplete?.(`Failed to ${action} MCP server '${server.name}': ${errorMessage(err_0)}`);
+      onComplete?.(t('mcp.remote.toggleFailed', { action: action, serverName: server.name, error: errorMessage(err_0) }));
     }
   }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
@@ -278,14 +280,14 @@ export function MCPRemoteServerMenu({
         });
         const result_0 = await reconnectMcpServer(server.name);
         if (result_0.client.type === 'connected') {
-          const message = isEffectivelyAuthenticated ? `Authentication successful. Reconnected to ${server.name}.` : `Authentication successful. Connected to ${server.name}.`;
+          const message = isEffectivelyAuthenticated ? t('mcp.remote.authSuccessReconnected', { serverName: server.name }) : t('mcp.remote.authSuccessConnected', { serverName: server.name });
           onComplete?.(message);
         } else if (result_0.client.type === 'needs-auth') {
-          onComplete?.('Authentication successful, but server still requires authentication. You may need to manually restart Claude Code.');
+          onComplete?.(t('mcp.remote.authSuccessStillNeedsAuth'));
         } else {
           // result.client.type === 'failed'
           logMCPDebug(server.name, `Reconnection failed after authentication`);
-          onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart Claude Code for the changes to take effect.');
+          onComplete?.(t('mcp.remote.authSuccessReconnectFailed'));
         }
       }
     } catch (err_1) {
@@ -335,16 +337,16 @@ export function MCPRemoteServerMenu({
           }
         };
       });
-      onComplete?.(`Authentication cleared for ${server.name}.`);
+      onComplete?.(t('mcp.remote.authCleared', { serverName: server.name }));
     }
   };
   if (isAuthenticating) {
     // XAA: silent exchange (cached id_token → no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = server.config.type !== 'claudeai-proxy' && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = server.config.type !== 'claudeai-proxy' && server.config.oauth?.xaa ? t('mcp.remote.authViaIdp') : t('mcp.remote.authBrowserWillOpen');
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Authenticating with {server.name}…</Text>
+        <Text color="claude">{t('mcp.remote.authenticatingWith', { serverName: server.name })}</Text>
         <Box>
           <Spinner />
           <Text>{authCopy}</Text>
@@ -352,10 +354,9 @@ export function MCPRemoteServerMenu({
         {authorizationUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
-                If your browser doesn&apos;t open automatically, copy this URL
-                manually{' '}
+                {t('mcp.remote.browserCopyHint')}
               </Text>
-              {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+              {urlCopied ? <Text color="success">({t('mcp.remote.copied')})</Text> : <Text dimColor>
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
@@ -363,8 +364,7 @@ export function MCPRemoteServerMenu({
           </Box>}
         {isAuthenticating && authorizationUrl && manualCallbackSubmit && <Box flexDirection="column" marginTop={1}>
             <Text dimColor>
-              If the redirect page shows a connection error, paste the URL from
-              your browser&apos;s address bar:
+              {t('mcp.remote.redirectErrorHint')}
             </Text>
             <Box>
               <Text dimColor>URL {'>'} </Text>
@@ -376,26 +376,24 @@ export function MCPRemoteServerMenu({
           </Box>}
         <Box marginLeft={3}>
           <Text dimColor>
-            Return here after authenticating in your browser. Press Esc to go
-            back.
+            {t('mcp.remote.returnAfterAuth')}
           </Text>
         </Box>
       </Box>;
   }
   if (isClaudeAIAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Authenticating with {server.name}…</Text>
+        <Text color="claude">{t('mcp.remote.authenticatingWith', { serverName: server.name })}</Text>
         <Box>
           <Spinner />
-          <Text> A browser window will open for authentication</Text>
+          <Text> {t('mcp.remote.authBrowserWillOpen')}</Text>
         </Box>
         {claudeAIAuthUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
-                If your browser doesn&apos;t open automatically, copy this URL
-                manually{' '}
+                {t('mcp.remote.browserCopyHint')}
               </Text>
-              {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+              {urlCopied ? <Text color="success">({t('mcp.remote.copied')})</Text> : <Text dimColor>
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
@@ -403,7 +401,7 @@ export function MCPRemoteServerMenu({
           </Box>}
         <Box marginLeft={3} flexDirection="column">
           <Text color="permission">
-            Press <Text bold>Enter</Text> after authenticating in your browser.
+            {t('mcp.remote.pressEnterAfterAuth')}
           </Text>
           <Text dimColor italic>
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
@@ -413,19 +411,17 @@ export function MCPRemoteServerMenu({
   }
   if (isClaudeAIClearingAuth) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Clear authentication for {server.name}</Text>
+        <Text color="claude">{t('mcp.remote.clearAuthFor', { serverName: server.name })}</Text>
         {claudeAIClearAuthBrowserOpened ? <>
             <Text>
-              Find the MCP server in the browser and click
-              &quot;Disconnect&quot;.
+              {t('mcp.remote.findAndDisconnect')}
             </Text>
             {claudeAIClearAuthUrl && <Box flexDirection="column">
                 <Box>
                   <Text dimColor>
-                    If your browser didn&apos;t open automatically, copy this
-                    URL manually{' '}
+                    {t('mcp.remote.browserCopyHint')}
                   </Text>
-                  {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+                  {urlCopied ? <Text color="success">({t('mcp.remote.copied')})</Text> : <Text dimColor>
                       <KeyboardShortcutHint shortcut="c" action="copy" parens />
                     </Text>}
                 </Box>
@@ -433,7 +429,7 @@ export function MCPRemoteServerMenu({
               </Box>}
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
-                Press <Text bold>Enter</Text> when done.
+                {t('mcp.remote.pressEnterWhenDone')}
               </Text>
               <Text dimColor italic>
                 <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
@@ -441,12 +437,11 @@ export function MCPRemoteServerMenu({
             </Box>
           </> : <>
             <Text>
-              This will open claude.ai in the browser. Find the MCP server in
-              the list and click &quot;Disconnect&quot;.
+              {t('mcp.remote.clearAuthWillOpenClaude')}
             </Text>
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
-                Press <Text bold>Enter</Text> to open the browser.
+                {t('mcp.remote.pressEnterToOpenBrowser')}
               </Text>
               <Text dimColor italic>
                 <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />
@@ -458,13 +453,13 @@ export function MCPRemoteServerMenu({
   if (isReconnecting) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="text">
-          Connecting to <Text bold>{server.name}</Text>…
+          {t('mcp.remote.connectingTo', { serverName: server.name })}
         </Text>
         <Box>
           <Spinner />
-          <Text> Establishing connection to MCP server</Text>
+          <Text> {t('mcp.reconnect.establishingConnection')}</Text>
         </Box>
-        <Text dimColor>This may take a few moments.</Text>
+        <Text dimColor>{t('mcp.remote.mayTakeMoments')}</Text>
       </Box>;
   }
   const menuOptions = [];
@@ -472,42 +467,42 @@ export function MCPRemoteServerMenu({
   // If server is disabled, show Enable first as the primary action
   if (server.client.type === 'disabled') {
     menuOptions.push({
-      label: 'Enable',
+      label: t('mcp.remote.menuEnable'),
       value: 'toggle-enabled'
     });
   }
   if (server.client.type === 'connected' && serverToolsCount > 0) {
     menuOptions.push({
-      label: 'View tools',
+      label: t('mcp.remote.menuViewTools'),
       value: 'tools'
     });
   }
   if (server.config.type === 'claudeai-proxy') {
     if (server.client.type === 'connected') {
       menuOptions.push({
-        label: 'Clear authentication',
+        label: t('mcp.remote.menuClearAuth'),
         value: 'claudeai-clear-auth'
       });
     } else if (server.client.type !== 'disabled') {
       menuOptions.push({
-        label: 'Authenticate',
+        label: t('mcp.remote.menuAuthenticate'),
         value: 'claudeai-auth'
       });
     }
   } else {
     if (isEffectivelyAuthenticated) {
       menuOptions.push({
-        label: 'Re-authenticate',
+        label: t('mcp.remote.menuReAuth'),
         value: 'reauth'
       });
       menuOptions.push({
-        label: 'Clear authentication',
+        label: t('mcp.remote.menuClearAuth'),
         value: 'clear-auth'
       });
     }
     if (!isEffectivelyAuthenticated) {
       menuOptions.push({
-        label: 'Authenticate',
+        label: t('mcp.remote.menuAuthenticate'),
         value: 'auth'
       });
     }
@@ -515,12 +510,12 @@ export function MCPRemoteServerMenu({
   if (server.client.type !== 'disabled') {
     if (server.client.type !== 'needs-auth') {
       menuOptions.push({
-        label: 'Reconnect',
+        label: t('mcp.remote.menuReconnect'),
         value: 'reconnectMcpServer'
       });
     }
     menuOptions.push({
-      label: 'Disable',
+      label: t('mcp.remote.menuDisable'),
       value: 'toggle-enabled'
     });
   }
@@ -528,57 +523,56 @@ export function MCPRemoteServerMenu({
   // If there are no other options, add a back option so Select handles escape
   if (menuOptions.length === 0) {
     menuOptions.push({
-      label: 'Back',
+      label: t('mcp.remote.menuBack'),
       value: 'back'
     });
   }
   return <Box flexDirection="column">
       <Box flexDirection="column" paddingX={1} borderStyle={borderless ? undefined : 'round'}>
         <Box marginBottom={1}>
-          <Text bold>{capitalizedServerName} MCP Server</Text>
+          <Text bold>{capitalizedServerName} {t('mcp.remote.serverTitle')}</Text>
         </Box>
 
         <Box flexDirection="column" gap={0}>
           <Box>
-            <Text bold>Status: </Text>
-            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} disabled</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} connected</Text> : server.client.type === 'pending' ? <>
+            <Text bold>{t('mcp.remote.statusLabel')}: </Text>
+            {server.client.type === 'disabled' ? <Text>{color('inactive', theme)(figures.radioOff)} {t('mcp.list.statusDisabled')}</Text> : server.client.type === 'connected' ? <Text>{color('success', theme)(figures.tick)} {t('mcp.list.statusConnected')}</Text> : server.client.type === 'pending' ? <>
                 <Text dimColor>{figures.radioOff}</Text>
-                <Text> connecting…</Text>
+                <Text> {t('mcp.list.statusConnecting')}</Text>
               </> : server.client.type === 'needs-auth' ? <Text>
-                {color('warning', theme)(figures.triangleUpOutline)} needs
-                authentication
-              </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
+                {color('warning', theme)(figures.triangleUpOutline)} {t('mcp.list.statusNeedsAuth')}
+              </Text> : <Text>{color('error', theme)(figures.cross)} {t('mcp.list.statusFailed')}</Text>}
           </Box>
 
           {server.transport !== 'claudeai-proxy' && <Box>
-              <Text bold>Auth: </Text>
+              <Text bold>{t('mcp.remote.authLabel')}: </Text>
               {isEffectivelyAuthenticated ? <Text>
-                  {color('success', theme)(figures.tick)} authenticated
+                  {color('success', theme)(figures.tick)} {t('mcp.remote.authenticated')}
                 </Text> : <Text>
-                  {color('error', theme)(figures.cross)} not authenticated
+                  {color('error', theme)(figures.cross)} {t('mcp.remote.notAuthenticated')}
                 </Text>}
             </Box>}
 
           <Box>
-            <Text bold>URL: </Text>
+            <Text bold>{t('mcp.remote.urlLabel')}: </Text>
             <Text dimColor>{server.config.url}</Text>
           </Box>
 
           <Box>
-            <Text bold>Config location: </Text>
+            <Text bold>{t('mcp.remote.configLocationLabel')}: </Text>
             <Text dimColor>{describeMcpConfigFilePath(server.scope)}</Text>
           </Box>
 
           {server.client.type === 'connected' && <CapabilitiesSection serverToolsCount={serverToolsCount} serverPromptsCount={serverCommandsCount} serverResourcesCount={mcp.resources[server.name]?.length || 0} />}
 
           {server.client.type === 'connected' && serverToolsCount > 0 && <Box>
-              <Text bold>Tools: </Text>
-              <Text dimColor>{serverToolsCount} tools</Text>
+              <Text bold>{t('mcp.remote.toolsLabel')}: </Text>
+              <Text dimColor>{serverToolsCount} {t('mcp.remote.toolsCount')}</Text>
             </Box>}
         </Box>
 
         {error && <Box marginTop={1}>
-            <Text color="error">Error: {error}</Text>
+            <Text color="error">{t('common.error')}: {error}</Text>
           </Box>}
 
         {menuOptions.length > 0 && <Box marginTop={1}>
@@ -637,7 +631,7 @@ export function MCPRemoteServerMenu({
 
       <Box marginTop={1}>
         <Text dimColor italic>
-          {exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline>
+          {exitState.pending ? <>{t('mcp.remote.pressAgainToExit')}</> : <Byline>
               <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
               <KeyboardShortcutHint shortcut="Enter" action="select" />
               <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" />

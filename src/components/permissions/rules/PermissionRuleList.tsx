@@ -10,6 +10,7 @@ import type { CommandResultDisplay } from '../../../commands.js';
 import { Select } from '../../../components/CustomSelect/select.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { useSearchInput } from '../../../hooks/useSearchInput.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import type { KeyboardEvent } from '../../../ink/events/keyboard-event.js';
 import { Box, Text, useTerminalFocus } from '../../../ink.js';
 import { useKeybinding } from '../../../keybindings/useKeybinding.js';
@@ -36,6 +37,7 @@ type RuleSourceTextProps = {
 };
 function RuleSourceText(t0) {
   const $ = _c(4);
+  const { t } = useI18n();
   const {
     rule
   } = t0;
@@ -47,7 +49,7 @@ function RuleSourceText(t0) {
   } else {
     t1 = $[1];
   }
-  const t2 = `From ${t1}`;
+  const t2 = t('permission.rules.from', { source: t1 });
   let t3;
   if ($[2] !== t2) {
     t3 = <Text dimColor={true}>{t2}</Text>;
@@ -63,17 +65,18 @@ function RuleSourceText(t0) {
 function getRuleBehaviorLabel(ruleBehavior: PermissionBehavior): string {
   switch (ruleBehavior) {
     case 'allow':
-      return 'allowed';
+      return t('permission.rules.allowed');
     case 'deny':
-      return 'denied';
+      return t('permission.rules.denied');
     case 'ask':
-      return 'ask';
+      return t('permission.rules.ask');
   }
 }
 
 // Component for showing tool details and managing the interactive deletion workflow
 function RuleDetails(t0) {
   const $ = _c(42);
+  const { t } = useI18n();
   const {
     rule,
     onDelete,
@@ -135,7 +138,7 @@ function RuleDetails(t0) {
   const ruleDescription = t6;
   let t7;
   if ($[13] !== exitState.keyName || $[14] !== exitState.pending) {
-    t7 = <Box marginLeft={3}>{exitState.pending ? <Text dimColor={true}>Press {exitState.keyName} again to exit</Text> : <Text dimColor={true}>Esc to cancel</Text>}</Box>;
+    t7 = <Box marginLeft={3}>{exitState.pending ? <Text dimColor={true}>{t('common.pressAgainToExit', { key: exitState.keyName })}</Text> : <Text dimColor={true}>{t('permission.rules.escToCancel')}</Text>}</Box>;
     $[13] = exitState.keyName;
     $[14] = exitState.pending;
     $[15] = t7;
@@ -146,14 +149,14 @@ function RuleDetails(t0) {
   if (rule.source === "policySettings") {
     let t8;
     if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = <Text bold={true} color="permission">Rule details</Text>;
+      t8 = <Text bold={true} color="permission">{t('permission.rules.ruleDetails')}</Text>;
       $[16] = t8;
     } else {
       t8 = $[16];
     }
     let t9;
     if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-      t9 = <Text italic={true}>This rule is configured by managed settings and cannot be modified.{"\n"}Contact your system administrator for more information.</Text>;
+      t9 = <Text italic={true}>{t('permission.rules.managedRule')}</Text>;
       $[17] = t9;
     } else {
       t9 = $[17];
@@ -187,7 +190,7 @@ function RuleDetails(t0) {
   }
   let t9;
   if ($[25] !== t8) {
-    t9 = <Text bold={true} color="error">Delete {t8} tool?</Text>;
+    t9 = <Text bold={true} color="error">{t('permission.rules.deleteTool', { behavior: t8 })}</Text>;
     $[25] = t8;
     $[26] = t9;
   } else {
@@ -195,7 +198,7 @@ function RuleDetails(t0) {
   }
   let t10;
   if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
-    t10 = <Text>Are you sure you want to delete this permission rule?</Text>;
+    t10 = <Text>{t('permission.rules.areYouSureDelete')}</Text>;
     $[27] = t10;
   } else {
     t10 = $[27];
@@ -212,10 +215,10 @@ function RuleDetails(t0) {
   let t12;
   if ($[31] === Symbol.for("react.memo_cache_sentinel")) {
     t12 = [{
-      label: "Yes",
+      label: t('common.yes'),
       value: "yes"
     }, {
-      label: "No",
+      label: t('common.no'),
       value: "no"
     }];
     $[31] = t12;
@@ -363,6 +366,7 @@ function RulesTabContent(props) {
 // Composes the subtitle + search + Select for a single allow/ask/deny tab.
 function PermissionRulesTab(t0) {
   const $ = _c(27);
+  const { t } = useI18n();
   let T0;
   let T1;
   let handleToolSelect;
@@ -388,9 +392,9 @@ function PermissionRulesTab(t0) {
     let t8;
     if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
       t8 = {
-        allow: "Claude Code won't ask before using allowed tools.",
-        ask: "Claude Code will always ask for confirmation before using these tools.",
-        deny: "Claude Code will always reject requests to use denied tools."
+        allow: t('permission.rules.allowDescription'),
+        ask: t('permission.rules.askDescription'),
+        deny: t('permission.rules.denyDescription')
       };
       $[10] = t8;
     } else {
@@ -472,6 +476,7 @@ type Props = {
 };
 export function PermissionRuleList(t0) {
   const $ = _c(113);
+  const { t } = useI18n();
   const {
     onExit,
     initialTab,
@@ -601,7 +606,7 @@ export function PermissionRuleList(t0) {
       const options = [];
       if (tab !== "workspace" && tab !== "recent" && !query) {
         options.push({
-          label: `Add a new rule${figures.ellipsis}`,
+          label: t('permission.rules.addNewRule'),
           value: "add-new-rule"
         });
       }
@@ -811,7 +816,7 @@ export function PermissionRuleList(t0) {
         const approvedMsg = approvedDenials.length > 0 ? [`Approved ${approvedDenials.map(_temp4).join(", ")}`] : [];
         onExit([...approvedMsg, ...changes].join("\n"));
       } else {
-        onExit("Permissions dialog dismissed", {
+        onExit(t('permission.rules.permissionsDialogDismissed'), {
           display: "system"
         });
       }
@@ -965,7 +970,7 @@ export function PermissionRuleList(t0) {
         if (remember) {
           persistPermissionUpdate(permissionUpdate);
         }
-        setChanges(prev_5 => [...prev_5, `Added directory ${chalk.bold(path_0)} to workspace${remember ? " and saved to local settings" : " for this session"}`]);
+        setChanges(prev_5 => [...prev_5, remember ? t('permission.addDirectory.addedAndSaved', { path: path_0 }) : t('permission.addDirectory.addedForSession', { path: path_0 })]);
         setIsAddingWorkspaceDirectory(false);
       };
       $[56] = setAppState;
@@ -1067,14 +1072,14 @@ export function PermissionRuleList(t0) {
   const t23 = !isSearchMode;
   let t24;
   if ($[82] === Symbol.for("react.memo_cache_sentinel")) {
-    t24 = <Tab id="recent" title="Recently denied"><RecentDenialsTab onHeaderFocusChange={handleHeaderFocusChange} onStateChange={handleDenialStateChange} /></Tab>;
+    t24 = <Tab id="recent" title={t('permission.rules.tab.recentlyDenied')}><RecentDenialsTab onHeaderFocusChange={handleHeaderFocusChange} onStateChange={handleDenialStateChange} /></Tab>;
     $[82] = t24;
   } else {
     t24 = $[82];
   }
   let t25;
   if ($[83] !== sharedRulesProps) {
-    t25 = <Tab id="allow" title="Allow"><PermissionRulesTab tab="allow" {...sharedRulesProps} /></Tab>;
+    t25 = <Tab id="allow" title={t('permission.rules.tab.allow')}><PermissionRulesTab tab="allow" {...sharedRulesProps} /></Tab>;
     $[83] = sharedRulesProps;
     $[84] = t25;
   } else {
@@ -1082,7 +1087,7 @@ export function PermissionRuleList(t0) {
   }
   let t26;
   if ($[85] !== sharedRulesProps) {
-    t26 = <Tab id="ask" title="Ask"><PermissionRulesTab tab="ask" {...sharedRulesProps} /></Tab>;
+    t26 = <Tab id="ask" title={t('permission.rules.tab.ask')}><PermissionRulesTab tab="ask" {...sharedRulesProps} /></Tab>;
     $[85] = sharedRulesProps;
     $[86] = t26;
   } else {
@@ -1090,7 +1095,7 @@ export function PermissionRuleList(t0) {
   }
   let t27;
   if ($[87] !== sharedRulesProps) {
-    t27 = <Tab id="deny" title="Deny"><PermissionRulesTab tab="deny" {...sharedRulesProps} /></Tab>;
+    t27 = <Tab id="deny" title={t('permission.rules.tab.deny')}><PermissionRulesTab tab="deny" {...sharedRulesProps} /></Tab>;
     $[87] = sharedRulesProps;
     $[88] = t27;
   } else {
@@ -1098,14 +1103,14 @@ export function PermissionRuleList(t0) {
   }
   let t28;
   if ($[89] === Symbol.for("react.memo_cache_sentinel")) {
-    t28 = <Text>Claude Code can read files in the workspace, and make edits when auto-accept edits is on.</Text>;
+    t28 = <Text>{t('permission.rules.workspaceDescription')}</Text>;
     $[89] = t28;
   } else {
     t28 = $[89];
   }
   let t29;
   if ($[90] !== onExit || $[91] !== toolPermissionContext) {
-    t29 = <Tab id="workspace" title="Workspace"><Box flexDirection="column">{t28}<WorkspaceTab onExit={onExit} toolPermissionContext={toolPermissionContext} onRequestAddDirectory={handleRequestAddDirectory} onRequestRemoveDirectory={handleRequestRemoveDirectory} onHeaderFocusChange={handleHeaderFocusChange} /></Box></Tab>;
+    t29 = <Tab id="workspace" title={t('permission.rules.tab.workspace')}><Box flexDirection="column">{t28}<WorkspaceTab onExit={onExit} toolPermissionContext={toolPermissionContext} onRequestAddDirectory={handleRequestAddDirectory} onRequestRemoveDirectory={handleRequestRemoveDirectory} onHeaderFocusChange={handleHeaderFocusChange} /></Box></Tab>;
     $[90] = onExit;
     $[91] = toolPermissionContext;
     $[92] = t29;
@@ -1114,7 +1119,7 @@ export function PermissionRuleList(t0) {
   }
   let t30;
   if ($[93] !== defaultTab || $[94] !== isHidden || $[95] !== t23 || $[96] !== t25 || $[97] !== t26 || $[98] !== t27 || $[99] !== t29) {
-    t30 = <Tabs title="Permissions:" color="permission" defaultTab={defaultTab} hidden={isHidden} initialHeaderFocused={!hasDenials} navFromContent={t23}>{t24}{t25}{t26}{t27}{t29}</Tabs>;
+    t30 = <Tabs title={t('permission.rules.title')} color="permission" defaultTab={defaultTab} hidden={isHidden} initialHeaderFocused={!hasDenials} navFromContent={t23}>{t24}{t25}{t26}{t27}{t29}</Tabs>;
     $[93] = defaultTab;
     $[94] = isHidden;
     $[95] = t23;
@@ -1128,7 +1133,7 @@ export function PermissionRuleList(t0) {
   }
   let t31;
   if ($[101] !== defaultTab || $[102] !== exitState.keyName || $[103] !== exitState.pending || $[104] !== headerFocused || $[105] !== isSearchMode) {
-    t31 = <Box marginTop={1} paddingLeft={1}><Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : headerFocused ? <>←/→ tab switch · ↓ return · Esc cancel</> : isSearchMode ? <>Type to filter · Enter/↓ select · ↑ tabs · Esc clear</> : hasDenials && defaultTab === "recent" ? <>Enter approve · r retry · ↑↓ navigate · ←/→ switch · Esc cancel</> : <>↑↓ navigate · Enter select · Type to search · ←/→ switch · Esc cancel</>}</Text></Box>;
+    t31 = <Box marginTop={1} paddingLeft={1}><Text dimColor={true}>{exitState.pending ? <>{t('common.pressAgainToExit', { key: exitState.keyName })}</> : headerFocused ? <>{t('permission.rules.nav.tabSwitch')}</> : isSearchMode ? <>{t('permission.rules.nav.search')}</> : hasDenials && defaultTab === "recent" ? <>{t('permission.rules.nav.recentDenials')}</> : <>{t('permission.rules.nav.default')}</>}</Text></Box>;
     $[101] = defaultTab;
     $[102] = exitState.keyName;
     $[103] = exitState.pending;

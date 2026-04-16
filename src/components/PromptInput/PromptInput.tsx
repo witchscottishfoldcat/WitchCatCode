@@ -14,6 +14,7 @@ import { isQueuedCommandEditable, popAllEditable } from 'src/utils/messageQueueM
 import stripAnsi from 'strip-ansi';
 import { companionReservedColumns } from '../../buddy/CompanionSprite.js';
 import { findBuddyTriggerPositions, useBuddyNotification } from '../../buddy/useBuddyNotification.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { FastModePicker } from '../../commands/fast/fast.js';
 import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js';
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminalSetup/terminalSetup.js';
@@ -235,6 +236,7 @@ function PromptInput({
   insertTextRef,
   voiceInterimRange
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const mainLoopModel = useMainLoopModel();
   // A local-jsx command (e.g., /mcp while agent is running) renders a full-
   // screen dialog on top of PromptInput via the immediate-command path with
@@ -749,7 +751,7 @@ function PromptInput({
     if (thinkTriggers.length && isUltrathinkEnabled()) {
       addNotification({
         key: 'ultrathink-active',
-        text: 'Effort set to high for this turn',
+        text: t('promptInput.effortSetHigh'),
         priority: 'immediate',
         timeoutMs: 5000
       });
@@ -761,7 +763,7 @@ function PromptInput({
     if (feature('ULTRAPLAN') && ultraplanTriggers.length) {
       addNotification({
         key: 'ultraplan-active',
-        text: 'This prompt will launch an ultraplan session in Claude Code on the web',
+        text: t('promptInput.ultraplanActive'),
         priority: 'immediate',
         timeoutMs: 5000
       });
@@ -773,7 +775,7 @@ function PromptInput({
     if (isUltrareviewEnabled() && ultrareviewTriggers.length) {
       addNotification({
         key: 'ultrareview-active',
-        text: 'Run /ultrareview after Claude finishes to review these changes in the cloud',
+        text: t('promptInput.ultrareviewActive'),
         priority: 'immediate',
         timeoutMs: 5000
       });
@@ -818,7 +820,7 @@ function PromptInput({
         addNotification({
           key: 'stash-hint',
           jsx: <Text dimColor>
-              Tip:{' '}
+              {t('promptInput.tip')}{' '}
               <ConfigurableShortcutHint action="chat:stash" context="Chat" fallback="ctrl+s" description="stash" />
             </Text>,
           priority: 'immediate',
@@ -1045,7 +1047,7 @@ function PromptInput({
         if (result.success) {
           addNotification({
             key: 'direct-message-sent',
-            text: `Sent to @${result.recipientName}`,
+            text: t('promptInput.sentTo', { name: result.recipientName }),
             priority: 'immediate',
             timeoutMs: 3000
           });
@@ -1344,7 +1346,7 @@ function PromptInput({
       }
       addNotification({
         key: 'external-editor-error',
-        text: `External editor failed: ${errorMessage(err)}`,
+        text: t('promptInput.editorFailed', { error: errorMessage(err) }),
         color: 'warning',
         priority: 'high'
       });
@@ -1623,7 +1625,7 @@ function PromptInput({
         onImagePaste(imageData.base64, imageData.mediaType);
       } else {
         const shortcutDisplay = getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v');
-        const message = env.isSSH() ? "No image found in clipboard. You're SSH'd; try scp?" : `No image found in clipboard. Use ${shortcutDisplay} to paste images.`;
+        const message = env.isSSH() ? t('promptInput.noImageSSH') : t('promptInput.noImageUseShortcut', { shortcut: shortcutDisplay });
         addNotification({
           key: 'no-image-in-clipboard',
           text: message,
@@ -1875,9 +1877,8 @@ function PromptInput({
       const shortcut = MACOS_OPTION_SPECIAL_CHARS[char];
       const terminalName = getNativeCSIuTerminalDisplayName();
       const jsx = terminalName ? <Text dimColor>
-          To enable {shortcut}, set <Text bold>Option as Meta</Text> in{' '}
-          {terminalName} preferences (⌘,)
-        </Text> : <Text dimColor>To enable {shortcut}, run /terminal-setup</Text>;
+          {t('promptInput.optionMetaInTerminal', { shortcut, terminalName })}
+        </Text> : <Text dimColor>{t('promptInput.optionMetaTerminalSetup', { shortcut })}</Text>;
       addNotification({
         key: 'option-meta-hint',
         jsx,
@@ -2035,12 +2036,12 @@ function PromptInput({
     });
     setShowModelPicker(false);
     const effectiveFastMode = (isFastMode ?? false) && !wasFastModeDisabled;
-    let message = `Model set to ${modelDisplayString(model)}`;
+    let message = t('promptInput.modelSetTo', { model: modelDisplayString(model) });
     if (isBilledAsExtraUsage(model, effectiveFastMode, isOpus1mMergeEnabled())) {
-      message += ' · Billed as extra usage';
+      message += ' · ' + t('model.billedAsExtraUsage');
     }
     if (wasFastModeDisabled) {
-      message += ' · Fast mode OFF';
+      message += ' · ' + t('model.fastModeOff');
     }
     addNotification({
       key: 'model-switched',
@@ -2097,7 +2098,7 @@ function PromptInput({
     addNotification({
       key: 'thinking-toggled-hotkey',
       jsx: <Text color={enabled ? 'suggestion' : undefined} dimColor={!enabled}>
-            Thinking {enabled ? 'on' : 'off'}
+            {t('promptInput.thinkingState', { state: enabled ? t('promptInput.thinkingOn') : t('promptInput.thinkingOff') })}
           </Text>,
       priority: 'immediate',
       timeoutMs: 3000
@@ -2236,7 +2237,7 @@ function PromptInput({
   if (isExternalEditorActive) {
     return <Box flexDirection="row" alignItems="center" justifyContent="center" borderColor={getBorderColor()} borderStyle="round" borderLeft={false} borderRight={false} borderBottom width="100%">
         <Text dimColor italic>
-          Save and close editor to continue...
+          {t('promptInput.saveAndCloseEditor')}
         </Text>
       </Box>;
   }
@@ -2244,7 +2245,7 @@ function PromptInput({
   return <Box flexDirection="column" marginTop={briefOwnsGap ? 0 : 1}>
       {!isFullscreenEnvEnabled() && <PromptInputQueuedCommands />}
       {hasSuppressedDialogs && <Box marginTop={1} marginLeft={2}>
-          <Text dimColor>Waiting for permission…</Text>
+          <Text dimColor>{t('promptInput.waitingForPermission')}</Text>
         </Box>}
       <PromptInputStashNotice hasStash={stashedPrompt !== undefined} />
       {swarmBanner ? <>

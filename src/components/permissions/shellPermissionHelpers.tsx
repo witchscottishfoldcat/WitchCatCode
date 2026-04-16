@@ -1,6 +1,7 @@
 import { basename, sep } from 'path';
 import React, { type ReactNode } from 'react';
 import { getOriginalCwd } from '../../bootstrap/state.js';
+import { t } from '../../i18n/core.js';
 import { Text } from '../../ink.js';
 import type { PermissionUpdate } from '../../utils/permissions/PermissionUpdateSchema.js';
 import { permissionRuleExtractPrefix } from '../../utils/permissions/shellRuleMatching.js';
@@ -25,7 +26,7 @@ function commandListDisplayTruncated(commands: string[]): ReactNode {
   // Check if the plain text representation would be too long
   const plainText = commands.join(', ');
   if (plainText.length > 50) {
-    return 'similar';
+    return t('shellPermissionHelpers.similar');
   }
   return commandListDisplay(commands);
 }
@@ -52,7 +53,7 @@ function formatPathList(paths: string[]): ReactNode {
   return <Text>
       <Text bold>{names[0]}</Text>
       {sep}, <Text bold>{names[1]}</Text>
-      {sep} and {paths.length - 2} more
+      {sep} {t('shellPermissionHelpers.andNMore', { n: paths.length - 2 })}
     </Text>;
 }
 
@@ -95,14 +96,14 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const firstPath = readPaths[0]!;
       const dirName = basename(firstPath) || firstPath;
       return <Text>
-          Yes, allow reading from <Text bold>{dirName}</Text>
-          {sep} from this project
+          {t('shellPermissionHelpers.yesAllowReading', { path: dirName })}
+          {sep} {t('shellPermissionHelpers.fromThisProject')}
         </Text>;
     }
 
     // Multiple read paths
     return <Text>
-        Yes, allow reading from {formatPathList(readPaths)} from this project
+        {t('shellPermissionHelpers.yesAllowReading', { path: '' })} {formatPathList(readPaths)} {t('shellPermissionHelpers.fromThisProject')}
       </Text>;
   }
   if (hasDirectories && !hasReadPaths && !hasCommands) {
@@ -111,23 +112,21 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
       const firstDir = directories[0]!;
       const dirName = basename(firstDir) || firstDir;
       return <Text>
-          Yes, and always allow access to <Text bold>{dirName}</Text>
-          {sep} from this project
+          {t('shellPermissionHelpers.yesAlwaysAllowAccess', { path: dirName })}
+          {sep} {t('shellPermissionHelpers.fromThisProject')}
         </Text>;
     }
 
     // Multiple directories
     return <Text>
-        Yes, and always allow access to {formatPathList(directories)} from this
-        project
+        {t('shellPermissionHelpers.yesAlwaysAllowAccess', { path: '' })} {formatPathList(directories)} {t('shellPermissionHelpers.fromThisProject')}
       </Text>;
   }
   if (hasCommands && !hasDirectories && !hasReadPaths) {
     // Only shell command permissions
     return <Text>
-        {"Yes, and don't ask again for "}
-        {commandListDisplayTruncated(shellCommands)} commands in{' '}
-        <Text bold>{getOriginalCwd()}</Text>
+        {t('shellPermissionHelpers.yesDontAskAgain', { cmd: '' })}
+        {commandListDisplayTruncated(shellCommands)} {t('shellPermissionHelpers.commandsIn', { path: getOriginalCwd() })}
       </Text>;
   }
 
@@ -138,8 +137,7 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
     if (hasDirectories && hasReadPaths) {
       // Mixed - use generic "access to"
       return <Text>
-          Yes, and always allow access to {formatPathList(allPaths)} from this
-          project
+          {t('shellPermissionHelpers.yesAlwaysAllowAccess', { path: '' })} {formatPathList(allPaths)} {t('shellPermissionHelpers.fromThisProject')}
         </Text>;
     }
   }
@@ -150,12 +148,12 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
     // Keep it concise but informative
     if (allPaths.length === 1 && shellCommands.length === 1) {
       return <Text>
-          Yes, and allow access to {formatPathList(allPaths)} and{' '}
+          {t('shellPermissionHelpers.yesAllowAccess', { path: '' })} {formatPathList(allPaths)} and{' '}
           {commandListDisplayTruncated(shellCommands)} commands
         </Text>;
     }
     return <Text>
-        Yes, and allow {formatPathList(allPaths)} access and{' '}
+        {t('shellPermissionHelpers.yesAllow', { path: '' })} {formatPathList(allPaths)} access and{' '}
         {commandListDisplayTruncated(shellCommands)} commands
       </Text>;
   }

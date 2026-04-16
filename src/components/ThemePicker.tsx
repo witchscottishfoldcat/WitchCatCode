@@ -16,6 +16,7 @@ import { Byline } from './design-system/Byline.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { getColorModuleUnavailableReason, getSyntaxTheme } from './StructuredDiff/colorDiff.js';
 import { StructuredDiff } from './StructuredDiff.js';
+import { useI18n } from '../hooks/useI18n.js';
 export type ThemePickerProps = {
   onThemeSelect: (setting: ThemeSetting) => void;
   showIntroText?: boolean;
@@ -28,7 +29,7 @@ export type ThemePickerProps = {
   onCancel?: () => void;
 };
 export function ThemePicker(t0) {
-  const $ = _c(59);
+  const $ = _c(63);
   const {
     onThemeSelect,
     showIntroText: t1,
@@ -74,6 +75,7 @@ export function ThemePicker(t0) {
   const setAppState = useSetAppState();
   useRegisterKeybindingContext("ThemePicker");
   const syntaxToggleShortcut = useShortcutDisplay("theme:toggleSyntaxHighlighting", "ThemePicker", "ctrl+t");
+  const { t } = useI18n();
   let t8;
   if ($[3] !== setAppState || $[4] !== syntaxHighlightingDisabled) {
     t8 = () => {
@@ -109,90 +111,93 @@ export function ThemePicker(t0) {
   useKeybinding("theme:toggleSyntaxHighlighting", t8, t9);
   const exitState = useExitOnCtrlCDWithKeybindings(skipExitHandling ? _temp2 : undefined);
   let t10;
-  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[7] !== t) {
     t10 = [...(feature("AUTO_THEME") ? [{
-      label: "Auto (match terminal)",
+      label: t('config.theme.auto'),
       value: "auto" as const
     }] : []), {
-      label: "Dark mode",
+      label: t('config.theme.dark'),
       value: "dark"
     }, {
-      label: "Light mode",
+      label: t('config.theme.light'),
       value: "light"
     }, {
-      label: "Dark mode (colorblind-friendly)",
+      label: t('config.theme.darkDaltonized'),
       value: "dark-daltonized"
     }, {
-      label: "Light mode (colorblind-friendly)",
+      label: t('config.theme.lightDaltonized'),
       value: "light-daltonized"
     }, {
-      label: "Dark mode (ANSI colors only)",
+      label: t('config.theme.darkAnsi'),
       value: "dark-ansi"
     }, {
-      label: "Light mode (ANSI colors only)",
+      label: t('config.theme.lightAnsi'),
       value: "light-ansi"
     }];
-    $[7] = t10;
+    $[7] = t;
+    $[8] = t10;
   } else {
-    t10 = $[7];
+    t10 = $[8];
   }
   const themeOptions = t10;
   let t11;
-  if ($[8] !== showIntroText) {
-    t11 = showIntroText ? <Text>Let's get started.</Text> : <Text bold={true} color="permission">Theme</Text>;
-    $[8] = showIntroText;
-    $[9] = t11;
+  if ($[9] !== showIntroText || $[10] !== t) {
+    t11 = showIntroText ? <Text>{t('themePicker.letsGetStarted')}</Text> : <Text bold={true} color="permission">{t('themePicker.theme')}</Text>;
+    $[9] = showIntroText;
+    $[10] = t;
+    $[11] = t11;
   } else {
-    t11 = $[9];
+    t11 = $[11];
   }
   let t12;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t12 = <Text bold={true}>Choose the text style that looks best with your terminal</Text>;
-    $[10] = t12;
+  if ($[12] !== t) {
+    t12 = <Text bold={true}>{t('themePicker.chooseStyle')}</Text>;
+    $[12] = t;
+    $[13] = t12;
   } else {
-    t12 = $[10];
+    t12 = $[13];
   }
   let t13;
-  if ($[11] !== helpText || $[12] !== showHelpTextBelow) {
+  if ($[14] !== helpText || $[15] !== showHelpTextBelow) {
     t13 = helpText && !showHelpTextBelow && <Text dimColor={true}>{helpText}</Text>;
-    $[11] = helpText;
-    $[12] = showHelpTextBelow;
-    $[13] = t13;
+    $[14] = helpText;
+    $[15] = showHelpTextBelow;
+    $[16] = t13;
   } else {
-    t13 = $[13];
+    t13 = $[16];
   }
   let t14;
-  if ($[14] !== t13) {
+  if ($[17] !== t13) {
     t14 = <Box flexDirection="column">{t12}{t13}</Box>;
-    $[14] = t13;
-    $[15] = t14;
+    $[17] = t13;
+    $[18] = t14;
   } else {
-    t14 = $[15];
+    t14 = $[18];
   }
   let t15;
-  if ($[16] !== setPreviewTheme) {
+  if ($[19] !== setPreviewTheme) {
     t15 = setting => {
       setPreviewTheme(setting as ThemeSetting);
     };
-    $[16] = setPreviewTheme;
-    $[17] = t15;
+    $[19] = setPreviewTheme;
+    $[20] = t15;
   } else {
-    t15 = $[17];
+    t15 = $[20];
   }
   let t16;
-  if ($[18] !== onThemeSelect || $[19] !== savePreview) {
+  if ($[21] !== onThemeSelect || $[22] !== savePreview) {
     t16 = setting_0 => {
       savePreview();
       onThemeSelect(setting_0 as ThemeSetting);
     };
-    $[18] = onThemeSelect;
-    $[19] = savePreview;
-    $[20] = t16;
+    $[21] = onThemeSelect;
+    $[22] = savePreview;
+    $[23] = t16;
   } else {
-    t16 = $[20];
+    t16 = $[23];
   }
   let t17;
-  if ($[21] !== cancelPreview || $[22] !== onCancelProp || $[23] !== skipExitHandling) {
+  if ($[24] !== cancelPreview || $[25] !== onCancelProp || $[26] !== skipExitHandling) {
     t17 = skipExitHandling ? () => {
       cancelPreview();
       onCancelProp?.();
@@ -200,36 +205,36 @@ export function ThemePicker(t0) {
       cancelPreview();
       await gracefulShutdown(0);
     };
-    $[21] = cancelPreview;
-    $[22] = onCancelProp;
-    $[23] = skipExitHandling;
-    $[24] = t17;
+    $[24] = cancelPreview;
+    $[25] = onCancelProp;
+    $[26] = skipExitHandling;
+    $[27] = t17;
   } else {
-    t17 = $[24];
+    t17 = $[27];
   }
   let t18;
-  if ($[25] !== t15 || $[26] !== t16 || $[27] !== t17 || $[28] !== themeSetting) {
+  if ($[28] !== t15 || $[29] !== t16 || $[30] !== t17 || $[31] !== themeSetting) {
     t18 = <Select options={themeOptions} onFocus={t15} onChange={t16} onCancel={t17} visibleOptionCount={themeOptions.length} defaultValue={themeSetting} defaultFocusValue={themeSetting} />;
-    $[25] = t15;
-    $[26] = t16;
-    $[27] = t17;
-    $[28] = themeSetting;
-    $[29] = t18;
+    $[28] = t15;
+    $[29] = t16;
+    $[30] = t17;
+    $[31] = themeSetting;
+    $[32] = t18;
   } else {
-    t18 = $[29];
+    t18 = $[32];
   }
   let t19;
-  if ($[30] !== t11 || $[31] !== t14 || $[32] !== t18) {
+  if ($[33] !== t11 || $[34] !== t14 || $[35] !== t18) {
     t19 = <Box flexDirection="column" gap={1}>{t11}{t14}{t18}</Box>;
-    $[30] = t11;
-    $[31] = t14;
-    $[32] = t18;
-    $[33] = t19;
+    $[33] = t11;
+    $[34] = t14;
+    $[35] = t18;
+    $[36] = t19;
   } else {
-    t19 = $[33];
+    t19 = $[36];
   }
   let t20;
-  if ($[34] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[37] === Symbol.for("react.memo_cache_sentinel")) {
     t20 = {
       oldStart: 1,
       newStart: 1,
@@ -237,90 +242,91 @@ export function ThemePicker(t0) {
       newLines: 3,
       lines: [" function greet() {", "-  console.log(\"Hello, World!\");", "+  console.log(\"Hello, Claude!\");", " }"]
     };
-    $[34] = t20;
+    $[37] = t20;
   } else {
-    t20 = $[34];
+    t20 = $[37];
   }
   let t21;
-  if ($[35] !== columns) {
+  if ($[38] !== columns) {
     t21 = <Box flexDirection="column" borderTop={true} borderBottom={true} borderLeft={false} borderRight={false} borderStyle="dashed" borderColor="subtle"><StructuredDiff patch={t20} dim={false} filePath="demo.js" firstLine={null} width={columns} /></Box>;
-    $[35] = columns;
-    $[36] = t21;
+    $[38] = columns;
+    $[39] = t21;
   } else {
-    t21 = $[36];
+    t21 = $[39];
   }
-  const t22 = colorModuleUnavailableReason === "env" ? `Syntax highlighting disabled (via CLAUDE_CODE_SYNTAX_HIGHLIGHT=${process.env.CLAUDE_CODE_SYNTAX_HIGHLIGHT})` : syntaxHighlightingDisabled ? `Syntax highlighting disabled (${syntaxToggleShortcut} to enable)` : syntaxTheme ? `Syntax theme: ${syntaxTheme.theme}${syntaxTheme.source ? ` (from ${syntaxTheme.source})` : ""} (${syntaxToggleShortcut} to disable)` : `Syntax highlighting enabled (${syntaxToggleShortcut} to disable)`;
+  const t22 = colorModuleUnavailableReason === "env" ? t('themePicker.syntaxDisabledEnv', { value: process.env.CLAUDE_CODE_SYNTAX_HIGHLIGHT }) : syntaxHighlightingDisabled ? t('themePicker.syntaxDisabled', { shortcut: syntaxToggleShortcut }) : syntaxTheme ? t('themePicker.syntaxTheme', { theme: syntaxTheme.theme, source: syntaxTheme.source ? t('themePicker.syntaxFrom', { source: syntaxTheme.source }) : '', shortcut: syntaxToggleShortcut }) : t('themePicker.syntaxEnabled', { shortcut: syntaxToggleShortcut });
   let t23;
-  if ($[37] !== t22) {
+  if ($[40] !== t22) {
     t23 = <Text dimColor={true}>{" "}{t22}</Text>;
-    $[37] = t22;
-    $[38] = t23;
+    $[40] = t22;
+    $[41] = t23;
   } else {
-    t23 = $[38];
+    t23 = $[41];
   }
   let t24;
-  if ($[39] !== t21 || $[40] !== t23) {
+  if ($[42] !== t21 || $[43] !== t23) {
     t24 = <Box flexDirection="column" width="100%">{t21}{t23}</Box>;
-    $[39] = t21;
-    $[40] = t23;
-    $[41] = t24;
+    $[42] = t21;
+    $[43] = t23;
+    $[44] = t24;
   } else {
-    t24 = $[41];
+    t24 = $[44];
   }
   let t25;
-  if ($[42] !== t19 || $[43] !== t24) {
+  if ($[45] !== t19 || $[46] !== t24) {
     t25 = <Box flexDirection="column" gap={1}>{t19}{t24}</Box>;
-    $[42] = t19;
-    $[43] = t24;
-    $[44] = t25;
+    $[45] = t19;
+    $[46] = t24;
+    $[47] = t25;
   } else {
-    t25 = $[44];
+    t25 = $[47];
   }
   const content = t25;
   if (!showIntroText) {
     let t26;
-    if ($[45] !== content) {
+    if ($[48] !== content) {
       t26 = <Box flexDirection="column">{content}</Box>;
-      $[45] = content;
-      $[46] = t26;
+      $[48] = content;
+      $[49] = t26;
     } else {
-      t26 = $[46];
+      t26 = $[49];
     }
     let t27;
-    if ($[47] !== helpText || $[48] !== showHelpTextBelow) {
+    if ($[50] !== helpText || $[51] !== showHelpTextBelow) {
       t27 = showHelpTextBelow && helpText && <Box marginLeft={3}><Text dimColor={true}>{helpText}</Text></Box>;
-      $[47] = helpText;
-      $[48] = showHelpTextBelow;
-      $[49] = t27;
+      $[50] = helpText;
+      $[51] = showHelpTextBelow;
+      $[52] = t27;
     } else {
-      t27 = $[49];
+      t27 = $[52];
     }
     let t28;
-    if ($[50] !== exitState || $[51] !== hideEscToCancel) {
-      t28 = !hideEscToCancel && <Box><Text dimColor={true} italic={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}</Text></Box>;
-      $[50] = exitState;
-      $[51] = hideEscToCancel;
-      $[52] = t28;
+    if ($[53] !== exitState || $[54] !== hideEscToCancel || $[55] !== t) {
+      t28 = !hideEscToCancel && <Box><Text dimColor={true} italic={true}>{exitState.pending ? <>{t('themePicker.pressAgainToExit', { key: exitState.keyName })}</> : <Byline><KeyboardShortcutHint shortcut="Enter" action="select" /><KeyboardShortcutHint shortcut="Esc" action="cancel" /></Byline>}</Text></Box>;
+      $[53] = exitState;
+      $[54] = hideEscToCancel;
+      $[55] = t;
+      $[56] = t28;
     } else {
-      t28 = $[52];
+      t28 = $[56];
     }
     let t29;
-    if ($[53] !== t27 || $[54] !== t28) {
+    if ($[57] !== t27 || $[58] !== t28) {
       t29 = <Box marginTop={1}>{t27}{t28}</Box>;
-      $[53] = t27;
-      $[54] = t28;
-      $[55] = t29;
+      $[57] = t27;
+      $[58] = t28;
+      $[59] = t29;
     } else {
-      t29 = $[55];
+      t29 = $[59];
     }
     let t30;
-    if ($[56] !== t26 || $[57] !== t29) {
+    if ($[60] !== t26 || $[61] !== t29) {
       t30 = <>{t26}{t29}</>;
-      $[56] = t26;
-      $[57] = t29;
-      $[58] = t30;
+      $[60] = t26;
+      $[61] = t29;
+      $[62] = t30;
     } else {
-      t30 = $[58];
+      t30 = $[62];
     }
     return t30;
   }

@@ -52,8 +52,9 @@ import {
 } from '../claudeAiLimits.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
+import { t } from '../../i18n/core.js'
 
-export const API_ERROR_MESSAGE_PREFIX = 'API Error'
+export const API_ERROR_MESSAGE_PREFIX = t('error.apiError')
 
 export function startsWithApiErrorPrefix(text: string): boolean {
   return (
@@ -61,7 +62,7 @@ export function startsWithApiErrorPrefix(text: string): boolean {
     text.startsWith(`Please run /login · ${API_ERROR_MESSAGE_PREFIX}`)
   )
 }
-export const PROMPT_TOO_LONG_ERROR_MESSAGE = 'Prompt is too long'
+export const PROMPT_TOO_LONG_ERROR_MESSAGE = t('error.promptTooLong')
 
 export function isPromptTooLongMessage(msg: AssistantMessage): boolean {
   if (!msg.isApiErrorMessage) {
@@ -153,51 +154,51 @@ export function isMediaSizeErrorMessage(msg: AssistantMessage): boolean {
     isMediaSizeError(msg.errorDetails)
   )
 }
-export const CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE = 'Credit balance is too low'
-export const INVALID_API_KEY_ERROR_MESSAGE = 'Not logged in · Please run /login'
+export const CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE = t('error.creditBalanceTooLow')
+export const INVALID_API_KEY_ERROR_MESSAGE = t('error.notLoggedIn')
 export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
-  'Invalid API key · Fix external API key'
+  t('error.invalidApiKeyExternal')
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
-  'Your WITCHCAT_API_KEY belongs to a disabled organization · Unset the environment variable to use your subscription instead'
+  t('error.orgDisabledWithOAuth')
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY =
-  'Your WITCHCAT_API_KEY belongs to a disabled organization · Update or unset the environment variable'
+  t('error.orgDisabledEnvKey')
 export const TOKEN_REVOKED_ERROR_MESSAGE =
-  'OAuth token revoked · Please run /login'
+  t('error.oauthTokenRevoked')
 export const CCR_AUTH_ERROR_MESSAGE =
-  'Authentication error · This may be a temporary network issue, please try again'
-export const REPEATED_529_ERROR_MESSAGE = 'Repeated 529 Overloaded errors'
+  t('error.ccrAuthError')
+export const REPEATED_529_ERROR_MESSAGE = t('error.repeated529')
 export const CUSTOM_OFF_SWITCH_MESSAGE =
   'Opus is experiencing high load, please use /model to switch to Sonnet'
 export const API_TIMEOUT_ERROR_MESSAGE = 'Request timed out'
 export function getPdfTooLargeErrorMessage(): string {
   const limits = `max ${API_PDF_MAX_PAGES} pages, ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
   return getIsNonInteractiveSession()
-    ? `PDF too large (${limits}). Try reading the file a different way (e.g., extract text with pdftotext).`
-    : `PDF too large (${limits}). Double press esc to go back and try again, or use pdftotext to convert to text first.`
+    ? t('error.pdfTooLarge.nonInteractive', { limits })
+    : t('error.pdfTooLarge.interactive', { limits })
 }
 export function getPdfPasswordProtectedErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'PDF is password protected. Try using a CLI tool to extract or convert the PDF.'
-    : 'PDF is password protected. Please double press esc to edit your message and try again.'
+    ? t('error.pdfPasswordProtected.nonInteractive')
+    : t('error.pdfPasswordProtected.interactive')
 }
 export function getPdfInvalidErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'The PDF file was not valid. Try converting it to text first (e.g., pdftotext).'
-    : 'The PDF file was not valid. Double press esc to go back and try again with a different file.'
+    ? t('error.pdfInvalid.nonInteractive')
+    : t('error.pdfInvalid.interactive')
 }
 export function getImageTooLargeErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'Image was too large. Try resizing the image or using a different approach.'
-    : 'Image was too large. Double press esc to go back and try again with a smaller image.'
+    ? t('error.imageTooLarge.nonInteractive')
+    : t('error.imageTooLarge.interactive')
 }
 export function getRequestTooLargeErrorMessage(): string {
   const limits = `max ${formatFileSize(PDF_TARGET_RAW_SIZE)}`
   return getIsNonInteractiveSession()
-    ? `Request too large (${limits}). Try with a smaller file.`
-    : `Request too large (${limits}). Double press esc to go back and try with a smaller file.`
+    ? t('error.requestTooLarge.nonInteractive', { limits })
+    : t('error.requestTooLarge.interactive', { limits })
 }
 export const OAUTH_ORG_NOT_ALLOWED_ERROR_MESSAGE =
-  'Your account does not have access to Claude Code. Please run /login.'
+  t('error.oauthOrgNotAllowed')
 
 export function getTokenRevokedErrorMessage(): string {
   return getIsNonInteractiveSession()
@@ -207,7 +208,7 @@ export function getTokenRevokedErrorMessage(): string {
 
 export function getOauthOrgNotAllowedErrorMessage(): string {
   return getIsNonInteractiveSession()
-    ? 'Your organization does not have access to Claude. Please login again or contact your administrator.'
+    ? t('error.oauthOrgNotAllowed.nonInteractive')
     : OAUTH_ORG_NOT_ALLOWED_ERROR_MESSAGE
 }
 
@@ -541,10 +542,10 @@ export function getAssistantMessageFromError(
     // (e.g. 1M context without Extra Usage) and infra capacity 429s land here.
     if (error.message.includes('Extra usage is required for long context')) {
       const hint = getIsNonInteractiveSession()
-        ? 'enable extra usage at claude.ai/settings/usage, or use --model to switch to standard context'
-        : 'run /extra-usage to enable, or /model to switch to standard context'
+        ? t('error.extraUsageRequired.nonInteractive')
+        : t('error.extraUsageRequired.interactive')
       return createAssistantAPIErrorMessage({
-        content: `${API_ERROR_MESSAGE_PREFIX}: Extra usage is required for 1M context · ${hint}`,
+        content: `${API_ERROR_MESSAGE_PREFIX}: ${t('error.extraUsageRequired')} · ${hint}`,
         error: 'rate_limit',
       })
     }
@@ -554,7 +555,7 @@ export function getAssistantMessageFromError(
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) · ${detail || 'this may be a temporary capacity issue — check status.anthropic.com'}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: ${t('error.rateLimitRejected')} · ${detail || t('error.rateLimitTemporaryCapacity')}`,
       error: 'rate_limit',
     })
   }
@@ -651,7 +652,7 @@ export function getAssistantMessageFromError(
     error.message.includes('anthropic-beta')
   ) {
     return createAssistantAPIErrorMessage({
-      content: 'Auto mode is unavailable for your plan',
+      content: t('error.autoModeUnavailable'),
       error: 'invalid_request',
     })
   }
@@ -687,19 +688,19 @@ export function getAssistantMessageFromError(
     }
 
     if (process.env.USER_TYPE === 'ant') {
-      const baseMessage = `API Error: 400 ${error.message}\n\nRun /share and post the JSON file to ${MACRO.FEEDBACK_CHANNEL}.`
+      const baseMessage = t('error.toolUseConcurrency.ant', { message: error.message, channel: MACRO.FEEDBACK_CHANNEL })
       const rewindInstruction = getIsNonInteractiveSession()
         ? ''
-        : ' Then, use /rewind to recover the conversation.'
+        : ` ${t('error.toolUseConcurrency.rewind')}`
       return createAssistantAPIErrorMessage({
         content: baseMessage + rewindInstruction,
         error: 'invalid_request',
       })
     } else {
-      const baseMessage = 'API Error: 400 due to tool use concurrency issues.'
+      const baseMessage = t('error.toolUseConcurrency.generic')
       const rewindInstruction = getIsNonInteractiveSession()
         ? ''
-        : ' Run /rewind to recover the conversation.'
+        : ` ${t('error.rewind.recover')}`
       return createAssistantAPIErrorMessage({
         content: baseMessage + rewindInstruction,
         error: 'invalid_request',
@@ -744,7 +745,7 @@ export function getAssistantMessageFromError(
   ) {
     return createAssistantAPIErrorMessage({
       content:
-        'Claude Opus is not available with the Claude Pro plan. If you have updated your subscription plan recently, run /logout and /login for the plan to take effect.',
+        t('error.opusNotAvailablePro'),
       error: 'invalid_request',
     })
   }
@@ -905,8 +906,8 @@ export function getAssistantMessageFromError(
     const fallbackSuggestion = get3PModelFallbackSuggestion(model)
     return createAssistantAPIErrorMessage({
       content: fallbackSuggestion
-        ? `${API_ERROR_MESSAGE_PREFIX} (${model}): ${error.message}. Try ${switchCmd} to switch to ${fallbackSuggestion}.`
-        : `${API_ERROR_MESSAGE_PREFIX} (${model}): ${error.message}. Run ${switchCmd} to pick a different model.`,
+        ? t('error.bedrockModelAccess.withSuggestion', { prefix: API_ERROR_MESSAGE_PREFIX, model, errorMsg: error.message, switchCmd, fallbackSuggestion })
+        : t('error.bedrockModelAccess.withoutSuggestion', { prefix: API_ERROR_MESSAGE_PREFIX, model, errorMsg: error.message, switchCmd }),
       error: 'invalid_request',
     })
   }
@@ -923,13 +924,10 @@ export function getAssistantMessageFromError(
     }
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
     const fallbackSuggestion = get3PModelFallbackSuggestion(model)
-    const customGatewayHint = process.env.ANTHROPIC_BASE_URL
-      ? ` Current gateway: ${process.env.ANTHROPIC_BASE_URL}. If this is a relay/proxy, keep the custom model name as provided by that service.`
-      : ''
     return createAssistantAPIErrorMessage({
       content: fallbackSuggestion
-        ? `The model ${model} is not available on your ${getAPIProvider()} deployment. Try ${switchCmd} to switch to ${fallbackSuggestion}, or ask your admin to enable this model.${customGatewayHint}`
-        : `There's an issue with the selected model (${model}). It may not exist or you may not have access to it. Run ${switchCmd} to pick a different model.${customGatewayHint}`,
+        ? t('error.modelNotAvailable.withSuggestion', { model, provider: getAPIProvider(), switchCmd, fallbackSuggestion })
+        : t('error.modelNotAvailable.withoutSuggestion', { model, switchCmd }),
       error: 'invalid_request',
     })
   }
@@ -1213,12 +1211,12 @@ export function getErrorMessageIfRefusal(
   logEvent('tengu_refusal_api_response', {})
 
   const baseMessage = getIsNonInteractiveSession()
-    ? `${API_ERROR_MESSAGE_PREFIX}: Claude Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Try rephrasing the request or attempting a different approach.`
-    : `${API_ERROR_MESSAGE_PREFIX}: Claude Code is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Please double press esc to edit your last message or start a new session for Claude Code to assist with a different task.`
+    ? `${API_ERROR_MESSAGE_PREFIX}: ${t('error.refusal.nonInteractive')}`
+    : `${API_ERROR_MESSAGE_PREFIX}: ${t('error.refusal.interactive')}`
 
   const modelSuggestion =
     model !== 'claude-sonnet-4-20250514'
-      ? ' If you are seeing this refusal repeatedly, try running /model claude-sonnet-4-20250514 to switch models.'
+      ? ` ${t('error.refusalModelSuggestion')}`
       : ''
 
   return createAssistantAPIErrorMessage({

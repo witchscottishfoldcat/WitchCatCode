@@ -1,7 +1,8 @@
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 const releaseNotes: Command = {
-  description: 'View release notes',
+  description: t('command.release-notes.description'),
   name: 'release-notes',
   type: 'local',
   supportsNonInteractive: true,

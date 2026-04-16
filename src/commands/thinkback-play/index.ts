@@ -1,12 +1,13 @@
 import type { Command } from '../../commands.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { t } from '../../i18n/core.js'
 
 // Hidden command that just plays the animation
 // Called by the thinkback skill after generation is complete
 const thinkbackPlay = {
   type: 'local',
   name: 'thinkback-play',
-  description: 'Play the thinkback animation',
+  description: t('command.thinkback-play.description'),
   isEnabled: () =>
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_thinkback'),
   isHidden: true,
