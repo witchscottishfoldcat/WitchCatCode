@@ -573,6 +573,7 @@ const zhCN = {
   'model.withEffort': '思考强度 {effort}',
   'model.withReasoning': '推理强度 {effort}',
   'model.keptModel': '保持模型为 {model}',
+  'model.resetToDefault': '已重置为默认模型',
   'model.fastModeOn': '快速模式 已开启',
   'model.fastModeOff': '快速模式 已关闭',
   'model.billedAsExtraUsage': '按额外用量计费',

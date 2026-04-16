@@ -573,6 +573,7 @@ const en = {
   'model.withEffort': 'with {effort} effort',
   'model.withReasoning': 'with {effort} reasoning',
   'model.keptModel': 'Kept model as {model}',
+  'model.resetToDefault': 'Reset to default model',
   'model.fastModeOn': 'Fast mode ON',
   'model.fastModeOff': 'Fast mode OFF',
   'model.billedAsExtraUsage': 'Billed as extra usage',

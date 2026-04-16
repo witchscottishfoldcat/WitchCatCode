@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿import { c as _c } from "react/compiler-runtime";
+﻿﻿import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import * as React from 'react';
 import { t } from '../../i18n/core.js';
@@ -24,6 +24,7 @@ import {
   getReasoningMode,
 } from '../../utils/modelReasoning.js';
 import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
+import { getModelOptions, type ModelOption } from '../../utils/model/modelOptions.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
 
@@ -121,6 +122,28 @@ function getConfiguredModelOptions(): ConfiguredModelOption[] {
         model === storage.activeModel,
     }));
   });
+}
+
+function isConfiguredProviderValue(value: string): boolean {
+  return value.includes('::')
+}
+
+const BUILTIN_NO_PREFERENCE = '__NO_PREFERENCE__'
+
+function getUnifiedModelOptions(fastMode: boolean): ConfiguredModelOption[] {
+  const configuredOptions = getConfiguredModelOptions();
+  const builtinOptions = getModelOptions(fastMode);
+  const builtinAsConfigured: ConfiguredModelOption[] = builtinOptions.map(opt => ({
+    value: opt.value ?? BUILTIN_NO_PREFERENCE,
+    label: opt.label,
+    description: opt.description,
+    model: opt.value ?? '',
+    providerId: 'builtin',
+    providerKind: 'anthropic-like' as const,
+    authMode: 'api-key' as ProviderAuthMode,
+    isCurrent: false,
+  }));
+  return [...builtinAsConfigured, ...configuredOptions];
 }
 
 function parseConfiguredOptionValue(value: string): {
@@ -262,8 +285,8 @@ function ModelPickerWrapper({
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession);
   const isFastMode = useAppState(s => s.fastMode);
   const setAppState = useSetAppState();
-  const configuredOptions = getConfiguredModelOptions();
-  const currentConfiguredValue = configuredOptions.find(option => option.isCurrent)?.value ?? mainLoopModel;
+  const unifiedOptions = getUnifiedModelOptions(isFastMode ?? false);
+  const currentConfiguredValue = unifiedOptions.find(option => option.isCurrent)?.value ?? mainLoopModel;
 
   function handleCancel(): void {
     logEvent('tengu_model_command_menu', {
@@ -276,8 +299,22 @@ function ModelPickerWrapper({
   }
 
   function handleSelect(model: string | null, reasoning: ReasoningSelection | undefined): void {
-    const persistedModel = persistSelectedConfiguredModel(model, reasoning);
-    const selectedModel = persistedModel ?? model;
+    if (!model || model === '__NO_PREFERENCE__') {
+      setAppState(prev => ({
+        ...prev,
+        mainLoopModel: null,
+        mainLoopModelForSession: null,
+      }));
+      onDone(t('model.resetToDefault'));
+      return;
+    }
+
+    let selectedModel: string | null;
+    if (isConfiguredProviderValue(model)) {
+      selectedModel = persistSelectedConfiguredModel(model, reasoning) ?? model;
+    } else {
+      selectedModel = model;
+    }
     logEvent('tengu_model_command_menu', {
       action: selectedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       from_model:
@@ -339,12 +376,8 @@ function ModelPickerWrapper({
       onCancel={handleCancel}
       isStandaloneCommand={true}
       showFastModeNotice={showFastModeNotice}
-      headerText={
-        configuredOptions.length > 0
-          ? t('model.headerText')
-          : undefined
-      }
-      customOptions={configuredOptions.length > 0 ? configuredOptions : undefined}
+      headerText={t('model.headerText')}
+      customOptions={unifiedOptions}
       skipSettingsWrite={false}
     />
   );
