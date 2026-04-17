@@ -59,6 +59,7 @@ export type ProviderConfig = {
   baseURL?: string
   apiKey?: string
   models: string[]
+  maxTokens?: number
   reasoning?: ProviderReasoningConfig
   oauth?: GeminiOAuthConfig | OpenAIOAuthConfig
 }
@@ -301,6 +302,7 @@ function normalizeProviderConfig(value: Record<string, unknown>): ProviderConfig
     baseURL,
     apiKey: typeof value.apiKey === 'string' ? value.apiKey : undefined,
     models: dedupeModels(value.models),
+    maxTokens: typeof value.maxTokens === 'number' ? value.maxTokens : undefined,
     reasoning: normalizeProviderReasoning(value.reasoning),
     oauth:
       kind === 'openai-like'

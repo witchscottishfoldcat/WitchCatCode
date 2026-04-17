@@ -93,6 +93,7 @@ import {
   getRuntimeMainLoopModel,
   renderModelName,
 } from './utils/model/model.js'
+import { resolveProviderForModel } from './utils/providerRouter.js'
 import {
   doesMostRecentAssistantMessageExceed200k,
   finalContextTokensFromLastResponse,
@@ -595,6 +596,8 @@ async function* queryLoop(
         permissionMode === 'plan' &&
         doesMostRecentAssistantMessageExceed200k(messagesForQuery),
     })
+    const providerConfig = resolveProviderForModel(currentModel)
+    const providerMaxTokens = providerConfig.maxTokens
 
     queryCheckpoint('query_setup_end')
 
@@ -704,6 +707,7 @@ async function* queryLoop(
               hasAppendSystemPrompt:
                 !!toolUseContext.options.appendSystemPrompt,
               maxOutputTokensOverride,
+              providerMaxTokens,
               fetchOverride: dumpPromptsFetch,
               mcpTools: appState.mcp.tools,
               hasPendingMcpServers: appState.mcp.clients.some(

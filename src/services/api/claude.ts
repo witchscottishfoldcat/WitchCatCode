@@ -690,6 +690,7 @@ export type Options = {
   isNonInteractiveSession: boolean
   extraToolSchemas?: BetaToolUnion[]
   maxOutputTokensOverride?: number
+  providerMaxTokens?: number
   fallbackModel?: string
   onStreamingFallback?: () => void
   querySource: QuerySource
@@ -1629,6 +1630,10 @@ async function* queryModel(
       options.maxOutputTokensOverride ||
       getMaxOutputTokensForModel(options.model)
 
+    const effectiveMaxTokens = options.providerMaxTokens
+      ? Math.min(maxOutputTokens, options.providerMaxTokens)
+      : maxOutputTokens
+
     const hasThinking =
       thinkingConfig.type !== 'disabled' &&
       !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_THINKING)
@@ -1748,7 +1753,7 @@ async function* queryModel(
       tool_choice: options.toolChoice,
       ...(useBetas && { betas: betasParams }),
       metadata: getAPIMetadata(),
-      max_tokens: maxOutputTokens,
+      max_tokens: effectiveMaxTokens,
       thinking,
       ...(temperature !== undefined && { temperature }),
       ...(contextManagement &&

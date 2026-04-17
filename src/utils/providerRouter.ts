@@ -11,6 +11,7 @@ export type ResolvedProvider = {
   baseURL: string | undefined
   apiKey: string | undefined
   authMode: string | undefined
+  maxTokens: number | undefined
   reasoning: ProviderConfig['reasoning']
   oauth: ProviderConfig['oauth']
 }
@@ -44,6 +45,7 @@ export function resolveProviderForModel(model?: string): ResolvedProvider {
       baseURL: process.env.ANTHROPIC_BASE_URL,
       apiKey: process.env.WITCHCAT_API_KEY || process.env.ANTHROPIC_API_KEY,
       authMode: undefined,
+      maxTokens: undefined,
       reasoning: undefined,
       oauth: undefined,
     }
@@ -55,6 +57,7 @@ export function resolveProviderForModel(model?: string): ResolvedProvider {
     baseURL: provider.baseURL ?? process.env.ANTHROPIC_BASE_URL,
     apiKey: provider.apiKey ?? process.env.WITCHCAT_API_KEY ?? process.env.ANTHROPIC_API_KEY,
     authMode: provider.authMode,
+    maxTokens: provider.maxTokens,
     reasoning: provider.reasoning,
     oauth: provider.oauth,
   }
