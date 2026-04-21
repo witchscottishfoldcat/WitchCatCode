@@ -1,6 +1,6 @@
 {
-  "name": "@witchcat-code/cli",
-  "version": "1.0.0",
+  "name": "@thewitchcat/cli",
+  "version": "1.0.1",
   "private": false,
   "description": "WitchcatCode - Multi-provider native CLI for AI code assistants",
   "license": "MIT",
