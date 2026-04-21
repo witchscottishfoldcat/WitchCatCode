@@ -27,6 +27,7 @@ import {
   setScrollRegion,
 } from './termio/csi.js'
 import { LINK_END, link as oscLink } from './termio/osc.js'
+import { hasCursorUpViewportYankBug } from './terminal.js'
 
 type State = {
   previousOutput: string
@@ -262,7 +263,15 @@ export class LogUpdate {
       // eraseLines only works within the viewport - it can't clear scrollback.
       // If we need to clear more lines than fit in the viewport, some are in
       // scrollback, so we need a full reset.
-      if (linesToClear > prev.viewport.height) {
+      //
+      // Also full-reset on terminals with the cursor-up viewport-yank bug
+      // (Windows conhost / WT_SESSION). eraseLines uses cursorUp to move
+      // upward while clearing, which yanks the viewport to the top of the
+      // scrollback mid-stream (microsoft/terminal#14774).
+      if (
+        linesToClear > prev.viewport.height ||
+        hasCursorUpViewportYankBug()
+      ) {
         return fullResetSequence_CAUSES_FLICKER(
           next,
           'offscreen',

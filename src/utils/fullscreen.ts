@@ -105,6 +105,26 @@ export function _resetTmuxControlModeProbeForTesting(): void {
 }
 
 /**
+ * True when running on legacy Windows console (conhost) rather than a
+ * modern terminal emulator. Legacy conhost has poor alt-screen support
+ * and cursor-up yanks the viewport to scrollback (microsoft/terminal#14774),
+ * so fullscreen is disabled by default.
+ */
+function isLegacyWindowsConsole(): boolean {
+  if (process.platform !== 'win32') return false
+  // Windows Terminal
+  if (process.env.WT_SESSION) return false
+  // VS Code integrated terminal with ConPTY
+  if (process.env.TERM_PROGRAM === 'vscode' && process.env.TERM_PROGRAM_VERSION)
+    return false
+  // mintty (Git Bash / MSYS2 / Cygwin)
+  if (process.env.TERM_PROGRAM === 'mintty') return false
+  if (process.env.MSYSTEM) return false
+  // Everything else on Windows is legacy conhost
+  return true
+}
+
+/**
  * Runtime env-var check only. Ants default to on (CLAUDE_CODE_NO_FLICKER=0
  * to opt out); external users default to off (CLAUDE_CODE_NO_FLICKER=1 to
  * opt in).
@@ -123,6 +143,14 @@ export function isFullscreenEnvEnabled(): boolean {
         'fullscreen disabled: tmux -CC (iTerm2 integration mode) detected · set CLAUDE_CODE_NO_FLICKER=1 to override',
       )
     }
+    return false
+  }
+  // Auto-disable on legacy Windows console: alt-screen flickers and
+  // cursor-up sequences yank the viewport to scrollback top.
+  if (isLegacyWindowsConsole()) {
+    logForDebugging(
+      'fullscreen disabled: legacy Windows console detected · set CLAUDE_CODE_NO_FLICKER=1 to override',
+    )
     return false
   }
   return process.env.USER_TYPE === 'ant'
