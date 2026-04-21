@@ -353,26 +353,46 @@ import { errorMessage, toError } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
 import { isExtractModeActive } from '../memdir/paths.js'
 
-// Dead code elimination: conditional imports
+// Dead code elimination: lazy conditional imports
+// Uses getters to defer require() until first access, avoiding ESM module-loader
+// deadlocks when feature() flags are registered in Bun's bundle mode.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const coordinatorModeModule = feature('COORDINATOR_MODE')
-  ? (require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js'))
+  ? (() => {
+      let _mod: typeof import('../coordinator/coordinatorMode.js') | null = null
+      return () => (_mod ??= require('../coordinator/coordinatorMode.js') as typeof import('../coordinator/coordinatorMode.js'))
+    })()
   : null
 const proactiveModule =
   feature('PROACTIVE') || feature('KAIROS')
-    ? (require('../proactive/index.js') as typeof import('../proactive/index.js'))
+    ? (() => {
+        let _mod: typeof import('../proactive/index.js') | null = null
+        return () => (_mod ??= require('../proactive/index.js') as typeof import('../proactive/index.js'))
+      })()
     : null
 const cronSchedulerModule = feature('AGENT_TRIGGERS')
-  ? (require('../utils/cronScheduler.js') as typeof import('../utils/cronScheduler.js'))
+  ? (() => {
+      let _mod: typeof import('../utils/cronScheduler.js') | null = null
+      return () => (_mod ??= require('../utils/cronScheduler.js') as typeof import('../utils/cronScheduler.js'))
+    })()
   : null
 const cronJitterConfigModule = feature('AGENT_TRIGGERS')
-  ? (require('../utils/cronJitterConfig.js') as typeof import('../utils/cronJitterConfig.js'))
+  ? (() => {
+      let _mod: typeof import('../utils/cronJitterConfig.js') | null = null
+      return () => (_mod ??= require('../utils/cronJitterConfig.js') as typeof import('../utils/cronJitterConfig.js'))
+    })()
   : null
 const cronGate = feature('AGENT_TRIGGERS')
-  ? (require('../tools/ScheduleCronTool/prompt.js') as typeof import('../tools/ScheduleCronTool/prompt.js'))
+  ? (() => {
+      let _mod: typeof import('../tools/ScheduleCronTool/prompt.js') | null = null
+      return () => (_mod ??= require('../tools/ScheduleCronTool/prompt.js') as typeof import('../tools/ScheduleCronTool/prompt.js'))
+    })()
   : null
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
-  ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
+  ? (() => {
+      let _mod: typeof import('../services/extractMemories/extractMemories.js') | null = null
+      return () => (_mod ??= require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
+    })()
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -538,10 +558,10 @@ export async function runHeadless(
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule &&
-    !proactiveModule.isProactiveActive() &&
+    !proactiveModule().isProactiveActive() &&
     isEnvTruthy(process.env.CLAUDE_CODE_PROACTIVE)
   ) {
-    proactiveModule.activateProactive('command')
+    proactiveModule().activateProactive('command')
   }
 
   // Periodically force a full GC to keep memory usage in check
@@ -965,7 +985,7 @@ export async function runHeadless(
   // the forked agent mid-flight. Gated by isExtractModeActive so the
   // tengu_slate_thimble flag controls non-interactive extraction end-to-end.
   if (feature('EXTRACT_MEMORIES') && isExtractModeActive()) {
-    await extractMemoriesModule!.drainPendingExtraction()
+    await extractMemoriesModule!().drainPendingExtraction()
   }
 
   gracefulShutdownSync(
@@ -1836,8 +1856,8 @@ function runHeadlessStreaming(
       ? () => {
           setTimeout(() => {
             if (
-              !proactiveModule?.isProactiveActive() ||
-              proactiveModule.isProactivePaused() ||
+              !proactiveModule?.().isProactiveActive() ||
+              proactiveModule().isProactivePaused() ||
               inputClosed
             ) {
               return
@@ -2475,8 +2495,8 @@ function runHeadlessStreaming(
     // Proactive tick: if proactive is active and queue is empty, inject a tick
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
-      proactiveModule?.isProactiveActive() &&
-      !proactiveModule.isProactivePaused()
+      proactiveModule?.().isProactiveActive() &&
+      !proactiveModule().isProactivePaused()
     ) {
       if (peek(isMainThread) === undefined && !inputClosed) {
         scheduleProactiveTick!()
@@ -2704,9 +2724,9 @@ function runHeadlessStreaming(
   if (
     feature('AGENT_TRIGGERS') &&
     cronSchedulerModule &&
-    cronGate?.isKairosCronEnabled()
+    cronGate?.().isKairosCronEnabled()
   ) {
-    cronScheduler = cronSchedulerModule.createCronScheduler({
+    cronScheduler = cronSchedulerModule().createCronScheduler({
       onFire: prompt => {
         if (inputClosed) return
         enqueue({
@@ -2727,8 +2747,8 @@ function runHeadlessStreaming(
         void run()
       },
       isLoading: () => running || inputClosed,
-      getJitterConfig: cronJitterConfigModule?.getCronJitterConfig,
-      isKilled: () => !cronGate?.isKairosCronEnabled(),
+      getJitterConfig: cronJitterConfigModule?.().getCronJitterConfig,
+      isKilled: () => !cronGate?.().isKairosCronEnabled(),
     })
     cronScheduler.start()
   }
@@ -3881,12 +3901,12 @@ function runHeadlessStreaming(
             enabled: boolean
           }
           if (req.enabled) {
-            if (!proactiveModule!.isProactiveActive()) {
-              proactiveModule!.activateProactive('command')
+            if (!proactiveModule!().isProactiveActive()) {
+              proactiveModule!().activateProactive('command')
               scheduleProactiveTick!()
             }
           } else {
-            proactiveModule!.deactivateProactive()
+            proactiveModule!().deactivateProactive()
           }
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'remote_control') {
@@ -4916,7 +4936,7 @@ async function loadInitialMessages(
       if (result) {
         // Match coordinator mode to the resumed session's mode
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
-          const warning = coordinatorModeModule.matchSessionMode(result.mode)
+          const warning = coordinatorModeModule().matchSessionMode(result.mode)
           if (warning) {
             process.stderr.write(warning + '\n')
             // Refresh agent definitions to reflect the mode switch
@@ -4966,7 +4986,7 @@ async function loadInitialMessages(
         // Write mode entry for the resumed session
         if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
           saveMode(
-            coordinatorModeModule.isCoordinatorMode()
+            coordinatorModeModule().isCoordinatorMode()
               ? 'coordinator'
               : 'normal',
           )
@@ -5121,7 +5141,7 @@ async function loadInitialMessages(
 
       // Match coordinator mode to the resumed session's mode
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
-        const warning = coordinatorModeModule.matchSessionMode(result.mode)
+        const warning = coordinatorModeModule().matchSessionMode(result.mode)
         if (warning) {
           process.stderr.write(warning + '\n')
           // Refresh agent definitions to reflect the mode switch
@@ -5166,7 +5186,7 @@ async function loadInitialMessages(
       // Write mode entry for the resumed session
       if (feature('COORDINATOR_MODE') && coordinatorModeModule) {
         saveMode(
-          coordinatorModeModule.isCoordinatorMode() ? 'coordinator' : 'normal',
+          coordinatorModeModule().isCoordinatorMode() ? 'coordinator' : 'normal',
         )
       }
 

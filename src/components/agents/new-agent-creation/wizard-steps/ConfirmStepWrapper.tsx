@@ -1,5 +1,5 @@
-import chalk from 'chalk';
 import React, { type ReactNode, useCallback, useState } from 'react';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { useSetAppState } from 'src/state/AppState.js';
 import type { Tools } from '../../../../Tool.js';
@@ -23,6 +23,7 @@ export function ConfirmStepWrapper({
   const {
     wizardData
   } = useWizard<AgentWizardData>();
+  const { t } = useI18n();
   const [saveError, setSaveError] = useState<string | null>(null);
   const setAppState = useSetAppState();
   const saveAgent = useCallback(async (openInEditor: boolean): Promise<void> => {
@@ -61,12 +62,12 @@ export function ConfirmStepWrapper({
           opened_in_editor: true
         } : {})
       } as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS);
-      const message = openInEditor ? `Created agent: ${chalk.bold(wizardData.finalAgent.agentType)} and opened in editor. ` + `If you made edits, restart to load the latest version.` : `Created agent: ${chalk.bold(wizardData.finalAgent.agentType)}`;
+      const message = openInEditor ? t('agent.wizard.confirmWrapper.createdAndOpened', { name: wizardData.finalAgent.agentType }) : t('agent.wizard.confirmWrapper.created', { name: wizardData.finalAgent.agentType });
       onComplete(message);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save agent');
+      setSaveError(err instanceof Error ? err.message : t('agent.wizard.confirmWrapper.failedToSave'));
     }
-  }, [wizardData, onComplete, setAppState]);
+  }, [wizardData, onComplete, setAppState, t]);
   const handleSave = useCallback(() => saveAgent(false), [saveAgent]);
   const handleSaveAndEdit = useCallback(() => saveAgent(true), [saveAgent]);
   return <ConfirmStep tools={tools} existingAgents={existingAgents} onSave={handleSave} onSaveAndEdit={handleSaveAndEdit} error={saveError} />;

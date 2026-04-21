@@ -59,6 +59,7 @@ export type ProviderConfig = {
   baseURL?: string
   apiKey?: string
   models: string[]
+  maxTokens?: number
   reasoning?: ProviderReasoningConfig
   oauth?: GeminiOAuthConfig | OpenAIOAuthConfig
 }
@@ -263,13 +264,31 @@ function buildProviderSummary(
   }
 }
 
+const AUTH_MODE_ALIASES: Record<string, ProviderAuthMode> = {
+  'apiKey': 'api-key',
+  'api-key': 'api-key',
+  'chat-completions': 'chat-completions',
+  'responses': 'responses',
+  'oauth': 'oauth',
+  'vertex-compatible': 'vertex-compatible',
+  'gemini-cli-oauth': 'gemini-cli-oauth',
+}
+
+function normalizeAuthMode(raw: string, kind: CompatibleProviderKind): ProviderAuthMode {
+  const normalized = AUTH_MODE_ALIASES[raw]
+  if (normalized) return normalized
+  if (kind === 'openai-like') return 'chat-completions'
+  if (kind === 'gemini-like') return 'vertex-compatible'
+  return 'api-key'
+}
+
 function normalizeProviderConfig(value: Record<string, unknown>): ProviderConfig | null {
   const kind = normalizeProviderKind(value.kind) ?? normalizeProviderKind(value.id)
   if (!kind) return null
   const baseURL = typeof value.baseURL === 'string' ? value.baseURL : undefined
   const authMode =
     typeof value.authMode === 'string'
-      ? value.authMode
+      ? normalizeAuthMode(value.authMode, kind)
       : kind === 'openai-like'
         ? 'chat-completions'
         : kind === 'gemini-like'
@@ -283,6 +302,7 @@ function normalizeProviderConfig(value: Record<string, unknown>): ProviderConfig
     baseURL,
     apiKey: typeof value.apiKey === 'string' ? value.apiKey : undefined,
     models: dedupeModels(value.models),
+    maxTokens: typeof value.maxTokens === 'number' ? value.maxTokens : undefined,
     reasoning: normalizeProviderReasoning(value.reasoning),
     oauth:
       kind === 'openai-like'

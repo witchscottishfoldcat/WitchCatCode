@@ -3,6 +3,7 @@ import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { EnterPlanModeTool } from 'src/tools/EnterPlanModeTool/EnterPlanModeTool.js';
 import { ExitPlanModeV2Tool } from 'src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useNotifyAfterTimeout } from '../../hooks/useNotifyAfterTimeout.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import type { AnyObject, Tool, ToolUseContext } from '../../Tool.js';
@@ -125,21 +126,21 @@ export type ToolUseConfirm<Input extends AnyObject = AnyObject> = {
   onReject(feedback?: string, contentBlocks?: ContentBlockParam[]): void;
   recheckPermission(): Promise<void>;
 };
-function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
+function getNotificationMessage(toolUseConfirm: ToolUseConfirm, t: (key: string, params?: Record<string, unknown>) => string): string {
   const toolName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never);
   if (toolUseConfirm.tool === ExitPlanModeV2Tool) {
-    return 'Claude Code needs your approval for the plan';
+    return t('permission.request.approvalForPlan');
   }
   if (toolUseConfirm.tool === EnterPlanModeTool) {
-    return 'Claude Code wants to enter plan mode';
+    return t('permission.request.enterPlanMode');
   }
   if (feature('REVIEW_ARTIFACT') && toolUseConfirm.tool === ReviewArtifactTool) {
-    return 'Claude needs your approval for a review artifact';
+    return t('permission.request.approvalForReviewArtifact');
   }
   if (!toolName || toolName.trim() === '') {
-    return 'Claude Code needs your attention';
+    return t('permission.request.needsAttention');
   }
-  return `Claude needs your permission to use ${toolName}`;
+  return t('permission.request.permissionToUse', { toolName });
 }
 
 // TODO: Move this to Tool.renderPermissionRequest
@@ -154,6 +155,7 @@ export function PermissionRequest(t0) {
     workerBadge,
     setStickyFooter
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onDone || $[1] !== onReject || $[2] !== toolUseConfirm) {
     t1 = () => {
@@ -180,7 +182,7 @@ export function PermissionRequest(t0) {
   useKeybinding("app:interrupt", t1, t2);
   let t3;
   if ($[5] !== toolUseConfirm) {
-    t3 = getNotificationMessage(toolUseConfirm);
+    t3 = getNotificationMessage(toolUseConfirm, t);
     $[5] = toolUseConfirm;
     $[6] = t3;
   } else {

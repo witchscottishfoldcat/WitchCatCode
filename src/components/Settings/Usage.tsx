@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { extraUsage as extraUsageCommand } from 'src/commands/extra-usage/index.js';
 import { formatCost } from 'src/cost-tracker.js';
 import { getSubscriptionType } from 'src/utils/auth.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -32,6 +33,7 @@ function LimitBar(t0) {
     extraSubtext
   } = t0;
   const showTimeInReset = t1 === undefined ? true : t1;
+  const { t } = useI18n();
   const {
     utilization,
     resets_at
@@ -39,7 +41,7 @@ function LimitBar(t0) {
   if (utilization === null) {
     return null;
   }
-  const usedText = `${Math.floor(utilization)}% used`;
+  const usedText = t('usage.limitBar.percentUsed', { n: Math.floor(utilization) });
   let subtext;
   if (resets_at) {
     let t2;
@@ -51,7 +53,7 @@ function LimitBar(t0) {
     } else {
       t2 = $[2];
     }
-    subtext = `Resets ${t2}`;
+    subtext = t('usage.limitBar.resetsAt', { time: t2 });
   }
   if (extraSubtext) {
     if (subtext) {
@@ -172,6 +174,7 @@ function LimitBar(t0) {
   }
 }
 export function Usage(): React.ReactNode {
+  const { t } = useI18n();
   const [utilization, setUtilization] = useState<Utilization | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,7 +197,7 @@ export function Usage(): React.ReactNode {
         };
       };
       const responseBody = axiosError.response?.data ? jsonStringify(axiosError.response.data) : undefined;
-      setError(responseBody ? `Failed to load usage data: ${responseBody}` : 'Failed to load usage data');
+      setError(responseBody ? t('usage.error.failedToLoadWithBody', { body: responseBody }) : t('usage.error.failedToLoad'));
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +213,7 @@ export function Usage(): React.ReactNode {
   });
   if (error) {
     return <Box flexDirection="column" gap={1}>
-        <Text color="error">Error: {error}</Text>
+        <Text color="error">{t('usage.error.prefix', { error })}</Text>
         <Text dimColor>
           <Byline>
             <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="retry" />
@@ -221,7 +224,7 @@ export function Usage(): React.ReactNode {
   }
   if (!utilization) {
     return <Box flexDirection="column" gap={1}>
-        <Text dimColor>Loading usage data…</Text>
+        <Text dimColor>{t('usage.loading')}</Text>
         <Text dimColor>
           <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
         </Text>
@@ -235,19 +238,19 @@ export function Usage(): React.ReactNode {
   const subscriptionType = getSubscriptionType();
   const showSonnetBar = subscriptionType === 'max' || subscriptionType === 'team' || subscriptionType === null;
   const limits = [{
-    title: 'Current session',
+    title: t('usage.limitBar.currentSession'),
     limit: utilization.five_hour
   }, {
-    title: 'Current week (all models)',
+    title: t('usage.limitBar.currentWeekAllModels'),
     limit: utilization.seven_day
   }, ...(showSonnetBar ? [{
-    title: 'Current week (Sonnet only)',
+    title: t('usage.limitBar.currentWeekSonnet'),
     limit: utilization.seven_day_sonnet
   }] : [])];
   return <Box flexDirection="column" gap={1} width="100%">
       {limits.some(({
       limit
-    }) => limit) || <Text dimColor>/usage is only available for subscription plans.</Text>}
+    }) => limit) || <Text dimColor>{t('usage.subscriptionOnly')}</Text>}
 
       {limits.map(({
       title,
@@ -267,13 +270,13 @@ type ExtraUsageSectionProps = {
   extraUsage: ExtraUsage;
   maxWidth: number;
 };
-const EXTRA_USAGE_SECTION_TITLE = 'Extra usage';
 function ExtraUsageSection(t0) {
   const $ = _c(20);
   const {
     extraUsage,
     maxWidth
   } = t0;
+  const { t } = useI18n();
   const subscriptionType = getSubscriptionType();
   const isProOrMax = subscriptionType === "pro" || subscriptionType === "max";
   if (!isProOrMax) {
@@ -283,7 +286,7 @@ function ExtraUsageSection(t0) {
     if (extraUsageCommand.isEnabled()) {
       let t1;
       if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-        t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>Extra usage not enabled · /extra-usage to enable</Text></Box>;
+        t1 = <Box flexDirection="column"><Text bold={true}>{t('usage.extraUsage.title')}</Text><Text dimColor={true}>{t('usage.extraUsage.notEnabled')}</Text></Box>;
         $[0] = t1;
       } else {
         t1 = $[0];
@@ -295,7 +298,7 @@ function ExtraUsageSection(t0) {
   if (extraUsage.monthly_limit === null) {
     let t1;
     if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Box flexDirection="column"><Text bold={true}>{EXTRA_USAGE_SECTION_TITLE}</Text><Text dimColor={true}>Unlimited</Text></Box>;
+      t1 = <Box flexDirection="column"><Text bold={true}>{t('usage.extraUsage.title')}</Text><Text dimColor={true}>{t('usage.extraUsage.unlimited')}</Text></Box>;
       $[1] = t1;
     } else {
       t1 = $[1];
@@ -333,7 +336,7 @@ function ExtraUsageSection(t0) {
     const now = new Date();
     const oneMonthReset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     T0 = LimitBar;
-    t7 = EXTRA_USAGE_SECTION_TITLE;
+    t7 = t('usage.extraUsage.title');
     t5 = extraUsage.utilization;
     t6 = oneMonthReset.toISOString();
     $[6] = extraUsage.utilization;
@@ -359,7 +362,7 @@ function ExtraUsageSection(t0) {
   } else {
     t8 = $[13];
   }
-  const t9 = `${formattedUsedCredits} / ${formattedMonthlyLimit} spent`;
+  const t9 = t('usage.extraUsage.spent', { used: formattedUsedCredits, limit: formattedMonthlyLimit });
   let t10;
   if ($[14] !== T0 || $[15] !== maxWidth || $[16] !== t7 || $[17] !== t8 || $[18] !== t9) {
     t10 = <T0 title={t7} limit={t8} showTimeInReset={false} extraSubtext={t9} maxWidth={maxWidth} />;

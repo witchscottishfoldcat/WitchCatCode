@@ -3,6 +3,7 @@ import { feature } from 'bun:bundle';
 import chalk from 'chalk';
 import figures from 'figures';
 import React, { useMemo } from 'react';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Ansi, Box, color, Text, useTheme } from '../../ink.js';
 import { useAppState } from '../../state/AppState.js';
 import type { PermissionMode } from '../../utils/permissions/PermissionMode.js';
@@ -18,28 +19,29 @@ type PermissionDecisionInfoItemProps = {
   title?: string;
   decisionReason: PermissionDecisionReason;
 };
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 function decisionReasonDisplayString(decisionReason: PermissionDecisionReason & {
   type: Exclude<PermissionDecisionReason['type'], 'subcommandResults'>;
-}): string {
+}, t: TranslateFn): string {
   if ((feature('BASH_CLASSIFIER') || feature('TRANSCRIPT_CLASSIFIER')) && decisionReason.type === 'classifier') {
-    return `${chalk.bold(decisionReason.classifier)} classifier: ${decisionReason.reason}`;
+    return `${chalk.bold(decisionReason.classifier)} ${t('permission.debug.classifier')}: ${decisionReason.reason}`;
   }
   switch (decisionReason.type) {
     case 'rule':
-      return `${chalk.bold(permissionRuleValueToString(decisionReason.rule.ruleValue))} rule from ${getSettingSourceDisplayNameLowercase(decisionReason.rule.source)}`;
+      return `${chalk.bold(permissionRuleValueToString(decisionReason.rule.ruleValue))} ${t('permission.debug.ruleFrom')} ${getSettingSourceDisplayNameLowercase(decisionReason.rule.source)}`;
     case 'mode':
-      return `${permissionModeTitle(decisionReason.mode)} mode`;
+      return `${permissionModeTitle(decisionReason.mode)} ${t('permission.debug.mode')}`;
     case 'sandboxOverride':
-      return 'Requires permission to bypass sandbox';
+      return t('permission.debug.requiresPermission');
     case 'workingDir':
       return decisionReason.reason;
     case 'safetyCheck':
     case 'other':
       return decisionReason.reason;
     case 'permissionPromptTool':
-      return `${chalk.bold(decisionReason.permissionPromptToolName)} permission prompt tool`;
+      return `${chalk.bold(decisionReason.permissionPromptToolName)} ${t('permission.debug.permissionPromptTool')}`;
     case 'hook':
-      return decisionReason.reason ? `${chalk.bold(decisionReason.hookName)} hook: ${decisionReason.reason}` : `${chalk.bold(decisionReason.hookName)} hook`;
+      return decisionReason.reason ? `${chalk.bold(decisionReason.hookName)} ${t('permission.debug.hook')}: ${decisionReason.reason}` : `${chalk.bold(decisionReason.hookName)} ${t('permission.debug.hook')}`;
     case 'asyncAgent':
       return decisionReason.reason;
     default:
@@ -53,6 +55,7 @@ function PermissionDecisionInfoItem(t0) {
     decisionReason
   } = t0;
   const [theme] = useTheme();
+  const { t } = useI18n();
   let t1;
   if ($[0] !== decisionReason || $[1] !== theme) {
     t1 = function formatDecisionReason() {
@@ -62,12 +65,12 @@ function PermissionDecisionInfoItem(t0) {
             return <Box flexDirection="column">{Array.from(decisionReason.reasons.entries()).map(t2 => {
                 const [subcommand, result] = t2;
                 const icon = result.behavior === "allow" ? color("success", theme)(figures.tick) : color("error", theme)(figures.cross);
-                return <Box flexDirection="column" key={subcommand}><Text>{icon} {subcommand}</Text>{result.decisionReason !== undefined && result.decisionReason.type !== "subcommandResults" && <Text><Text dimColor={true}>{"  "}⎿{"  "}</Text><Ansi>{decisionReasonDisplayString(result.decisionReason)}</Ansi></Text>}{result.behavior === "ask" && <SuggestedRules suggestions={result.suggestions} />}</Box>;
+                return <Box flexDirection="column" key={subcommand}><Text>{icon} {subcommand}</Text>{result.decisionReason !== undefined && result.decisionReason.type !== "subcommandResults" && <Text><Text dimColor={true}>{"  "}⎿{"  "}</Text><Ansi>{decisionReasonDisplayString(result.decisionReason, t)}</Ansi></Text>}{result.behavior === "ask" && <SuggestedRules suggestions={result.suggestions} />}</Box>;
               })}</Box>;
           }
         default:
           {
-            return <Text><Ansi>{decisionReasonDisplayString(decisionReason)}</Ansi></Text>;
+            return <Text><Ansi>{decisionReasonDisplayString(decisionReason, t)}</Ansi></Text>;
           }
       }
     };
@@ -110,6 +113,8 @@ function SuggestedRules(t0) {
   const {
     suggestions
   } = t0;
+  const { t } = useI18n();
+  const _suggestedRules = t('permission.debug.suggestedRules');
   let T0;
   let T1;
   let t1;
@@ -132,7 +137,7 @@ function SuggestedRules(t0) {
       } else {
         t2 = $[8];
       }
-      t3 = "Suggested rules:";
+      t3 = _suggestedRules;
       t4 = " ";
       T0 = Ansi;
       t1 = rules.map(_temp).join(", ");
@@ -213,10 +218,17 @@ function SuggestionDisplay(t0) {
     suggestions,
     width
   } = t0;
+  const { t } = useI18n();
+  const _suggestions = t('permission.debug.suggestions');
+  const _none = t('permission.debug.none');
+  const _suggestion = t('permission.debug.suggestion');
+  const _rules = t('permission.debug.rules');
+  const _directories = t('permission.debug.directories');
+  const _mode = t('permission.debug.mode');
   if (!suggestions || suggestions.length === 0) {
     let t1;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true}>Suggestions </Text>;
+      t1 = <Text dimColor={true}>{_suggestions} </Text>;
       $[0] = t1;
     } else {
       t1 = $[0];
@@ -231,7 +243,7 @@ function SuggestionDisplay(t0) {
     }
     let t3;
     if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <Text>None</Text>;
+      t3 = <Text>{_none}</Text>;
       $[3] = t3;
     } else {
       t3 = $[3];
@@ -257,7 +269,7 @@ function SuggestionDisplay(t0) {
       if (rules.length === 0 && directories.length === 0 && !mode) {
         let t3;
         if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-          t3 = <Text dimColor={true}>Suggestion </Text>;
+          t3 = <Text dimColor={true}>{_suggestion} </Text>;
           $[10] = t3;
         } else {
           t3 = $[10];
@@ -272,7 +284,7 @@ function SuggestionDisplay(t0) {
         }
         let t5;
         if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-          t5 = <Text>None</Text>;
+          t5 = <Text>{_none}</Text>;
           $[13] = t5;
         } else {
           t5 = $[13];
@@ -290,7 +302,7 @@ function SuggestionDisplay(t0) {
       }
       let t3;
       if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-        t3 = <Text dimColor={true}>Suggestions </Text>;
+        t3 = <Text dimColor={true}>{_suggestions} </Text>;
         $[16] = t3;
       } else {
         t3 = $[16];
@@ -318,7 +330,7 @@ function SuggestionDisplay(t0) {
       } else {
         t6 = $[21];
       }
-      t1 = <Box flexDirection="column">{t6}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Rules </Text></Box><Box flexDirection="column">{rules.map(_temp2)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Directories </Text></Box><Box flexDirection="column">{directories.map(_temp3)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> Mode </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
+      t1 = <Box flexDirection="column">{t6}{rules.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {_rules} </Text></Box><Box flexDirection="column">{rules.map(_temp2)}</Box></Box>}{directories.length > 0 && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {_directories} </Text></Box><Box flexDirection="column">{directories.map(_temp3)}</Box></Box>}{mode && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={width}><Text dimColor={true}> {_mode} </Text></Box><Text>{permissionModeTitle(mode)}</Text></Box>}</Box>;
     }
     $[6] = suggestions;
     $[7] = width;
@@ -346,6 +358,12 @@ export function PermissionDecisionDebugInfo(t0) {
     toolName
   } = t0;
   const toolPermissionContext = useAppState(_temp4);
+  const { t } = useI18n();
+  const _behavior = t('permission.debug.behavior');
+  const _message = t('permission.debug.message');
+  const _reason = t('permission.debug.reason');
+  const _undefined = t('permission.debug.undefined');
+  const _fix = t('permission.debug.fix');
   const decisionReason = permissionResult.decisionReason;
   const suggestions = "suggestions" in permissionResult ? permissionResult.suggestions : undefined;
   let t1;
@@ -384,7 +402,7 @@ export function PermissionDecisionDebugInfo(t0) {
   const unreachableRules = t1;
   let t2;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Behavior </Text></Box>;
+    t2 = <Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{_behavior} </Text></Box>;
     $[6] = t2;
   } else {
     t2 = $[6];
@@ -399,7 +417,7 @@ export function PermissionDecisionDebugInfo(t0) {
   }
   let t4;
   if ($[9] !== permissionResult.behavior || $[10] !== permissionResult.message) {
-    t4 = permissionResult.behavior !== "allow" && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Message </Text></Box><Text>{permissionResult.message}</Text></Box>;
+    t4 = permissionResult.behavior !== "allow" && <Box flexDirection="row"><Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{_message} </Text></Box><Text>{permissionResult.message}</Text></Box>;
     $[9] = permissionResult.behavior;
     $[10] = permissionResult.message;
     $[11] = t4;
@@ -408,14 +426,14 @@ export function PermissionDecisionDebugInfo(t0) {
   }
   let t5;
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>Reason </Text></Box>;
+    t5 = <Box justifyContent="flex-end" minWidth={10}><Text dimColor={true}>{_reason} </Text></Box>;
     $[12] = t5;
   } else {
     t5 = $[12];
   }
   let t6;
   if ($[13] !== decisionReason) {
-    t6 = <Box flexDirection="row">{t5}{decisionReason === undefined ? <Text>undefined</Text> : <PermissionDecisionInfoItem decisionReason={decisionReason} />}</Box>;
+    t6 = <Box flexDirection="row">{t5}{decisionReason === undefined ? <Text>{_undefined}</Text> : <PermissionDecisionInfoItem decisionReason={decisionReason} />}</Box>;
     $[13] = decisionReason;
     $[14] = t6;
   } else {
@@ -429,9 +447,10 @@ export function PermissionDecisionDebugInfo(t0) {
   } else {
     t7 = $[16];
   }
+  const _unreachableRulesTitle = t('permission.debug.unreachableRules', { count: unreachableRules.length });
   let t8;
   if ($[17] !== unreachableRules) {
-    t8 = unreachableRules.length > 0 && <Box flexDirection="column" marginTop={1}><Text color="warning">{figures.warning} Unreachable Rules ({unreachableRules.length})</Text>{unreachableRules.map(_temp5)}</Box>;
+    t8 = unreachableRules.length > 0 && <Box flexDirection="column" marginTop={1}><Text color="warning">{figures.warning} {_unreachableRulesTitle}</Text>{unreachableRules.map((u, i) => _temp5(u, i, _fix))}</Box>;
     $[17] = unreachableRules;
     $[18] = t8;
   } else {
@@ -451,8 +470,8 @@ export function PermissionDecisionDebugInfo(t0) {
   }
   return t9;
 }
-function _temp5(u_1, i) {
-  return <Box key={i} flexDirection="column" marginLeft={2}><Text color="warning">{permissionRuleValueToString(u_1.rule.ruleValue)}</Text><Text dimColor={true}>{"  "}{u_1.reason}</Text><Text dimColor={true}>{"  "}Fix: {u_1.fix}</Text></Box>;
+function _temp5(u_1, i, fixLabel) {
+  return <Box key={i} flexDirection="column" marginLeft={2}><Text color="warning">{permissionRuleValueToString(u_1.rule.ruleValue)}</Text><Text dimColor={true}>{"  "}{u_1.reason}</Text><Text dimColor={true}>{"  "}{fixLabel}: {u_1.fix}</Text></Box>;
 }
 function _temp4(s) {
   return s.toolPermissionContext;

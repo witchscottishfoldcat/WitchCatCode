@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { Box } from '../../../../ink.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
 import { Select } from '../../../CustomSelect/select.js';
@@ -16,13 +17,17 @@ export function MethodStep() {
     updateWizardData,
     goToStep
   } = useWizard();
+  const { t } = useI18n();
+  const _subtitle = t('agent.wizard.method.subtitle');
+  const _generateLabel = t('agent.wizard.method.generateLabel');
+  const _manualLabel = t('agent.wizard.method.manualLabel');
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t0 = [{
-      label: "Generate with Claude (recommended)",
+      label: _generateLabel,
       value: "generate"
     }, {
-      label: "Manual configuration",
+      label: _manualLabel,
       value: "manual"
     }];
     $[0] = t0;
@@ -68,7 +73,7 @@ export function MethodStep() {
   }
   let t4;
   if ($[8] !== t2 || $[9] !== t3) {
-    t4 = <WizardDialogLayout subtitle="Creation method" footerText={t1}><Box><Select key="method-select" options={methodOptions} onChange={t2} onCancel={t3} /></Box></WizardDialogLayout>;
+    t4 = <WizardDialogLayout subtitle={_subtitle} footerText={t1}><Box><Select key="method-select" options={methodOptions} onChange={t2} onCancel={t3} /></Box></WizardDialogLayout>;
     $[8] = t2;
     $[9] = t3;
     $[10] = t4;

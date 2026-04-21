@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { installOAuthTokens } from '../cli/handlers/auth.js';
@@ -21,6 +21,7 @@ import { Select } from './CustomSelect/select.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { Spinner } from './Spinner.js';
 import TextInput from './TextInput.js';
+import { useI18n } from '../hooks/useI18n.js';
 type Props = {
   onDone(): void;
   startingMessage?: string;
@@ -249,9 +250,10 @@ export function ConsoleOAuthFlow({
   onTextInputActiveChange,
 }: Props): React.ReactNode {
   const settings = getSettings_DEPRECATED() || {};
+  const { t } = useI18n();
   const forceLoginMethod = forceLoginMethodProp ?? settings.forceLoginMethod;
   const orgUUID = settings.forceLoginOrgUUID;
-  const forcedMethodMessage = forceLoginMethod === 'claudeai' ? 'Login method pre-selected: Subscription Plan (Claude Pro/Max)' : forceLoginMethod === 'console' ? 'Login method pre-selected: API Usage Billing (Anthropic Console)' : null;
+  const forcedMethodMessage = forceLoginMethod === 'claudeai' ? t('oauth.forcedClaudeAi') : forceLoginMethod === 'console' ? t('oauth.forcedConsole') : null;
   const readPersistedCustomApiEndpoint = useCallback(() => ({
     ...(getGlobalConfig().customApiEndpoint ?? {}),
     ...readCustomApiStorage()
@@ -495,7 +497,7 @@ export function ConsoleOAuthFlow({
     );
     void sendNotification(
       {
-        message: `Removed account: ${accountName}`,
+        message: t('oauth.accountRemoved', { accountName }),
         notificationType: 'auth_success',
       },
       terminal,
@@ -685,7 +687,7 @@ export function ConsoleOAuthFlow({
       if (!nextValue) {
         setOAuthStatus({
           state: 'error',
-          message: 'Compatible API base URL is required',
+          message: t('oauth.errorBaseUrlRequired'),
           toRetry: {
             state: 'custom_config',
             provider: safeOauthStatus.provider,
@@ -710,7 +712,7 @@ export function ConsoleOAuthFlow({
       if (!nextValue) {
         setOAuthStatus({
           state: 'error',
-          message: 'OAuth base URL is required for OIDC discovery',
+          message: t('oauth.errorOAuthBaseUrlRequired'),
           toRetry: {
             state: 'custom_config',
             provider: safeOauthStatus.provider,
@@ -735,7 +737,7 @@ export function ConsoleOAuthFlow({
       if (!nextValue) {
         setOAuthStatus({
           state: 'error',
-          message: 'API key is required',
+          message: t('oauth.errorApiKeyRequired'),
           toRetry: {
             state: 'custom_config',
             provider: safeOauthStatus.provider,
@@ -759,7 +761,7 @@ export function ConsoleOAuthFlow({
     if (normalizeModelsInput(nextValue).length === 0) {
       setOAuthStatus({
         state: 'error',
-        message: 'At least one model is required',
+        message: t('oauth.errorModelRequired'),
         toRetry: {
           state: 'custom_config',
           provider: safeOauthStatus.provider,
@@ -780,12 +782,12 @@ export function ConsoleOAuthFlow({
       void sendNotification({
         message:
           safeOauthStatus.provider === 'openai-like'
-            ? `OpenAI-compatible ${safeOauthStatus.authMode} endpoint saved`
+            ? t('oauth.openaiEndpointSaved', { authMode: safeOauthStatus.authMode })
             : safeOauthStatus.provider === 'gemini-like'
-              ? `Gemini-compatible ${safeOauthStatus.authMode} endpoint saved`
+              ? t('oauth.geminiEndpointSaved', { authMode: safeOauthStatus.authMode })
               : safeOauthStatus.provider === 'glm-like'
-                ? 'GLM (智谱AI) endpoint saved'
-                : 'Anthropic-compatible endpoint saved',
+                ? t('oauth.glmEndpointSaved')
+                : t('oauth.anthropicEndpointSaved'),
         notificationType: 'auth_success'
       }, terminal);
     }
@@ -796,7 +798,7 @@ export function ConsoleOAuthFlow({
       if (!parsedInput) {
         setOAuthStatus({
           state: 'error',
-          message: 'Invalid code. Paste the full callback URL or code#state.',
+          message: t('oauth.errorInvalidCode'),
           toRetry: {
             state: 'waiting_for_login',
             url
@@ -870,7 +872,7 @@ export function ConsoleOAuthFlow({
         const sslHint_0 = getSSLErrorHint(err_1);
         setOAuthStatus({
           state: 'error',
-          message: sslHint_0 ?? (isTokenExchangeError ? 'Failed to exchange authorization code for access token. Please try again.' : err_1.message),
+          message: sslHint_0 ?? (isTokenExchangeError ? t('oauth.errorTokenExchangeFailed') : err_1.message),
           toRetry: mode === 'setup-token' ? {
             state: 'ready_to_start'
           } : {
@@ -923,7 +925,7 @@ export function ConsoleOAuthFlow({
         if (!isOpenAIOAuth && !isGeminiCliOAuth) {
           const orgResult = await validateForceLoginOrg();
           if (!orgResult.valid) {
-            throw new Error('Forced login organization validation failed');
+            throw new Error(t('oauth.errorOrgValidationFailed'));
           }
         }
         setOAuthStatus({
@@ -931,10 +933,10 @@ export function ConsoleOAuthFlow({
         });
         void sendNotification({
           message: isGeminiCliOAuth
-            ? 'Gemini CLI OAuth successful'
+            ? t('oauth.geminiOAuthSuccess')
             : isOpenAIOAuth
-              ? 'OpenAI OAuth successful'
-              : 'Claude Code login successful',
+              ? t('oauth.openaiOAuthSuccess')
+              : t('oauth.claudeLoginSuccess'),
           notificationType: 'auth_success'
         }, terminal);
       }
@@ -991,9 +993,9 @@ export function ConsoleOAuthFlow({
       {safeOauthStatus.state === 'waiting_for_login' && showPastePrompt && <Box flexDirection="column" key="urlToCopy" gap={1} paddingBottom={1}>
           <Box paddingX={1}>
             <Text dimColor>
-              Browser didn&apos;t open? Use the url below to sign in{' '}
+              {t('oauth.browserNotOpen')}
             </Text>
-            {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
+            {urlCopied ? <Text color="success">{t('oauth.copied')}</Text> : <Text dimColor>
                 <KeyboardShortcutHint shortcut="c" action="copy" parens />
               </Text>}
           </Box>
@@ -1003,10 +1005,10 @@ export function ConsoleOAuthFlow({
         </Box>}
       {mode === 'setup-token' && safeOauthStatus.state === 'success' && safeOauthStatus.token && <Box key="tokenOutput" flexDirection="column" gap={1} paddingTop={1}>
             <Text color="success">
-              ✓ Long-lived authentication token created successfully!
+              ✓ t('oauth.tokenCreated')
             </Text>
             <Box flexDirection="column" gap={1}>
-              <Text>Your OAuth token (valid for 1 year):</Text>
+              <Text>{t('oauth.tokenInfo')}</Text>
               <Text color="warning">{safeOauthStatus.token}</Text>
               <Text dimColor>
                 Store this token securely. You won&apos;t be able to see it
@@ -1097,8 +1099,8 @@ function OAuthStatusMessage({
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
 
-          <Text bold>Manage accounts</Text>
-          <Text dimColor>Select a provider to manage it.</Text>
+          <Text bold>{t('oauth.manageAccounts')}</Text>
+          <Text dimColor>{t('oauth.selectProviderToManage')}</Text>
           <Select
             defaultValue={persistedActiveProviderKey}
             defaultFocusValue={persistedActiveProviderKey}
@@ -1127,18 +1129,18 @@ function OAuthStatusMessage({
                   label: (
                     <Text>
                       <Text bold>{accountName}</Text>
-                      <Text dimColor> · {typeLabel} · {authLabel} · {provider.models.length} model{provider.models.length !== 1 ? 's' : ''}</Text>
+                      <Text dimColor> · {typeLabel} · {authLabel} · {t('oauth.modelCount', { count: provider.models.length })}</Text>
                     </Text>
                   ),
                   value: getProviderKeyFromConfig(provider),
                 };
               }),
               {
-                label: <Text>Add new account →</Text>,
+                label: <Text>{t('oauth.addNewAccount')}</Text>,
                 value: '__add_new__' as const,
               },
               {
-                label: <Text dimColor>Done →</Text>,
+                label: <Text dimColor>{t('oauth.done')}</Text>,
                 value: '__done__' as const,
               },
             ]}
@@ -1164,17 +1166,17 @@ function OAuthStatusMessage({
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
           <Text bold>{accountName}</Text>
-          <Text dimColor>Choose an action for this provider.</Text>
+          <Text dimColor>{t('oauth.chooseAction')}</Text>
           <Select
             defaultValue="logout"
             defaultFocusValue="logout"
             options={[
               {
-                label: <Text>Logout</Text>,
+                label: <Text>{t('oauth.logout')}</Text>,
                 value: 'logout',
               },
               {
-                label: <Text dimColor>Back</Text>,
+                label: <Text dimColor>{t('oauth.back')}</Text>,
                 value: 'back',
               },
             ]}
@@ -1194,18 +1196,18 @@ function OAuthStatusMessage({
     case 'confirm_delete':
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
-          <Text bold color="error">Remove account: {oauthStatus.accountName}?</Text>
-          <Text>This will remove the saved provider configuration.</Text>
+          <Text bold color="error">{t('oauth.removeAccountConfirm', { name: oauthStatus.accountName })}</Text>
+          <Text>{t('oauth.removeConfigWarning')}</Text>
           <Select
             defaultValue="no"
             defaultFocusValue="no"
             options={[
               {
-                label: <Text>Yes</Text>,
+                label: <Text>{t('oauth.yes')}</Text>,
                 value: 'yes',
               },
               {
-                label: <Text>No</Text>,
+                label: <Text>{t('oauth.no')}</Text>,
                 value: 'no',
               },
             ]}
@@ -1224,19 +1226,19 @@ function OAuthStatusMessage({
     case 'provider_select':
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
-          <Text bold>Select API provider format</Text>
-          <Text>Select the compatible API style you want to configure.</Text>
+          <Text bold>{t('oauth.selectProviderFormat')}</Text>
+          <Text>{t('oauth.selectApiStyle')}</Text>
           <Box>
             <Select
               options={[
                 ...((persistedProviders?.length ?? 0) > 0 ? [{
-                  label: <Text dimColor>← Back to accounts</Text>,
+                  label: <Text dimColor>{t('oauth.backToAccounts')}</Text>,
                   value: '__back__'
                 }] : []),
                 {
                   label: (
                     <Text>
-                      Anthropic-like API · <Text dimColor>Compatible with /v1/messages</Text>
+                      {t('oauth.anthropicLikeApi')}
                     </Text>
                   ),
                   value: 'anthropic-like'
@@ -1244,7 +1246,7 @@ function OAuthStatusMessage({
                 {
                   label: (
                     <Text>
-                      OpenAI-like API · <Text dimColor>Configure chat-completions, responses, or oauth</Text>
+                      {t('oauth.openaiLikeApi')}
                     </Text>
                   ),
                   value: 'openai-like'
@@ -1252,7 +1254,7 @@ function OAuthStatusMessage({
                 {
                   label: (
                     <Text>
-                      Gemini-like API · <Text dimColor>Configure Vertex-compatible API or Gemini CLI OAuth</Text>
+                      {t('oauth.geminiLikeApi')}
                     </Text>
                   ),
                   value: 'gemini-like'
@@ -1260,7 +1262,7 @@ function OAuthStatusMessage({
                 {
                   label: (
                     <Text>
-                      GLM (智谱AI) · <Text dimColor>Compatible with Anthropic API via open.bigmodel.cn</Text>
+                      {t('oauth.glmLikeApi')}
                     </Text>
                   ),
                   value: 'glm-like'
@@ -1290,9 +1292,9 @@ function OAuthStatusMessage({
       if (oauthStatus.step === 'authMode') {
         return (
           <Box flexDirection="column" gap={1} marginTop={1}>
-            <Text bold>Configure compatible API</Text>
+            <Text bold>{t('oauth.configureApi')}</Text>
             <Text>{providerLabel}</Text>
-            <Text>Select auth mode:</Text>
+            <Text>{t('oauth.selectAuthMode')}</Text>
             <Box>
               <Select
                 options={oauthStatus.provider === 'openai-like'
@@ -1300,7 +1302,7 @@ function OAuthStatusMessage({
                       {
                         label: (
                           <Text>
-                            chat-completions · <Text dimColor>Use /v1/chat/completions with API key auth</Text>
+                            {t('oauth.authModeChatCompletions')}
                           </Text>
                         ),
                         value: 'chat-completions'
@@ -1308,7 +1310,7 @@ function OAuthStatusMessage({
                       {
                         label: (
                           <Text>
-                            responses · <Text dimColor>Use /v1/responses with API key auth</Text>
+                            {t('oauth.authModeResponses')}
                           </Text>
                         ),
                         value: 'responses'
@@ -1316,7 +1318,7 @@ function OAuthStatusMessage({
                       {
                         label: (
                           <Text>
-                            oauth · <Text dimColor>Use OAuth login and keep models available in /model</Text>
+                            {t('oauth.authModeOAuth')}
                           </Text>
                         ),
                         value: 'oauth'
@@ -1326,7 +1328,7 @@ function OAuthStatusMessage({
                       {
                         label: (
                           <Text>
-                            vertex-compatible · <Text dimColor>Use Gemini GenerateContent-compatible endpoint with API key auth</Text>
+                            {t('oauth.authModeVertexCompatible')}
                           </Text>
                         ),
                         value: 'vertex-compatible'
@@ -1334,7 +1336,7 @@ function OAuthStatusMessage({
                       {
                         label: (
                           <Text>
-                            gemini-cli-oauth · <Text dimColor>Use Gemini CLI / Cloud Code Assist OAuth</Text>
+                            {t('oauth.authModeGeminiCliOAuth')}
                           </Text>
                         ),
                         value: 'gemini-cli-oauth'
@@ -1358,47 +1360,47 @@ function OAuthStatusMessage({
       const label = oauthStatus.step === 'baseURL'
         ? oauthStatus.provider === 'openai-like'
           ? oauthStatus.authMode === 'responses'
-            ? 'Enter the OpenAI-compatible Responses base URL:'
-            : 'Enter the OpenAI-compatible Chat Completions base URL:'
+            ? t('oauth.enterOpenAIResponsesUrl')
+            : t('oauth.enterOpenAIChatUrl')
           : oauthStatus.provider === 'gemini-like'
-            ? 'Enter the Gemini Vertex-compatible base URL:'
-            : 'Enter the Anthropic-compatible Messages base URL:'
+            ? t('oauth.enterGeminiVertexUrl')
+            : t('oauth.enterAnthropicMessagesUrl')
         : oauthStatus.step === 'apiKey'
           ? oauthStatus.provider === 'gemini-like'
-            ? 'Enter Gemini API key:'
+            ? t('oauth.enterGeminiApiKey')
             : oauthStatus.provider === 'openai-like'
-              ? 'Enter API key:'
-              : 'Enter Anthropic API key:'
+              ? t('oauth.enterApiKey')
+              : t('oauth.enterAnthropicApiKey')
           : oauthStatus.provider === 'openai-like' && oauthStatus.authMode === 'oauth'
-            ? 'Enter one or more model names for OpenAI OAuth separated by spaces:'
+            ? t('oauth.enterOpenAIModels')
             : oauthStatus.provider === 'gemini-like' && oauthStatus.authMode === 'gemini-cli-oauth'
-              ? 'Enter one or more model names for Gemini CLI OAuth separated by spaces:'
-              : 'Enter one or more model names separated by spaces:';
+              ? t('oauth.enterGeminiModels')
+              : t('oauth.enterModels');
       const value = oauthStatus.step === 'baseURL' ? customBaseURL : oauthStatus.step === 'apiKey' ? customApiKey : customModels;
       const onChange = oauthStatus.step === 'baseURL' ? setCustomBaseURL : oauthStatus.step === 'apiKey' ? setCustomApiKey : setCustomModels;
       const placeholder = oauthStatus.step === 'baseURL'
         ? oauthStatus.provider === 'openai-like'
-          ? 'http(s)://your-openai-compatible-endpoint.example.com'
+          ? t('oauth.placeholderOpenAIUrl')
           : oauthStatus.provider === 'gemini-like'
-            ? 'https://generativelanguage.googleapis.com/v1beta'
-            : 'http(s)://your-anthropic-compatible-endpoint.example.com'
+            ? t('oauth.placeholderGeminiUrl')
+            : t('oauth.placeholderAnthropicUrl')
         : oauthStatus.step === 'apiKey'
-          ? 'sk-...'
+          ? t('oauth.placeholderApiKey')
           : oauthStatus.provider === 'openai-like'
-            ? 'gpt-5.4'
+            ? t('oauth.placeholderGptModel')
             : oauthStatus.provider === 'gemini-like'
-              ? 'gemini-3-flash-preview gemini-3.1-pro-high'
-              : 'minimax-m2.7-highspeed';
+              ? t('oauth.placeholderGeminiModel')
+              : t('oauth.placeholderModel');
 
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
-          <Text bold>Configure compatible API</Text>
+          <Text bold>{t('oauth.configureApi')}</Text>
           <Text>
-            {providerLabel} · Auth mode: {oauthStatus.authMode}
+            {providerLabel} · {t('oauth.authModeLabel', { mode: oauthStatus.authMode })}
           </Text>
           {oauthMode && oauthStatus.provider === 'openai-like' ? (
             <Text dimColor>
-              OAuth mode uses the official OpenAI browser login. API key is not required. Models remain available in /model.
+              {t('oauth.openaiOAuthDescription')}
             </Text>
           ) : null}
           <Text>{label}</Text>
@@ -1450,26 +1452,26 @@ function OAuthStatusMessage({
             {oauthStatus.step === 'baseURL' && !oauthMode ? <Text dimColor>{routeSuffix}</Text> : null}
           </Box>
           <Text dimColor>
-            {oauthStatus.step === 'models' ? 'Press Enter to save the models.' : oauthStatus.step === 'apiKey' ? 'Press Enter to continue.' : 'Press Enter to save and continue.'}
+            {oauthStatus.step === 'models' ? t('oauth.pressEnterSaveModels') : oauthStatus.step === 'apiKey' ? t('oauth.pressEnterContinue') : t('oauth.pressEnterSaveContinue')}
           </Text>
         </Box>
       );
     }
 
     case 'idle': {
-      const message = startingMessage ?? 'Claude Code can use your Claude subscription or API billing through your Console account.';
+      const message = startingMessage ?? t('oauth.defaultLoginMessage');
 
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
           <Text bold>{message}</Text>
-          <Text>Select login method:</Text>
+          <Text>{t('oauth.selectLoginMethod')}</Text>
           <Box>
             <Select
               options={[
                 {
                   label: (
                     <Text>
-                      Claude account with subscription · <Text dimColor>Pro, Max, Team, or Enterprise</Text>
+                      {t('oauth.claudeSubscription')}
                     </Text>
                   ),
                   value: 'claudeai'
@@ -1477,7 +1479,7 @@ function OAuthStatusMessage({
                 {
                   label: (
                     <Text>
-                      Anthropic Console account · <Text dimColor>API usage billing</Text>
+                      {t('oauth.consoleAccount')}
                     </Text>
                   ),
                   value: 'console'
@@ -1485,7 +1487,7 @@ function OAuthStatusMessage({
                 {
                   label: (
                     <Text>
-                      3rd-party platform · <Text dimColor>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>
+                      {t('oauth.thirdPartyPlatform')}
                     </Text>
                   ),
                   value: 'platform'
@@ -1520,14 +1522,14 @@ function OAuthStatusMessage({
     case 'platform_setup':
       return (
         <Box flexDirection="column" gap={1} marginTop={1}>
-          <Text bold>Using 3rd-party platforms</Text>
+          <Text bold>{t('oauth.usingThirdParty')}</Text>
           <Box flexDirection="column" gap={1}>
             <Text>
-              Claude Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart Claude Code.
+              {t('oauth.platformDescription')}
             </Text>
-            <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>
+            <Text>{t('oauth.enterpriseContact')}</Text>
             <Box flexDirection="column" marginTop={1}>
-              <Text bold>Documentation:</Text>
+              <Text bold>{t('oauth.documentation')}</Text>
               <Text>
                 · Amazon Bedrock:{' '}
                 <Link url="https://code.claude.com/docs/en/amazon-bedrock">https://code.claude.com/docs/en/amazon-bedrock</Link>
@@ -1543,7 +1545,7 @@ function OAuthStatusMessage({
             </Box>
             <Box marginTop={1}>
               <Text dimColor>
-                Press <Text bold>Enter</Text> to go back to login options.
+                {t('oauth.pressEnterBackToLogin')}
               </Text>
             </Box>
           </Box>
@@ -1561,12 +1563,12 @@ function OAuthStatusMessage({
           {!showPastePrompt ? (
             <Box>
               <Spinner />
-              <Text>Opening browser to sign in…</Text>
+              <Text>{t('oauth.openingBrowser')}</Text>
             </Box>
           ) : null}
           {showPastePrompt ? (
             <Box>
-              <Text>{PASTE_HERE_MSG}</Text>
+              <Text>{t('oauth.pasteHere')}</Text>
               <TextInput
                 value={pastedCode}
                 onChange={setPastedCode}
@@ -1586,7 +1588,7 @@ function OAuthStatusMessage({
         <Box flexDirection="column" gap={1}>
           <Box>
             <Spinner />
-            <Text>Creating API key for Claude Code…</Text>
+            <Text>{t('oauth.creatingApiKey')}</Text>
           </Box>
         </Box>
       );
@@ -1594,7 +1596,7 @@ function OAuthStatusMessage({
     case 'about_to_retry':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="permission">Retrying…</Text>
+          <Text color="permission">{t('oauth.retrying')}</Text>
         </Box>
       );
 
@@ -1605,11 +1607,11 @@ function OAuthStatusMessage({
             <>
               {getOauthAccountInfo()?.emailAddress ? (
                 <Text dimColor>
-                  Logged in as <Text>{getOauthAccountInfo()?.emailAddress}</Text>
+                  {t('oauth.loggedInAs', { email: getOauthAccountInfo()?.emailAddress })}
                 </Text>
               ) : null}
               <Text color="success">
-                Login successful. Press <Text bold>Enter</Text> to continue…
+                t('oauth.loginSuccessful')
               </Text>
             </>
           )}
@@ -1619,11 +1621,11 @@ function OAuthStatusMessage({
     case 'error':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="error">OAuth error: {oauthStatus.message}</Text>
+          <Text color="error">{t('oauth.error', { message: oauthStatus.message })}</Text>
           {oauthStatus.toRetry ? (
             <Box marginTop={1}>
               <Text color="permission">
-                Press <Text bold>Enter</Text> to retry.
+                {t('oauth.pressEnterRetry')}
               </Text>
             </Box>
           ) : null}

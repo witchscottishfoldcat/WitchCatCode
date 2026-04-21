@@ -7,6 +7,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import { env } from '../utils/env.js';
 import { getTerminalIdeType, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from '../utils/ide.js';
 import { Dialog } from './design-system/Dialog.js';
+import { useI18n } from '../hooks/useI18n.js';
 interface Props {
   onDone: () => void;
   installationStatus: IDEExtensionInstallationStatus | null;
@@ -18,6 +19,7 @@ export function IdeOnboardingDialog(t0) {
     installationStatus
   } = t0;
   markDialogAsShown();
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onDone) {
     t1 = {
@@ -59,7 +61,7 @@ export function IdeOnboardingDialog(t0) {
   }
   const ideName = t4;
   const installedVersion = installationStatus?.installedVersion;
-  const pluginOrExtension = isJetBrains ? "plugin" : "extension";
+  const pluginOrExtension = isJetBrains ? t('ideOnboarding.plugin') : t('ideOnboarding.extension');
   const mentionShortcut = env.platform === "darwin" ? "Cmd+Option+K" : "Ctrl+Alt+K";
   let t5;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
@@ -70,27 +72,23 @@ export function IdeOnboardingDialog(t0) {
   }
   let t6;
   if ($[8] !== ideName) {
-    t6 = <>{t5}<Text>Welcome to Claude Code for {ideName}</Text></>;
+    t6 = <>{t5}<Text>{t('ideOnboarding.welcomeTitle', { ideName })}</Text></>;
     $[8] = ideName;
     $[9] = t6;
   } else {
     t6 = $[9];
   }
-  const t7 = installedVersion ? `installed ${pluginOrExtension} v${installedVersion}` : undefined;
+  const t7 = installedVersion ? t('ideOnboarding.installedVersion', { pluginOrExtension, version: installedVersion }) : undefined;
   let t8;
   if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <Text color="suggestion">⧉ open files</Text>;
+    t8 = <Text color="suggestion">⧉ </Text>;
     $[10] = t8;
   } else {
     t8 = $[10];
   }
-  let t9;
-  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = <Text>• Claude has context of {t8}{" "}and <Text color="suggestion">⧉ selected lines</Text></Text>;
-    $[11] = t9;
-  } else {
-    t9 = $[11];
-  }
+  const openFilesLabel = <Text color="suggestion">{t8}{t('ideOnboarding.openFiles')}</Text>;
+  const selectedLinesLabel = <Text color="suggestion">{t8}{t('ideOnboarding.selectedLines')}</Text>;
+  const feature1 = <Text>• {t('ideOnboarding.feature1Prefix')}{openFilesLabel} {t('ideOnboarding.feature1And')}{selectedLinesLabel}</Text>;
   let t10;
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
     t10 = <Text color="diffAddedWord">+11</Text>;
@@ -100,28 +98,18 @@ export function IdeOnboardingDialog(t0) {
   }
   let t11;
   if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = <Text>• Review Claude Code's changes{" "}{t10}{" "}<Text color="diffRemovedWord">-22</Text> in the comfort of your IDE</Text>;
+    t11 = <Text color="diffRemovedWord">-22</Text>;
     $[13] = t11;
   } else {
     t11 = $[13];
   }
-  let t12;
-  if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
-    t12 = <Text>• Cmd+Esc<Text dimColor={true}> for Quick Launch</Text></Text>;
-    $[14] = t12;
-  } else {
-    t12 = $[14];
-  }
-  let t13;
-  if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = <Box flexDirection="column" gap={1}>{t9}{t11}{t12}<Text>• {mentionShortcut}<Text dimColor={true}> to reference files or lines in your input</Text></Text></Box>;
-    $[15] = t13;
-  } else {
-    t13 = $[15];
-  }
+  const feature2 = <Text>• {t('ideOnboarding.feature2Prefix')}{t10} {t11} {t('ideOnboarding.feature2Suffix')}</Text>;
+  const feature3 = <Text>• {mentionShortcut}<Text dimColor={true}> {t('ideOnboarding.quickLaunch')}</Text></Text>;
+  const feature4 = <Text>• {mentionShortcut}<Text dimColor={true}> {t('ideOnboarding.referenceHint')}</Text></Text>;
+  const featureList = <Box flexDirection="column" gap={1}>{feature1}{feature2}{feature3}{feature4}</Box>;
   let t14;
   if ($[16] !== onDone || $[17] !== t6 || $[18] !== t7) {
-    t14 = <Dialog title={t6} subtitle={t7} color="ide" onCancel={onDone} hideInputGuide={true}>{t13}</Dialog>;
+    t14 = <Dialog title={t6} subtitle={t7} color="ide" onCancel={onDone} hideInputGuide={true}>{featureList}</Dialog>;
     $[16] = onDone;
     $[17] = t6;
     $[18] = t7;
@@ -129,16 +117,10 @@ export function IdeOnboardingDialog(t0) {
   } else {
     t14 = $[19];
   }
-  let t15;
-  if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
-    t15 = <Box paddingX={1}><Text dimColor={true} italic={true}>Press Enter to continue</Text></Box>;
-    $[20] = t15;
-  } else {
-    t15 = $[20];
-  }
+  const pressEnterHint = <Box paddingX={1}><Text dimColor={true} italic={true}>{t('ideOnboarding.pressEnter')}</Text></Box>;
   let t16;
   if ($[21] !== t14) {
-    t16 = <>{t14}{t15}</>;
+    t16 = <>{t14}{pressEnterHint}</>;
     $[21] = t14;
     $[22] = t16;
   } else {

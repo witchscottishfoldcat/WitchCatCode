@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, Text } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { formatTokens } from '../utils/format.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
@@ -17,6 +18,7 @@ export function IdleReturnDialog(t0) {
     totalInputTokens,
     onDone
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== idleMinutes) {
     t1 = formatIdleDuration(idleMinutes);
@@ -35,7 +37,7 @@ export function IdleReturnDialog(t0) {
     t2 = $[3];
   }
   const formattedTokens = t2;
-  const t3 = `You've been away ${formattedIdle} and this conversation is ${formattedTokens} tokens.`;
+  const t3 = t('idleReturn.title', { idle: formattedIdle, tokens: formattedTokens });
   let t4;
   if ($[4] !== onDone) {
     t4 = () => onDone("dismiss");
@@ -44,62 +46,37 @@ export function IdleReturnDialog(t0) {
   } else {
     t4 = $[5];
   }
-  let t5;
-  if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Box flexDirection="column"><Text>If this is a new task, clearing context will save usage and be faster.</Text></Box>;
-    $[6] = t5;
-  } else {
-    t5 = $[6];
-  }
-  let t6;
-  if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = {
-      value: "continue" as const,
-      label: "Continue this conversation"
-    };
-    $[7] = t6;
-  } else {
-    t6 = $[7];
-  }
+  const t5 = <Box flexDirection="column"><Text>{t('idleReturn.hint')}</Text></Box>;
+  const t6 = [{
+    value: "continue" as const,
+    label: t('idleReturn.continue')
+  }, {
+    value: "clear" as const,
+    label: t('idleReturn.clear')
+  }, {
+    value: "never" as const,
+    label: t('idleReturn.neverAsk')
+  }];
   let t7;
-  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = {
-      value: "clear" as const,
-      label: "Send message as a new conversation"
-    };
-    $[8] = t7;
+  if ($[6] !== onDone) {
+    t7 = <Select options={t6} onChange={value => onDone(value)} />;
+    $[6] = onDone;
+    $[7] = t7;
   } else {
-    t7 = $[8];
+    t7 = $[7];
   }
   let t8;
-  if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = [t6, t7, {
-      value: "never" as const,
-      label: "Don't ask me again"
-    }];
-    $[9] = t8;
+  if ($[8] !== t3 || $[9] !== t4 || $[10] !== t5 || $[11] !== t7) {
+    t8 = <Dialog title={t3} onCancel={t4}>{t5}{t7}</Dialog>;
+    $[8] = t3;
+    $[9] = t4;
+    $[10] = t5;
+    $[11] = t7;
+    $[12] = t8;
   } else {
-    t8 = $[9];
+    t8 = $[12];
   }
-  let t9;
-  if ($[10] !== onDone) {
-    t9 = <Select options={t8} onChange={value => onDone(value)} />;
-    $[10] = onDone;
-    $[11] = t9;
-  } else {
-    t9 = $[11];
-  }
-  let t10;
-  if ($[12] !== t3 || $[13] !== t4 || $[14] !== t9) {
-    t10 = <Dialog title={t3} onCancel={t4}>{t5}{t9}</Dialog>;
-    $[12] = t3;
-    $[13] = t4;
-    $[14] = t9;
-    $[15] = t10;
-  } else {
-    t10 = $[15];
-  }
-  return t10;
+  return t8;
 }
 function formatIdleDuration(minutes: number): string {
   if (minutes < 1) {

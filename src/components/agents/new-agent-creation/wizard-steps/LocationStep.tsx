@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { Box } from '../../../../ink.js';
 import type { SettingSource } from '../../../../utils/settings/constants.js';
 import { ConfigurableShortcutHint } from '../../../ConfigurableShortcutHint.js';
@@ -16,10 +17,14 @@ export function LocationStep() {
     updateWizardData,
     cancel
   } = useWizard();
+  const { t } = useI18n();
+  const _subtitle = t('agent.wizard.location.subtitle');
+  const _projectLabel = t('agent.wizard.location.projectLabel');
+  const _personalLabel = t('agent.wizard.location.personalLabel');
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t0 = {
-      label: "Project (.claude/agents/)",
+      label: _projectLabel,
       value: "projectSettings" as SettingSource
     };
     $[0] = t0;
@@ -29,7 +34,7 @@ export function LocationStep() {
   let t1;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = [t0, {
-      label: "Personal (~/.claude/agents/)",
+      label: _personalLabel,
       value: "userSettings" as SettingSource
     }];
     $[1] = t1;
@@ -68,7 +73,7 @@ export function LocationStep() {
   }
   let t5;
   if ($[8] !== t3 || $[9] !== t4) {
-    t5 = <WizardDialogLayout subtitle="Choose location" footerText={t2}><Box><Select key="location-select" options={locationOptions} onChange={t3} onCancel={t4} /></Box></WizardDialogLayout>;
+    t5 = <WizardDialogLayout subtitle={_subtitle} footerText={t2}><Box><Select key="location-select" options={locationOptions} onChange={t3} onCancel={t4} /></Box></WizardDialogLayout>;
     $[8] = t3;
     $[9] = t4;
     $[10] = t5;

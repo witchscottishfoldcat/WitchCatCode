@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useCallback } from 'react';
 import { Select } from '../../../components/CustomSelect/select.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { Box, Text } from '../../../ink.js';
 import type { ToolPermissionContext } from '../../../Tool.js';
 import type { PermissionBehavior, PermissionRule, PermissionRuleValue } from '../../../utils/permissions/PermissionRule.js';
@@ -15,24 +16,25 @@ import { plural } from '../../../utils/stringUtils.js';
 import type { OptionWithDescription } from '../../CustomSelect/select.js';
 import { Dialog } from '../../design-system/Dialog.js';
 import { PermissionRuleDescription } from './PermissionRuleDescription.js';
-export function optionForPermissionSaveDestination(saveDestination: EditableSettingSource): OptionWithDescription {
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+export function optionForPermissionSaveDestination(saveDestination: EditableSettingSource, t: TranslateFn): OptionWithDescription {
   switch (saveDestination) {
     case 'localSettings':
       return {
-        label: 'Project settings (local)',
-        description: `Saved in ${getRelativeSettingsFilePathForSource('localSettings')}`,
+        label: t('permission.addRules.projectSettingsLocal'),
+        description: `${t('permission.addRules.savedIn')} ${getRelativeSettingsFilePathForSource('localSettings')}`,
         value: saveDestination
       };
     case 'projectSettings':
       return {
-        label: 'Project settings',
-        description: `Checked in at ${getRelativeSettingsFilePathForSource('projectSettings')}`,
+        label: t('permission.addRules.projectSettings'),
+        description: `${t('permission.addRules.checkedIn')} ${getRelativeSettingsFilePathForSource('projectSettings')}`,
         value: saveDestination
       };
     case 'userSettings':
       return {
-        label: 'User settings',
-        description: `Saved in at ~/.claude/settings.json`,
+        label: t('permission.addRules.userSettings'),
+        description: `${t('permission.addRules.savedIn')} ~/.claude/settings.json`,
         value: saveDestination
       };
   }
@@ -55,9 +57,14 @@ export function AddPermissionRules(t0) {
     initialContext,
     setToolPermissionContext
   } = t0;
+  const { t } = useI18n();
+  const _ruleLabel = t('permission.addRules.rule');
+  const _addTitle = t('permission.addRules.addTitle');
+  const _whereSingle = t('permission.addRules.whereSingle');
+  const _whereMultiple = t('permission.addRules.whereMultiple');
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = SOURCES.map(optionForPermissionSaveDestination);
+    t1 = SOURCES.map(src => optionForPermissionSaveDestination(src, t));
     $[0] = t1;
   } else {
     t1 = $[0];
@@ -112,13 +119,13 @@ export function AddPermissionRules(t0) {
   const onSelect = t2;
   let t3;
   if ($[8] !== ruleValues.length) {
-    t3 = plural(ruleValues.length, "rule");
+    t3 = plural(ruleValues.length, _ruleLabel);
     $[8] = ruleValues.length;
     $[9] = t3;
   } else {
     t3 = $[9];
   }
-  const title = `Add ${ruleBehavior} permission ${t3}`;
+  const title = t('permission.addRules.addTitle', { behavior: ruleBehavior, count: t3 });
   let t4;
   if ($[10] !== ruleValues) {
     t4 = ruleValues.map(_temp);
@@ -135,7 +142,7 @@ export function AddPermissionRules(t0) {
   } else {
     t5 = $[13];
   }
-  const t6 = ruleValues.length === 1 ? "Where should this rule be saved?" : "Where should these rules be saved?";
+  const t6 = ruleValues.length === 1 ? _whereSingle : _whereMultiple;
   let t7;
   if ($[14] !== t6) {
     t7 = <Text>{t6}</Text>;

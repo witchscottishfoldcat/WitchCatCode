@@ -8,6 +8,7 @@ import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEve
 import { getLastAssistantMessage, normalizeMessagesForAPI } from 'src/utils/messages.js';
 import type { CommandResultDisplay } from '../commands.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { Box, Text, useInput } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { queryHaiku } from '../services/api/claude.js';
@@ -158,6 +159,7 @@ export function Feedback({
   onDone,
   backgroundTasks = {}
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>('userInput');
   const [cursorOffset, setCursorOffset] = useState(0);
   const [description, setDescription] = useState(initialDescription ?? '');
@@ -240,9 +242,9 @@ export function Feedback({
       setStep('done');
     } else {
       if (result.isZdrOrg) {
-        setError('Feedback collection is not available for organizations with custom data retention policies.');
+        setError(t('feedback.zdrOrgError'));
       } else {
-        setError('Could not submit feedback. Please try again later.');
+        setError(t('feedback.submitFailed'));
       }
       // Stay on userInput step so user can retry with their content preserved
       setStep('userInput');
@@ -254,17 +256,17 @@ export function Feedback({
     // Don't cancel when done - let other keys close the dialog
     if (step === 'done') {
       if (error) {
-        onDone('Error submitting feedback / bug report', {
+        onDone(t('feedback.errorSubmit'), {
           display: 'system'
         });
       } else {
-        onDone('Feedback / bug report submitted', {
+        onDone(t('feedback.submitted'), {
           display: 'system'
         });
       }
       return;
     }
-    onDone('Feedback / bug report cancelled', {
+    onDone(t('feedback.cancelled'), {
       display: 'system'
     });
   }, [step, error, onDone]);
@@ -284,11 +286,11 @@ export function Feedback({
         void openBrowser(issueUrl);
       }
       if (error) {
-        onDone('Error submitting feedback / bug report', {
+        onDone(t('feedback.errorSubmit'), {
           display: 'system'
         });
       } else {
-        onDone('Feedback / bug report submitted', {
+        onDone(t('feedback.submitted'), {
           display: 'system'
         });
       }
@@ -298,7 +300,7 @@ export function Feedback({
     // When in userInput step with error, allow user to edit and retry
     // (don't close on any keypress - they can still press Esc to cancel)
     if (error && step !== 'userInput') {
-      onDone('Error submitting feedback / bug report', {
+      onDone(t('feedback.errorSubmit'), {
         display: 'system'
       });
       return;
@@ -307,7 +309,7 @@ export function Feedback({
       void submitReport();
     }
   });
-  return <Dialog title="Submit Feedback / Bug Report" onCancel={handleCancel} isCancelActive={step !== 'userInput'} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : step === 'userInput' ? <Byline>
+  return <Dialog title={t('feedback.submitTitle')} onCancel={handleCancel} isCancelActive={step !== 'userInput'} inputGuide={exitState => exitState.pending ? <Text>{t('feedback.pressToExit', { key: exitState.keyName })}</Text> : step === 'userInput' ? <Byline>
             <KeyboardShortcutHint shortcut="Enter" action="continue" />
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
           </Byline> : step === 'consent' ? <Byline>
@@ -315,77 +317,70 @@ export function Feedback({
             <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />
           </Byline> : null}>
       {step === 'userInput' && <Box flexDirection="column" gap={1}>
-          <Text>Describe the issue below:</Text>
+          <Text>{t('feedback.describeIssue')}</Text>
           <TextInput value={description} onChange={value => {
         setDescription(value);
         // Clear error when user starts editing to allow retry
         if (error) {
           setError(null);
         }
-      }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() => onDone('Feedback cancelled', {
+      }} columns={textInputColumns} onSubmit={() => setStep('consent')} onExitMessage={() => onDone(t('feedback.feedbackCancelled'), {
         display: 'system'
       })} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} showCursor />
           {error && <Box flexDirection="column" gap={1}>
               <Text color="error">{error}</Text>
               <Text dimColor>
-                Edit and press Enter to retry, or Esc to cancel
+                {t('feedback.editAndRetry')}
               </Text>
             </Box>}
         </Box>}
 
       {step === 'consent' && <Box flexDirection="column">
-          <Text>This report will include:</Text>
+          <Text>{t('feedback.reportIncludes')}</Text>
           <Box marginLeft={2} flexDirection="column">
             <Text>
-              - Your feedback / bug description:{' '}
+              - {t('feedback.bugDescription')}{' '}
               <Text dimColor>{description}</Text>
             </Text>
             <Text>
-              - Environment info:{' '}
+              - {t('feedback.environmentInfo')}{' '}
               <Text dimColor>
                 {env.platform}, {env.terminal}, v{MACRO.VERSION}
               </Text>
             </Text>
             {envInfo.gitState && <Text>
-                - Git repo metadata:{' '}
+                - {t('feedback.gitRepoMetadata')}{' '}
                 <Text dimColor>
                   {envInfo.gitState.branchName}
                   {envInfo.gitState.commitHash ? `, ${envInfo.gitState.commitHash.slice(0, 7)}` : ''}
                   {envInfo.gitState.remoteUrl ? ` @ ${envInfo.gitState.remoteUrl}` : ''}
-                  {!envInfo.gitState.isHeadOnRemote && ', not synced'}
-                  {!envInfo.gitState.isClean && ', has local changes'}
+                  {!envInfo.gitState.isHeadOnRemote && `, ${t('feedback.notSynced')}`}
+                  {!envInfo.gitState.isClean && `, ${t('feedback.hasLocalChanges')}`}
                 </Text>
               </Text>}
-            <Text>- Current session transcript</Text>
+            <Text>- {t('feedback.currentSessionTranscript')}</Text>
           </Box>
           <Box marginTop={1}>
             <Text wrap="wrap" dimColor>
-              We will use your feedback to debug related issues or to improve{' '}
-              Claude Code&apos;s functionality (eg. to reduce the risk of bugs
-              occurring in the future).
+              {t('feedback.usageNotice')}
             </Text>
           </Box>
           <Box marginTop={1}>
             <Text>
-              Press <Text bold>Enter</Text> to confirm and submit.
+              {t('feedback.pressToConfirm')}
             </Text>
           </Box>
         </Box>}
 
       {step === 'submitting' && <Box flexDirection="row" gap={1}>
-          <Text>Submitting report…</Text>
+          <Text>{t('feedback.submitting')}</Text>
         </Box>}
 
       {step === 'done' && <Box flexDirection="column">
-          {error ? <Text color="error">{error}</Text> : <Text color="success">Thank you for your report!</Text>}
-          {feedbackId && <Text dimColor>Feedback ID: {feedbackId}</Text>}
+          {error ? <Text color="error">{error}</Text> : <Text color="success">{t('feedback.thankYou')}</Text>}
+          {feedbackId && <Text dimColor>{t('feedback.feedbackId')} {feedbackId}</Text>}
           <Box marginTop={1}>
-            <Text>Press </Text>
-            <Text bold>Enter </Text>
-            <Text>
-              to open your browser and draft a GitHub issue, or any other key to
-              close.
-            </Text>
+            <Text>{t('feedback.pressToOpenGithub')}</Text>
           </Box>
         </Box>}
     </Dialog>;

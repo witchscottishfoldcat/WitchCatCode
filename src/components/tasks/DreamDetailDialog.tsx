@@ -5,6 +5,7 @@ import { useElapsedTime } from '../../hooks/useElapsedTime.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import type { DreamTaskState } from '../../tasks/DreamTask/DreamTask.js';
 import { plural } from '../../utils/stringUtils.js';
 import { Byline } from '../design-system/Byline.js';
@@ -28,6 +29,14 @@ export function DreamDetailDialog(t0) {
     onKill
   } = t0;
   const elapsedTime = useElapsedTime(task.startTime, task.status === "running", 1000, 0);
+  const { t } = useI18n();
+  const titleText = t('task.dream.title');
+  const statusLabel = t('task.dream.status');
+  const startingText = t('task.dream.starting');
+  const noOutputText = t('task.dream.noOutput');
+  const reviewingText = t('task.dream.reviewing');
+  const touchedText = t('task.dream.touched');
+  const earlierTurnsText = t('task.dream.earlierTurns', { count: 0 });
   let t1;
   if ($[0] !== onDone) {
     t1 = {
@@ -101,11 +110,11 @@ export function DreamDetailDialog(t0) {
     t15 = true;
     t16 = handleKeyDown;
     T1 = Dialog;
-    t8 = "Memory consolidation";
+    t8 = titleText;
     const t17 = task.sessionsReviewing;
     let t18;
     if ($[33] !== task.sessionsReviewing) {
-      t18 = plural(task.sessionsReviewing, "session");
+      t18 = plural(task.sessionsReviewing, t('task.dream.session'), t('task.dream.sessions'));
       $[33] = task.sessionsReviewing;
       $[34] = t18;
     } else {
@@ -113,14 +122,14 @@ export function DreamDetailDialog(t0) {
     }
     let t19;
     if ($[35] !== task.filesTouched.length) {
-      t19 = task.filesTouched.length > 0 && <>{" "}· {task.filesTouched.length}{" "}{plural(task.filesTouched.length, "file")} touched</>;
+      t19 = task.filesTouched.length > 0 && <>{" "}· {task.filesTouched.length}{" "}{plural(task.filesTouched.length, t('task.dream.file'), t('task.dream.files'))} {touchedText}</>;
       $[35] = task.filesTouched.length;
       $[36] = t19;
     } else {
       t19 = $[36];
     }
     if ($[37] !== elapsedTime || $[38] !== t18 || $[39] !== t19 || $[40] !== task.sessionsReviewing) {
-      t9 = <Text dimColor={true}>{elapsedTime} · reviewing {t17}{" "}{t18}{t19}</Text>;
+      t9 = <Text dimColor={true}>{elapsedTime} · {reviewingText} {t17}{" "}{t18}{t19}</Text>;
       $[37] = elapsedTime;
       $[38] = t18;
       $[39] = t19;
@@ -145,7 +154,7 @@ export function DreamDetailDialog(t0) {
     t5 = 1;
     let t20;
     if ($[46] === Symbol.for("react.memo_cache_sentinel")) {
-      t20 = <Text bold={true}>Status:</Text>;
+      t20 = <Text bold={true}>{statusLabel}</Text>;
       $[46] = t20;
     } else {
       t20 = $[46];
@@ -157,7 +166,7 @@ export function DreamDetailDialog(t0) {
     } else {
       t6 = $[48];
     }
-    t7 = shown.length === 0 ? <Text dimColor={true}>{task.status === "running" ? "Starting\u2026" : "(no text output)"}</Text> : <>{hidden > 0 && <Text dimColor={true}>({hidden} earlier {plural(hidden, "turn")})</Text>}{shown.map(_temp2)}</>;
+    t7 = shown.length === 0 ? <Text dimColor={true}>{task.status === "running" ? startingText : noOutputText}</Text> : <>{hidden > 0 && <Text dimColor={true}>({t('task.dream.earlierTurns', { count: hidden })} {plural(hidden, t('task.dream.turn'), t('task.dream.turns'))})</Text>}{shown.map(_temp2)}</>;
     $[8] = elapsedTime;
     $[9] = handleKeyDown;
     $[10] = onBack;

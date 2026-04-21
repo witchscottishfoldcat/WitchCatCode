@@ -24,6 +24,7 @@ import { BLACK_CIRCLE } from '../../constants/figures.js';
 import { TeammateMessageContent } from './UserTeammateMessage.js';
 import { isShutdownApproved } from '../../utils/teammateMailbox.js';
 import { CtrlOToExpand } from '../CtrlOToExpand.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { FilePathLink } from '../FilePathLink.js';
 import { feature } from 'bun:bundle';
 import { useSelectedMessageBg } from '../messageActions.js';
@@ -39,6 +40,7 @@ export function AttachmentMessage({
   verbose,
   isTranscriptMode
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const bg = useSelectedMessageBg();
   // Hoisted to mount-time — per-message component, re-renders on every scroll.
   const isDemoEnv = feature('EXPERIMENTAL_SKILL_SEARCH') ?
@@ -96,7 +98,7 @@ export function AttachmentMessage({
 
         // Plain text message - sender header with chevron, truncated content
         const inkColor = toInkColor(msg_0.color);
-        const formattedContent = formatTeammateMessageContent(msg_0.text) ?? msg_0.text;
+        const formattedContent = formatTeammateMessageContent(msg_0.text, t) ?? msg_0.text;
         return <TeammateMessageContent key={idx} displayName={msg_0.from} inkColor={inkColor} content={formattedContent} summary={msg_0.summary} isTranscriptMode={isTranscriptMode} />;
       })}
       </Box>;

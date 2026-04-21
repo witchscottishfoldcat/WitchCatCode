@@ -6,11 +6,12 @@
  * - clearConversation: import from './clear/conversation.js'
  */
 import type { Command } from '../../commands.js'
+import { t } from '../../i18n/core.js'
 
 const clear = {
   type: 'local',
   name: 'clear',
-  description: 'Clear conversation history and free up context',
+  description: t('command.clear.description'),
   aliases: ['reset', 'new'],
   supportsNonInteractive: false, // Should just create a new session
   load: () => import('./clear.js'),

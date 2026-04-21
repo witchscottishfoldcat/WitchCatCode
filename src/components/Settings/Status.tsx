@@ -6,6 +6,7 @@ import { getSessionId } from '../../bootstrap/state.js';
 import type { LocalJSXCommandContext } from '../../commands.js';
 import { useIsInsideModal } from '../../context/modalContext.js';
 import { Box, Text, useTheme } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { type AppState, useAppState } from '../../state/AppState.js';
 import { getCwd } from '../../utils/cwd.js';
 import { getCurrentSessionTitle } from '../../utils/sessionStorage.js';
@@ -16,21 +17,21 @@ type Props = {
   context: LocalJSXCommandContext;
   diagnosticsPromise: Promise<Diagnostic[]>;
 };
-function buildPrimarySection(): Property[] {
+function buildPrimarySection(t: (key: string) => string): Property[] {
   const sessionId = getSessionId();
   const customTitle = getCurrentSessionTitle(sessionId);
-  const nameValue = customTitle ?? <Text dimColor>/rename to add a name</Text>;
+  const nameValue = customTitle ?? <Text dimColor>{t('status.renameToAddName')}</Text>;
   return [{
-    label: 'Version',
+    label: t('status.version'),
     value: MACRO.VERSION
   }, {
-    label: 'Session name',
+    label: t('status.sessionName'),
     value: nameValue
   }, {
-    label: 'Session ID',
+    label: t('status.sessionId'),
     value: sessionId
   }, {
-    label: 'cwd',
+    label: t('status.cwd'),
     value: getCwd()
   }, ...buildAccountProperties(), ...buildAPIProviderProperties()];
 }
@@ -44,10 +45,10 @@ function buildSecondarySection({
   mcp: AppState['mcp'];
   theme: ThemeName;
   context: LocalJSXCommandContext;
-}): Property[] {
+}, t: (key: string) => string): Property[] {
   const modelLabel = getModelDisplayLabel(mainLoopModel);
   return [{
-    label: 'Model',
+    label: t('status.model'),
     value: modelLabel
   }, ...buildIDEProperties(mcp.clients, context.options.ideInstallationStatus, theme), ...buildMcpProperties(mcp.clients, theme), ...buildSandboxProperties(), ...buildSettingSourcesProperties()];
 }
@@ -105,12 +106,13 @@ export function Status(t0) {
     context,
     diagnosticsPromise
   } = t0;
+  const { t } = useI18n();
   const mainLoopModel = useAppState(_temp);
   const mcp = useAppState(_temp2);
   const [theme] = useTheme();
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = buildPrimarySection();
+    t1 = buildPrimarySection(t);
     $[0] = t1;
   } else {
     t1 = $[0];
@@ -122,7 +124,7 @@ export function Status(t0) {
       mcp,
       theme,
       context
-    });
+    }, t);
     $[1] = context;
     $[2] = mainLoopModel;
     $[3] = mcp;
@@ -206,13 +208,14 @@ function Diagnostics(t0) {
   const {
     promise
   } = t0;
+  const { t } = useI18n();
   const diagnostics = use(promise);
   if (diagnostics.length === 0) {
     return null;
   }
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Text bold={true}>System Diagnostics</Text>;
+    t1 = <Text bold={true}>{t('status.systemDiagnostics')}</Text>;
     $[0] = t1;
   } else {
     t1 = $[0];

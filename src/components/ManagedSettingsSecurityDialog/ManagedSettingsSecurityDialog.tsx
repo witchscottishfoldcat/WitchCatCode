@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -13,12 +14,13 @@ type Props = {
   onReject: () => void;
 };
 export function ManagedSettingsSecurityDialog(t0) {
-  const $ = _c(26);
+  const $ = _c(32);
   const {
     settings,
     onAccept,
     onReject
   } = t0;
+  const { t, locale } = useI18n();
   const dangerous = extractDangerousSettings(settings);
   const settingsList = formatDangerousSettingsList(dangerous);
   const exitState = useExitOnCtrlCDWithKeybindings();
@@ -57,89 +59,95 @@ export function ManagedSettingsSecurityDialog(t0) {
   const t7 = 1;
   const t8 = 1;
   let t9;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = <Text>Your organization has configured managed settings that could allow execution of arbitrary code or interception of your prompts and responses.</Text>;
-    $[4] = t9;
+  if ($[4] !== locale) {
+    t9 = <Text>{t('managedSettings.description')}</Text>;
+    $[4] = locale;
+    $[5] = t9;
   } else {
-    t9 = $[4];
+    t9 = $[5];
   }
   const T2 = Box;
   const t10 = "column";
   let t11;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = <Text dimColor={true}>Settings requiring approval:</Text>;
-    $[5] = t11;
+  if ($[6] !== locale) {
+    t11 = <Text dimColor={true}>{t('managedSettings.settingsRequiringApproval')}</Text>;
+    $[6] = locale;
+    $[7] = t11;
   } else {
-    t11 = $[5];
+    t11 = $[7];
   }
   const t12 = settingsList.map(_temp);
   let t13;
-  if ($[6] !== T2 || $[7] !== t11 || $[8] !== t12) {
+  if ($[8] !== T2 || $[9] !== t11 || $[10] !== t12) {
     t13 = <T2 flexDirection={t10}>{t11}{t12}</T2>;
-    $[6] = T2;
-    $[7] = t11;
-    $[8] = t12;
-    $[9] = t13;
+    $[8] = T2;
+    $[9] = t11;
+    $[10] = t12;
+    $[11] = t13;
   } else {
-    t13 = $[9];
+    t13 = $[11];
   }
   let t14;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t14 = <Text>Only accept if you trust your organization's IT administration and expect these settings to be configured.</Text>;
-    $[10] = t14;
+  if ($[12] !== locale) {
+    t14 = <Text>{t('managedSettings.trustWarning')}</Text>;
+    $[12] = locale;
+    $[13] = t14;
   } else {
-    t14 = $[10];
+    t14 = $[13];
   }
   let t15;
-  if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[14] !== locale) {
     t15 = [{
-      label: "Yes, I trust these settings",
+      label: t('managedSettings.trustSettings'),
       value: "accept"
     }, {
-      label: "No, exit Claude Code",
+      label: t('managedSettings.exitClaudeCode'),
       value: "exit"
     }];
-    $[11] = t15;
+    $[14] = locale;
+    $[15] = t15;
   } else {
-    t15 = $[11];
+    t15 = $[15];
   }
   let t16;
-  if ($[12] !== onChange) {
+  if ($[16] !== onChange) {
     t16 = <Select options={t15} onChange={value_0 => onChange(value_0 as 'accept' | 'exit')} onCancel={() => onChange("exit")} />;
-    $[12] = onChange;
-    $[13] = t16;
+    $[16] = onChange;
+    $[17] = t16;
   } else {
-    t16 = $[13];
+    t16 = $[17];
   }
   let t17;
-  if ($[14] !== exitState.keyName || $[15] !== exitState.pending) {
-    t17 = <Text dimColor={true}>{exitState.pending ? <>Press {exitState.keyName} again to exit</> : <>Enter to confirm · Esc to exit</>}</Text>;
-    $[14] = exitState.keyName;
-    $[15] = exitState.pending;
-    $[16] = t17;
+  if ($[18] !== exitState.keyName || $[19] !== exitState.pending || $[20] !== locale) {
+    t17 = <Text dimColor={true}>{exitState.pending ? <>{t('managedSettings.pressAgainToExit', { key: exitState.keyName })}</> : <>{t('managedSettings.enterToConfirm')}</>}</Text>;
+    $[18] = exitState.keyName;
+    $[19] = exitState.pending;
+    $[20] = locale;
+    $[21] = t17;
   } else {
-    t17 = $[16];
+    t17 = $[21];
   }
   let t18;
-  if ($[17] !== T1 || $[18] !== t13 || $[19] !== t16 || $[20] !== t17 || $[21] !== t9) {
+  if ($[22] !== T1 || $[23] !== t13 || $[24] !== t16 || $[25] !== t17 || $[26] !== t9) {
     t18 = <T1 flexDirection={t6} gap={t7} paddingTop={t8}>{t9}{t13}{t14}{t16}{t17}</T1>;
-    $[17] = T1;
-    $[18] = t13;
-    $[19] = t16;
-    $[20] = t17;
-    $[21] = t9;
-    $[22] = t18;
+    $[22] = T1;
+    $[23] = t13;
+    $[24] = t16;
+    $[25] = t17;
+    $[26] = t9;
+    $[27] = t18;
   } else {
-    t18 = $[22];
+    t18 = $[27];
   }
   let t19;
-  if ($[23] !== T0 || $[24] !== t18) {
-    t19 = <T0 color={t3} titleColor={t4} title={t5}>{t18}</T0>;
-    $[23] = T0;
-    $[24] = t18;
-    $[25] = t19;
+  if ($[28] !== T0 || $[29] !== locale || $[30] !== t18) {
+    t19 = <T0 color={t3} titleColor={t4} title={t('managedSettings.title')}>{t18}</T0>;
+    $[28] = T0;
+    $[29] = locale;
+    $[30] = t18;
+    $[31] = t19;
   } else {
-    t19 = $[25];
+    t19 = $[31];
   }
   return t19;
 }

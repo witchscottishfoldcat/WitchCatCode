@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { type Command, type CommandBase, type CommandResultDisplay, getCommandName, type PromptCommand } from '../../commands.js';
 import { Box, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { estimateSkillFrontmatterTokens, getSkillsPath } from '../../skills/loadSkillsDir.js';
 import { getDisplayPath } from '../../utils/file.js';
 import { formatTokens } from '../../utils/format.js';
@@ -21,14 +22,14 @@ type Props = {
   }) => void;
   commands: Command[];
 };
-function getSourceTitle(source: SkillSource): string {
+function getSourceTitle(source: SkillSource, t: (key: string, params?: Record<string, string>) => string): string {
   if (source === 'plugin') {
-    return 'Plugin skills';
+    return t('skills.pluginSkills');
   }
   if (source === 'mcp') {
-    return 'MCP skills';
+    return t('skills.mcpSkills');
   }
-  return `${capitalize(getSettingSourceName(source))} skills`;
+  return `${capitalize(getSettingSourceName(source))} ${t('skills.skillsSuffix')}`;
 }
 function getSourceSubtitle(source: SkillSource, skills: SkillCommand[]): string | undefined {
   // MCP skills show server names; file-based skills show filesystem paths.
@@ -50,6 +51,12 @@ export function SkillsMenu(t0) {
     onExit,
     commands
   } = t0;
+  const { t } = useI18n();
+  const dialogDismissed = t('skills.dialogDismissed');
+  const createSkillsHint = t('skills.createSkillsHint');
+  const noSkillsFound = t('skills.noSkillsFound');
+  const skillsTitle = t('skills.title');
+  const descriptionTokens = t('skills.descriptionTokens');
   let t1;
   if ($[0] !== commands) {
     t1 = commands.filter(_temp);
@@ -88,7 +95,7 @@ export function SkillsMenu(t0) {
   let t2;
   if ($[4] !== onExit) {
     t2 = () => {
-      onExit("Skills dialog dismissed", {
+      onExit(dialogDismissed, {
         display: "system"
       });
     };
@@ -101,7 +108,7 @@ export function SkillsMenu(t0) {
   if (skills.length === 0) {
     let t3;
     if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <Text dimColor={true}>Create skills in .claude/skills/ or ~/.claude/skills/</Text>;
+      t3 = <Text dimColor={true}>{createSkillsHint}</Text>;
       $[6] = t3;
     } else {
       t3 = $[6];
@@ -115,7 +122,7 @@ export function SkillsMenu(t0) {
     }
     let t5;
     if ($[8] !== handleCancel) {
-      t5 = <Dialog title="Skills" subtitle="No skills found" onCancel={handleCancel} hideInputGuide={true}>{t3}{t4}</Dialog>;
+      t5 = <Dialog title={skillsTitle} subtitle={noSkillsFound} onCancel={handleCancel} hideInputGuide={true}>{t3}{t4}</Dialog>;
       $[8] = handleCancel;
       $[9] = t5;
     } else {
@@ -131,7 +138,7 @@ export function SkillsMenu(t0) {
       if (groupSkills.length === 0) {
         return null;
       }
-      const title = getSourceTitle(source_0);
+      const title = getSourceTitle(source_0, t);
       const subtitle = getSourceSubtitle(source_0, groupSkills);
       return <Box flexDirection="column" key={source_0}><Box><Text bold={true} dimColor={true}>{title}</Text>{subtitle && <Text dimColor={true}> ({subtitle})</Text>}</Box>{groupSkills.map(skill_1 => renderSkill(skill_1))}</Box>;
     };
@@ -212,7 +219,7 @@ export function SkillsMenu(t0) {
   }
   let t14;
   if ($[31] !== handleCancel || $[32] !== t12 || $[33] !== t6) {
-    t14 = <Dialog title="Skills" subtitle={t6} onCancel={handleCancel} hideInputGuide={true}>{t12}{t13}</Dialog>;
+    t14 = <Dialog title={skillsTitle} subtitle={t6} onCancel={handleCancel} hideInputGuide={true}>{t12}{t13}</Dialog>;
     $[31] = handleCancel;
     $[32] = t12;
     $[33] = t6;
@@ -226,7 +233,7 @@ function _temp3(skill_0) {
   const estimatedTokens = estimateSkillFrontmatterTokens(skill_0);
   const tokenDisplay = `~${formatTokens(estimatedTokens)}`;
   const pluginName = skill_0.source === "plugin" ? skill_0.pluginInfo?.pluginManifest.name : undefined;
-  return <Box key={`${skill_0.name}-${skill_0.source}`}><Text>{getCommandName(skill_0)}</Text><Text dimColor={true}>{pluginName ? ` · ${pluginName}` : ""} · {tokenDisplay} description tokens</Text></Box>;
+  return <Box key={`${skill_0.name}-${skill_0.source}`}><Text>{getCommandName(skill_0)}</Text><Text dimColor={true}>{pluginName ? ` · ${pluginName}` : ""} · {tokenDisplay} {descriptionTokens}</Text></Box>;
 }
 function _temp2(a, b) {
   return getCommandName(a).localeCompare(getCommandName(b));

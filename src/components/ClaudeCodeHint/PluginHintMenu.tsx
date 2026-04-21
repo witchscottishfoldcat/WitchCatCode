@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Box, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Select } from '../CustomSelect/select.js';
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
 type Props = {
@@ -17,6 +18,7 @@ export function PluginHintMenu({
   sourceCommand,
   onResponse
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const onResponseRef = React.useRef(onResponse);
   onResponseRef.current = onResponse;
   React.useEffect(() => {
@@ -37,37 +39,36 @@ export function PluginHintMenu({
   }
   const options = [{
     label: <Text>
-          Yes, install <Text bold>{pluginName}</Text>
+          {t('pluginHint.yesInstall')} <Text bold>{pluginName}</Text>
         </Text>,
     value: 'yes'
   }, {
-    label: 'No',
+    label: t('pluginHint.no'),
     value: 'no'
   }, {
-    label: "No, and don't show plugin installation hints again",
+    label: t('pluginHint.noDontShowAgain'),
     value: 'disable'
   }];
-  return <PermissionDialog title="Plugin Recommendation">
+  return <PermissionDialog title={t('pluginHint.title')}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Box marginBottom={1}>
           <Text dimColor>
-            The <Text bold>{sourceCommand}</Text> command suggests installing a
-            plugin.
+            {t('pluginHint.commandSuggests', { command: sourceCommand })}
           </Text>
         </Box>
         <Box>
-          <Text dimColor>Plugin:</Text>
+          <Text dimColor>{t('pluginHint.plugin')}:</Text>
           <Text> {pluginName}</Text>
         </Box>
         <Box>
-          <Text dimColor>Marketplace:</Text>
+          <Text dimColor>{t('pluginHint.marketplace')}:</Text>
           <Text> {marketplaceName}</Text>
         </Box>
         {pluginDescription && <Box>
             <Text dimColor>{pluginDescription}</Text>
           </Box>}
         <Box marginTop={1}>
-          <Text>Would you like to install it?</Text>
+          <Text>{t('pluginHint.wouldYouLike')}</Text>
         </Box>
         <Box>
           <Select options={options} onChange={onSelect} onCancel={() => onResponse('no')} />

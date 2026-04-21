@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useMemo } from 'react';
 import { getOriginalCwd } from '../../bootstrap/state.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, Text, useTheme } from '../../ink.js';
 import { sanitizeToolNameForAnalytics } from '../../services/analytics/metadata.js';
 import { env } from '../../utils/env.js';
@@ -22,6 +23,12 @@ export function FallbackPermissionRequest(t0) {
     workerBadge
   } = t0;
   const [theme] = useTheme();
+  const { t } = useI18n();
+  const _yesLabel = t('permission.fallback.yes');
+  const _noLabel = t('permission.fallback.no');
+  const _dontAskAgainPrefix = t('permission.fallback.dontAskAgainPrefix');
+  const _dontAskAgainMiddle = t('permission.fallback.dontAskAgainMiddle');
+  const _toolUseTitle = t('permission.fallback.toolUse');
   let originalUserFacingName;
   let t1;
   if ($[0] !== toolUseConfirm.input || $[1] !== toolUseConfirm.tool) {
@@ -157,7 +164,7 @@ export function FallbackPermissionRequest(t0) {
   let t7;
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
     t7 = {
-      label: "Yes",
+      label: _yesLabel,
       value: "yes",
       feedbackConfig: {
         type: "accept"
@@ -182,7 +189,7 @@ export function FallbackPermissionRequest(t0) {
       let t10;
       if ($[19] !== t8) {
         t10 = {
-          label: <Text>Yes, and don't ask again for {t8}{" "}commands in {t9}</Text>,
+          label: <Text>{_dontAskAgainPrefix} {t8} {_dontAskAgainMiddle} {t9}</Text>,
           value: "yes-dont-ask-again"
         };
         $[19] = t8;
@@ -194,9 +201,9 @@ export function FallbackPermissionRequest(t0) {
     }
     let t8;
     if ($[21] === Symbol.for("react.memo_cache_sentinel")) {
-      t8 = {
-        label: "No",
-        value: "no",
+    t8 = {
+      label: _noLabel,
+      value: "no",
         feedbackConfig: {
           type: "reject"
         }
@@ -320,7 +327,7 @@ export function FallbackPermissionRequest(t0) {
   }
   let t20;
   if ($[54] !== t16 || $[55] !== t19 || $[56] !== workerBadge) {
-    t20 = <PermissionDialog title="Tool use" workerBadge={workerBadge}>{t16}{t19}</PermissionDialog>;
+    t20 = <PermissionDialog title={_toolUseTitle} workerBadge={workerBadge}>{t16}{t19}</PermissionDialog>;
     $[54] = t16;
     $[55] = t19;
     $[56] = workerBadge;

@@ -13,6 +13,7 @@ import { editPromptInEditor } from '../../../utils/promptEditor.js';
 import { type OptionWithDescription, Select, SelectMulti } from '../../CustomSelect/index.js';
 import { Divider } from '../../design-system/Divider.js';
 import { FilePathLink } from '../../FilePathLink.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { PermissionRequestTitle } from '../PermissionRequestTitle.js';
 import { PreviewQuestionView } from './PreviewQuestionView.js';
 import { QuestionNavigationBar } from './QuestionNavigationBar.js';
@@ -42,6 +43,7 @@ type Props = {
 };
 export function QuestionView(t0) {
   const $ = _c(114);
+  const { t } = useI18n();
   const {
     question,
     questions,
@@ -185,7 +187,7 @@ export function QuestionView(t0) {
       t8 = $[21];
     }
     handleOpenEditor = t8;
-    const t9 = question.multiSelect ? "Type something" : "Type something.";
+    const t9 = question.multiSelect ? t('common.typeSomething') : t('common.typeSomething');
     const t10 = questionState?.textInputValue ?? "";
     let t11;
     if ($[22] !== onUpdateQuestionState || $[23] !== question.multiSelect || $[24] !== questionText) {
@@ -206,7 +208,7 @@ export function QuestionView(t0) {
       t12 = {
         type: "input" as const,
         value: "__other__",
-        label: "Other",
+        label: t('common.other'),
         placeholder: t9,
         initialValue: t10,
         onChange: t11
@@ -261,7 +263,7 @@ export function QuestionView(t0) {
   }
   let t8;
   if ($[47] !== isInPlanMode || $[48] !== planFilePath) {
-    t8 = isInPlanMode && planFilePath && <Box flexDirection="column" gap={0}><Divider color="inactive" /><Text color="inactive">Planning: <FilePathLink filePath={planFilePath} /></Text></Box>;
+    t8 = isInPlanMode && planFilePath && <Box flexDirection="column" gap={0}><Divider color="inactive" /><Text color="inactive">{t('permission.planning')} <FilePathLink filePath={planFilePath} /></Text></Box>;
     $[47] = isInPlanMode;
     $[48] = planFilePath;
     $[49] = t8;
@@ -303,7 +305,7 @@ export function QuestionView(t0) {
         const textInput = values.includes("__other__") ? questionStates[questionText]?.textInputValue : undefined;
         const finalValues = values.filter(_temp4).concat(textInput ? [textInput] : []);
         onAnswer(questionText, finalValues, undefined, false);
-      }} onFocus={handleFocus} onCancel={onCancel} submitButtonText={currentQuestionIndex === questions.length - 1 ? "Submit" : "Next"} onSubmit={onSubmit} onDownFromLastItem={handleDownFromLastItem} isDisabled={isFooterFocused} onOpenEditor={handleOpenEditor} onImagePaste={onImagePaste} pastedContents={pastedContents} onRemoveImage={onRemoveImage} /> : <Select key={question.question} options={options} defaultValue={questionStates[question.question]?.selectedValue as string | undefined} onChange={value_1 => {
+      }} onFocus={handleFocus} onCancel={onCancel} submitButtonText={currentQuestionIndex === questions.length - 1 ? t('permission.question.submit') : t('permission.question.next')} onSubmit={onSubmit} onDownFromLastItem={handleDownFromLastItem} isDisabled={isFooterFocused} onOpenEditor={handleOpenEditor} onImagePaste={onImagePaste} pastedContents={pastedContents} onRemoveImage={onRemoveImage} /> : <Select key={question.question} options={options} defaultValue={questionStates[question.question]?.selectedValue as string | undefined} onChange={value_1 => {
         onUpdateQuestionState(questionText, {
           selectedValue: value_1
         }, false);
@@ -351,7 +353,7 @@ export function QuestionView(t0) {
   const t16 = options.length + 1;
   let t17;
   if ($[80] !== t15 || $[81] !== t16) {
-    t17 = <Text color={t15}>{t16}. Chat about this</Text>;
+    t17 = <Text color={t15}>{t16}. {t('permission.question.chatAboutThis')}</Text>;
     $[80] = t15;
     $[81] = t16;
     $[82] = t17;
@@ -369,7 +371,7 @@ export function QuestionView(t0) {
   }
   let t19;
   if ($[86] !== footerIndex || $[87] !== isFooterFocused || $[88] !== isInPlanMode || $[89] !== options.length) {
-    t19 = isInPlanMode && <Box flexDirection="row" gap={1}>{isFooterFocused && footerIndex === 1 ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}<Text color={isFooterFocused && footerIndex === 1 ? "suggestion" : undefined}>{options.length + 2}. Skip interview and plan immediately</Text></Box>;
+    t19 = isInPlanMode && <Box flexDirection="row" gap={1}>{isFooterFocused && footerIndex === 1 ? <Text color="suggestion">{figures.pointer}</Text> : <Text> </Text>}<Text color={isFooterFocused && footerIndex === 1 ? "suggestion" : undefined}>{options.length + 2}. {t('permission.question.skipInterview')}</Text></Box>;
     $[86] = footerIndex;
     $[87] = isFooterFocused;
     $[88] = isInPlanMode;
@@ -389,7 +391,7 @@ export function QuestionView(t0) {
   }
   let t21;
   if ($[94] !== questions.length) {
-    t21 = questions.length === 1 ? <>{figures.arrowUp}/{figures.arrowDown} to navigate</> : "Tab/Arrow keys to navigate";
+    t21 = questions.length === 1 ? <>{figures.arrowUp}/{figures.arrowDown} {t('permission.question.arrowNav')}</> : t('permission.question.tabArrowNav');
     $[94] = questions.length;
     $[95] = t21;
   } else {
@@ -397,7 +399,7 @@ export function QuestionView(t0) {
   }
   let t22;
   if ($[96] !== isOtherFocused) {
-    t22 = isOtherFocused && editorName && <> · ctrl+g to edit in {editorName}</>;
+    t22 = isOtherFocused && editorName && <>{t('permission.question.ctrlGToEditIn', { editor: editorName })}</>;
     $[96] = isOtherFocused;
     $[97] = t22;
   } else {
@@ -405,7 +407,7 @@ export function QuestionView(t0) {
   }
   let t23;
   if ($[98] !== t21 || $[99] !== t22) {
-    t23 = <Box marginTop={1}><Text color="inactive" dimColor={true}>Enter to select ·{" "}{t21}{t22}{" "}· Esc to cancel</Text></Box>;
+    t23 = <Box marginTop={1}><Text color="inactive" dimColor={true}>{t('permission.question.enterToSelect')}{" "}{t21}{t22}{" "}{t('permission.question.escToCancel')}</Text></Box>;
     $[98] = t21;
     $[99] = t22;
     $[100] = t23;

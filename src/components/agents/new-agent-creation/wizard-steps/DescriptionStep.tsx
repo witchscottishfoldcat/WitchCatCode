@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode, useCallback, useState } from 'react';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { Box, Text } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import { editPromptInEditor } from '../../../../utils/promptEditor.js';
@@ -18,6 +19,11 @@ export function DescriptionStep() {
     updateWizardData,
     wizardData
   } = useWizard();
+  const { t } = useI18n();
+  const _subtitle = t('agent.wizard.description.subtitle');
+  const _title = t('agent.wizard.description.title');
+  const _errorRequired = t('agent.wizard.description.errorRequired');
+  const _placeholder = t('agent.wizard.description.placeholder');
   const [whenToUse, setWhenToUse] = useState(wizardData.whenToUse || "");
   const [cursorOffset, setCursorOffset] = useState(whenToUse.length);
   const [error, setError] = useState(null);
@@ -61,7 +67,7 @@ export function DescriptionStep() {
     t3 = value => {
       const trimmedValue = value.trim();
       if (!trimmedValue) {
-        setError("Description is required");
+        setError(_errorRequired);
         return;
       }
       setError(null);
@@ -86,14 +92,14 @@ export function DescriptionStep() {
   }
   let t5;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text>When should Claude use this agent?</Text>;
+    t5 = <Text>{_title}</Text>;
     $[8] = t5;
   } else {
     t5 = $[8];
   }
   let t6;
   if ($[9] !== cursorOffset || $[10] !== handleSubmit || $[11] !== whenToUse) {
-    t6 = <Box marginTop={1}><TextInput value={whenToUse} onChange={setWhenToUse} onSubmit={handleSubmit} placeholder="e.g., use this agent after you're done writing code..." columns={80} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>;
+    t6 = <Box marginTop={1}><TextInput value={whenToUse} onChange={setWhenToUse} onSubmit={handleSubmit} placeholder={_placeholder} columns={80} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} focus={true} showCursor={true} /></Box>;
     $[9] = cursorOffset;
     $[10] = handleSubmit;
     $[11] = whenToUse;
@@ -111,7 +117,7 @@ export function DescriptionStep() {
   }
   let t8;
   if ($[15] !== t6 || $[16] !== t7) {
-    t8 = <WizardDialogLayout subtitle="Description (tell Claude when to use this agent)" footerText={t4}><Box flexDirection="column">{t5}{t6}{t7}</Box></WizardDialogLayout>;
+    t8 = <WizardDialogLayout subtitle={_subtitle} footerText={t4}><Box flexDirection="column">{t5}{t6}{t7}</Box></WizardDialogLayout>;
     $[15] = t6;
     $[16] = t7;
     $[17] = t8;

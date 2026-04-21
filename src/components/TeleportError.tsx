@@ -2,6 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useState } from 'react';
 import { checkIsGitClean, checkNeedsClaudeAiLogin } from 'src/utils/background/remote/preconditions.js';
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { Box, Text } from '../ink.js';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
 import { Select } from './CustomSelect/index.js';
@@ -19,12 +20,13 @@ type TeleportErrorProps = {
 // re-fire on every render.
 const EMPTY_ERRORS_TO_IGNORE: ReadonlySet<TeleportLocalErrorType> = new Set();
 export function TeleportError(t0) {
-  const $ = _c(18);
+  const $ = _c(19);
   const {
     onComplete,
     errorsToIgnore: t1
   } = t0;
   const errorsToIgnore = t1 === undefined ? EMPTY_ERRORS_TO_IGNORE : t1;
+  const { t, locale } = useI18n();
   const [currentError, setCurrentError] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   let t2;
@@ -144,24 +146,26 @@ export function TeleportError(t0) {
           return t9;
         }
         let t9;
-        if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-          t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires a Claude.ai account.</Text><Text dimColor={true}>Your Claude Pro/Max subscription will be used by Claude Code.</Text></Box>;
-          $[16] = t9;
+        if ($[16] !== locale) {
+          t9 = <Box flexDirection="column"><Text dimColor={true}>{t('teleport.error.requiresAccount')}</Text><Text dimColor={true}>{t('teleport.error.subscriptionNote')}</Text></Box>;
+          $[16] = locale;
+          $[17] = t9;
         } else {
-          t9 = $[16];
+          t9 = $[17];
         }
         let t10;
-        if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-          t10 = <Dialog title="Log in to Claude" onCancel={onCancel}>{t9}<Select options={[{
-              label: "Login with Claude account",
+        if ($[18] !== locale) {
+          t10 = <Dialog title={t('teleport.error.loginTitle')} onCancel={onCancel}>{t9}<Select options={[{
+              label: t('teleport.error.loginWithClaude'),
               value: "login"
             }, {
-              label: "Exit",
+              label: t('common.exit'),
               value: "exit"
             }]} onChange={handleLoginDialogSelect} /></Dialog>;
-          $[17] = t10;
+          $[18] = locale;
+          $[19] = t10;
         } else {
-          t10 = $[17];
+          t10 = $[19];
         }
         return t10;
       }

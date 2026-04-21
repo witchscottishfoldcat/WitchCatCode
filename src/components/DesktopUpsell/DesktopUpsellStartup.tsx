@@ -7,6 +7,7 @@ import { logEvent } from '../../services/analytics/index.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { Select } from '../CustomSelect/select.js';
 import { DesktopHandoff } from '../DesktopHandoff.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
 type DesktopUpsellConfig = {
   enable_shortcut_tip: boolean;
@@ -39,6 +40,7 @@ export function DesktopUpsellStartup(t0) {
   const {
     onDone
   } = t0;
+  const { t } = useI18n();
   const [showHandoff, setShowHandoff] = useState(false);
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -87,10 +89,14 @@ export function DesktopUpsellStartup(t0) {
     t2 = $[4];
   }
   const handleSelect = t2;
+  const labelTry = t('upsell.optionTry');
+  const labelNotNow = t('upsell.optionNotNow');
+  const labelNever = t('upsell.optionNever');
+  const descriptionText = t('upsell.description');
   let t3;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
     t3 = {
-      label: "Open in Claude Code Desktop",
+      label: labelTry,
       value: "try" as const
     };
     $[5] = t3;
@@ -100,7 +106,7 @@ export function DesktopUpsellStartup(t0) {
   let t4;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
     t4 = {
-      label: "Not now",
+      label: labelNotNow,
       value: "not-now" as const
     };
     $[6] = t4;
@@ -110,7 +116,7 @@ export function DesktopUpsellStartup(t0) {
   let t5;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
     t5 = [t3, t4, {
-      label: "Don't ask again",
+      label: labelNever,
       value: "never" as const
     }];
     $[7] = t5;
@@ -120,7 +126,7 @@ export function DesktopUpsellStartup(t0) {
   const options = t5;
   let t6;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Box marginBottom={1}><Text>Same Claude Code with visual diffs, live app preview, parallel sessions, and more.</Text></Box>;
+    t6 = <Box marginBottom={1}><Text>{descriptionText}</Text></Box>;
     $[8] = t6;
   } else {
     t6 = $[8];
@@ -135,7 +141,7 @@ export function DesktopUpsellStartup(t0) {
   }
   let t8;
   if ($[11] !== handleSelect || $[12] !== t7) {
-    t8 = <PermissionDialog title="Try Claude Code Desktop"><Box flexDirection="column" paddingX={2} paddingY={1}>{t6}<Select options={options} onChange={handleSelect} onCancel={t7} /></Box></PermissionDialog>;
+    t8 = <PermissionDialog title={t('upsell.title')}><Box flexDirection="column" paddingX={2} paddingY={1}>{t6}<Select options={options} onChange={handleSelect} onCancel={t7} /></Box></PermissionDialog>;
     $[11] = handleSelect;
     $[12] = t7;
     $[13] = t8;

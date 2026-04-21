@@ -7,6 +7,7 @@ import type { NormalizedUserMessage } from '../types/message.js';
 import { getUserMessageText } from '../utils/messages.js';
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
 import { MessageResponse } from './MessageResponse.js';
+import { useI18n } from '../hooks/useI18n.js';
 type Props = {
   message: NormalizedUserMessage;
   screen: Screen;
@@ -17,6 +18,7 @@ export function CompactSummary(t0) {
     message,
     screen
   } = t0;
+  const { t } = useI18n();
   const isTranscriptMode = screen === "transcript";
   let t1;
   if ($[0] !== message) {
@@ -36,16 +38,10 @@ export function CompactSummary(t0) {
     } else {
       t2 = $[2];
     }
-    let t3;
-    if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-      t3 = <Text bold={true}>Summarized conversation</Text>;
-      $[3] = t3;
-    } else {
-      t3 = $[3];
-    }
+    const summaryHeading = <Text bold={true}>{t('compactSummary.heading')}</Text>;
     let t4;
     if ($[4] !== isTranscriptMode || $[5] !== metadata) {
-      t4 = !isTranscriptMode && <MessageResponse><Box flexDirection="column"><Text dimColor={true}>Summarized {metadata.messagesSummarized} messages{" "}{metadata.direction === "up_to" ? "up to this point" : "from this point"}</Text>{metadata.userContext && <Text dimColor={true}>Context: {"\u201C"}{metadata.userContext}{"\u201D"}</Text>}<Text dimColor={true}><ConfigurableShortcutHint action="app:toggleTranscript" context="Global" fallback="ctrl+o" description="expand history" parens={true} /></Text></Box></MessageResponse>;
+      t4 = !isTranscriptMode && <MessageResponse><Box flexDirection="column"><Text dimColor={true}>{t('compactSummary.summarized', { count: metadata.messagesSummarized })} {metadata.direction === "up_to" ? t('compactSummary.upToThisPoint') : t('compactSummary.fromThisPoint')}</Text>{metadata.userContext && <Text dimColor={true}>{t('compactSummary.context')}: {"\u201C"}{metadata.userContext}{"\u201D"}</Text>}<Text dimColor={true}><ConfigurableShortcutHint action="app:toggleTranscript" context="Global" fallback="ctrl+o" description={t('compactSummary.expandHistory')} parens={true} /></Text></Box></MessageResponse>;
       $[4] = isTranscriptMode;
       $[5] = metadata;
       $[6] = t4;
@@ -63,7 +59,7 @@ export function CompactSummary(t0) {
     }
     let t6;
     if ($[10] !== t4 || $[11] !== t5) {
-      t6 = <Box flexDirection="column" marginTop={1}><Box flexDirection="row">{t2}<Box flexDirection="column">{t3}{t4}{t5}</Box></Box></Box>;
+      t6 = <Box flexDirection="column" marginTop={1}><Box flexDirection="row">{t2}<Box flexDirection="column">{summaryHeading}{t4}{t5}</Box></Box></Box>;
       $[10] = t4;
       $[11] = t5;
       $[12] = t6;
@@ -72,46 +68,46 @@ export function CompactSummary(t0) {
     }
     return t6;
   }
-  let t2;
+  let t2b;
   if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box minWidth={2}><Text color="text">{BLACK_CIRCLE}</Text></Box>;
-    $[13] = t2;
+    t2b = <Box minWidth={2}><Text color="text">{BLACK_CIRCLE}</Text></Box>;
+    $[13] = t2b;
   } else {
-    t2 = $[13];
+    t2b = $[13];
   }
-  let t3;
+  let t3b;
   if ($[14] !== isTranscriptMode) {
-    t3 = !isTranscriptMode && <Text dimColor={true}>{" "}<ConfigurableShortcutHint action="app:toggleTranscript" context="Global" fallback="ctrl+o" description="expand" parens={true} /></Text>;
+    t3b = !isTranscriptMode && <Text dimColor={true}>{" "}<ConfigurableShortcutHint action="app:toggleTranscript" context="Global" fallback="ctrl+o" description={t('compactSummary.expand')} parens={true} /></Text>;
     $[14] = isTranscriptMode;
-    $[15] = t3;
+    $[15] = t3b;
   } else {
-    t3 = $[15];
+    t3b = $[15];
   }
-  let t4;
-  if ($[16] !== t3) {
-    t4 = <Box flexDirection="row">{t2}<Box flexDirection="column"><Text bold={true}>Compact summary{t3}</Text></Box></Box>;
-    $[16] = t3;
-    $[17] = t4;
+  let t4b;
+  if ($[16] !== t3b) {
+    t4b = <Box flexDirection="row">{t2b}<Box flexDirection="column"><Text bold={true}>{t('compactSummary.compactHeading')}{t3b}</Text></Box></Box>;
+    $[16] = t3b;
+    $[17] = t4b;
   } else {
-    t4 = $[17];
+    t4b = $[17];
   }
-  let t5;
+  let t5b;
   if ($[18] !== isTranscriptMode || $[19] !== textContent) {
-    t5 = isTranscriptMode && <MessageResponse><Text>{textContent}</Text></MessageResponse>;
+    t5b = isTranscriptMode && <MessageResponse><Text>{textContent}</Text></MessageResponse>;
     $[18] = isTranscriptMode;
     $[19] = textContent;
-    $[20] = t5;
+    $[20] = t5b;
   } else {
-    t5 = $[20];
+    t5b = $[20];
   }
-  let t6;
-  if ($[21] !== t4 || $[22] !== t5) {
-    t6 = <Box flexDirection="column" marginTop={1}>{t4}{t5}</Box>;
-    $[21] = t4;
-    $[22] = t5;
-    $[23] = t6;
+  let t6b;
+  if ($[21] !== t4b || $[22] !== t5b) {
+    t6b = <Box flexDirection="column" marginTop={1}>{t4b}{t5b}</Box>;
+    $[21] = t4b;
+    $[22] = t5b;
+    $[23] = t6b;
   } else {
-    t6 = $[23];
+    t6b = $[23];
   }
-  return t6;
+  return t6b;
 }

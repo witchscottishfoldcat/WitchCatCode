@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
 import type { KeyboardEvent } from '../../../../ink/events/keyboard-event.js';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { Box, Text } from '../../../../ink.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js';
@@ -37,6 +38,21 @@ export function ConfirmStep(t0) {
     goBack,
     wizardData
   } = useWizard();
+  const { t } = useI18n();
+  const _memoryLabel = t('agent.wizard.confirm.memoryLabel');
+  const _labelName = t('agent.wizard.confirm.labelName');
+  const _labelLocation = t('agent.wizard.confirm.labelLocation');
+  const _labelTools = t('agent.wizard.confirm.labelTools');
+  const _labelModel = t('agent.wizard.confirm.labelModel');
+  const _labelDescription = t('agent.wizard.confirm.labelDescription');
+  const _labelSystemPrompt = t('agent.wizard.confirm.labelSystemPrompt');
+  const _warnings = t('agent.wizard.confirm.warnings');
+  const _errors = t('agent.wizard.confirm.errors');
+  const _saveAndEditText = t('agent.wizard.confirm.saveAndEdit');
+  const _allTools = t('agent.wizard.confirm.allTools');
+  const _none = t('agent.wizard.confirm.none');
+  const _and = t('common.and');
+  const _title = t('agent.wizard.confirm.title');
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = {
@@ -107,10 +123,10 @@ export function ConfirmStep(t0) {
       t21 = $[31];
     }
     const whenToUsePreview = t21;
-    const getToolsDisplay = _temp;
+    const getToolsDisplay = () => _temp(agent.tools, t);
     let t22;
     if ($[32] !== agent.memory) {
-      t22 = isAutoMemoryEnabled() ? <Text><Text bold={true}>Memory</Text>: {getMemoryScopeDisplay(agent.memory)}</Text> : null;
+      t22 = isAutoMemoryEnabled() ? <Text><Text bold={true}>{_memoryLabel}</Text>: {getMemoryScopeDisplay(agent.memory)}</Text> : null;
       $[32] = agent.memory;
       $[33] = t22;
     } else {
@@ -118,7 +134,7 @@ export function ConfirmStep(t0) {
     }
     const memoryDisplayElement = t22;
     T1 = WizardDialogLayout;
-    t18 = "Confirm and save";
+    t18 = _title;
     if ($[34] === Symbol.for("react.memo_cache_sentinel")) {
       t19 = <Byline><KeyboardShortcutHint shortcut="s/Enter" action="save" /><KeyboardShortcutHint shortcut="e" action="edit in your editor" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>;
       $[34] = t19;
@@ -132,7 +148,7 @@ export function ConfirmStep(t0) {
     t6 = handleKeyDown;
     let t23;
     if ($[35] === Symbol.for("react.memo_cache_sentinel")) {
-      t23 = <Text bold={true}>Name</Text>;
+      t23 = <Text bold={true}>{_labelName}</Text>;
       $[35] = t23;
     } else {
       t23 = $[35];
@@ -146,7 +162,7 @@ export function ConfirmStep(t0) {
     }
     let t24;
     if ($[38] === Symbol.for("react.memo_cache_sentinel")) {
-      t24 = <Text bold={true}>Location</Text>;
+      t24 = <Text bold={true}>{_labelLocation}</Text>;
       $[38] = t24;
     } else {
       t24 = $[38];
@@ -172,7 +188,7 @@ export function ConfirmStep(t0) {
     }
     let t26;
     if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
-      t26 = <Text bold={true}>Tools</Text>;
+      t26 = <Text bold={true}>{_labelTools}</Text>;
       $[44] = t26;
     } else {
       t26 = $[44];
@@ -194,7 +210,7 @@ export function ConfirmStep(t0) {
     }
     let t28;
     if ($[49] === Symbol.for("react.memo_cache_sentinel")) {
-      t28 = <Text bold={true}>Model</Text>;
+      t28 = <Text bold={true}>{_labelModel}</Text>;
       $[49] = t28;
     } else {
       t28 = $[49];
@@ -216,7 +232,7 @@ export function ConfirmStep(t0) {
     }
     t11 = memoryDisplayElement;
     if ($[54] === Symbol.for("react.memo_cache_sentinel")) {
-      t12 = <Box marginTop={1}><Text><Text bold={true}>Description</Text> (tells Claude when to use this agent):</Text></Box>;
+      t12 = <Box marginTop={1}><Text><Text bold={true}>{_labelDescription}</Text>:</Text></Box>;
       $[54] = t12;
     } else {
       t12 = $[54];
@@ -229,7 +245,7 @@ export function ConfirmStep(t0) {
       t13 = $[56];
     }
     if ($[57] === Symbol.for("react.memo_cache_sentinel")) {
-      t14 = <Box marginTop={1}><Text><Text bold={true}>System prompt</Text>:</Text></Box>;
+      t14 = <Box marginTop={1}><Text><Text bold={true}>{_labelSystemPrompt}</Text>:</Text></Box>;
       $[57] = t14;
     } else {
       t14 = $[57];
@@ -241,8 +257,8 @@ export function ConfirmStep(t0) {
     } else {
       t15 = $[59];
     }
-    t16 = validation.warnings.length > 0 && <Box marginTop={1} flexDirection="column"><Text color="warning">Warnings:</Text>{validation.warnings.map(_temp2)}</Box>;
-    t17 = validation.errors.length > 0 && <Box marginTop={1} flexDirection="column"><Text color="error">Errors:</Text>{validation.errors.map(_temp3)}</Box>;
+    t16 = validation.warnings.length > 0 && <Box marginTop={1} flexDirection="column"><Text color="warning">{_warnings}</Text>{validation.warnings.map(_temp2)}</Box>;
+    t17 = validation.errors.length > 0 && <Box marginTop={1} flexDirection="column"><Text color="error">{_errors}</Text>{validation.errors.map(_temp3)}</Box>;
     $[4] = agent;
     $[5] = existingAgents;
     $[6] = handleKeyDown;
@@ -312,7 +328,7 @@ export function ConfirmStep(t0) {
   }
   let t23;
   if ($[64] === Symbol.for("react.memo_cache_sentinel")) {
-    t23 = <Box marginTop={2}><Text color="success">Press {t21} or {t22} to save,{" "}<Text bold={true}>e</Text> to save and edit</Text></Box>;
+    t23 = <Box marginTop={2}><Text color="success">{_saveAndEditText}</Text></Box>;
     $[64] = t23;
   } else {
     t23 = $[64];
@@ -360,18 +376,18 @@ function _temp3(err, i_0) {
 function _temp2(warning, i) {
   return <Text key={i} dimColor={true}>{" "}• {warning}</Text>;
 }
-function _temp(toolNames) {
+function _temp(toolNames, t) {
   if (toolNames === undefined) {
-    return "All tools";
+    return t('agent.wizard.confirm.allTools');
   }
   if (toolNames.length === 0) {
-    return "None";
+    return t('agent.wizard.confirm.none');
   }
   if (toolNames.length === 1) {
-    return toolNames[0] || "None";
+    return toolNames[0] || t('agent.wizard.confirm.none');
   }
   if (toolNames.length === 2) {
-    return toolNames.join(" and ");
+    return toolNames.join(` ${t('common.and')} `);
   }
-  return `${toolNames.slice(0, -1).join(", ")}, and ${toolNames[toolNames.length - 1]}`;
+  return `${toolNames.slice(0, -1).join(", ")}, ${t('common.and')} ${toolNames[toolNames.length - 1]}`;
 }

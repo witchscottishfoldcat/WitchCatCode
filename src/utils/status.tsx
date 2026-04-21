@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
+import { t } from '../i18n/core.js';
 import { color, Text } from '../ink.js';
 import type { MCPServerConnection } from '../services/mcp/types.js';
 import { getAccountInformation, isClaudeAISubscriber } from './auth.js';
@@ -31,8 +32,8 @@ export function buildSandboxProperties(): Property[] {
   }
   const isSandboxed = SandboxManager.isSandboxingEnabled();
   return [{
-    label: 'Bash Sandbox',
-    value: isSandboxed ? 'Enabled' : 'Disabled'
+    label: t('status.sandbox.label'),
+    value: isSandboxed ? t('status.sandbox.enabled') : t('status.sandbox.disabled')
   }];
 }
 export function buildIDEProperties(mcpClients: MCPServerConnection[], ideInstallationStatus: IDEExtensionInstallationStatus | null = null, theme: ThemeName): Property[] {
@@ -42,11 +43,11 @@ export function buildIDEProperties(mcpClients: MCPServerConnection[], ideInstall
     const pluginOrExtension = isJetBrainsIde(ideInstallationStatus.ideType) ? 'plugin' : 'extension';
     if (ideInstallationStatus.error) {
       return [{
-        label: 'IDE',
+        label: t('status.ide.label'),
         value: <Text>
-              {color('error', theme)(figures.cross)} Error installing {ideName}{' '}
-              {pluginOrExtension}: {ideInstallationStatus.error}
-              {'\n'}Please restart your IDE and try again.
+              {color('error', theme)(figures.cross)} {t('status.ide.errorInstalling', { ideName, type: pluginOrExtension })}
+              {ideInstallationStatus.error}
+              {'\n'}{t('status.ide.restartIde')}
             </Text>
       }];
     }
@@ -54,33 +55,33 @@ export function buildIDEProperties(mcpClients: MCPServerConnection[], ideInstall
       if (ideClient && ideClient.type === 'connected') {
         if (ideInstallationStatus.installedVersion !== ideClient.serverInfo?.version) {
           return [{
-            label: 'IDE',
-            value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion} (server version: ${ideClient.serverInfo?.version})`
+            label: t('status.ide.label'),
+            value: t('status.ide.connectedVersion', { ideName, type: pluginOrExtension, version: `${ideInstallationStatus.installedVersion} (server version: ${ideClient.serverInfo?.version})` })
           }];
         } else {
           return [{
-            label: 'IDE',
-            value: `Connected to ${ideName} ${pluginOrExtension} version ${ideInstallationStatus.installedVersion}`
+            label: t('status.ide.label'),
+            value: t('status.ide.connectedVersion', { ideName, type: pluginOrExtension, version: ideInstallationStatus.installedVersion })
           }];
         }
       } else {
         return [{
-          label: 'IDE',
-          value: `Installed ${ideName} ${pluginOrExtension}`
+          label: t('status.ide.label'),
+          value: t('status.ide.installed', { ideName, type: pluginOrExtension })
         }];
       }
     }
   } else if (ideClient) {
-    const ideName = getIdeClientName(ideClient) ?? 'IDE';
+    const ideName = getIdeClientName(ideClient) ?? t('status.ide.label');
     if (ideClient.type === 'connected') {
       return [{
-        label: 'IDE',
-        value: `Connected to ${ideName} extension`
+        label: t('status.ide.label'),
+        value: t('status.ide.connectedExtension', { ideName })
       }];
     } else {
       return [{
-        label: 'IDE',
-        value: `${color('error', theme)(figures.cross)} Not connected to ${ideName}`
+        label: t('status.ide.label'),
+        value: `${color('error', theme)(figures.cross)} ${t('status.ide.notConnected', { ideName })}`
       }];
     }
   }
@@ -104,12 +105,12 @@ export function buildMcpProperties(clients: MCPServerConnection[] = [], theme: T
     if (s.type === 'connected') byState.connected++;else if (s.type === 'pending') byState.pending++;else if (s.type === 'needs-auth') byState.needsAuth++;else byState.failed++;
   }
   const parts: string[] = [];
-  if (byState.connected) parts.push(color('success', theme)(`${byState.connected} connected`));
-  if (byState.needsAuth) parts.push(color('warning', theme)(`${byState.needsAuth} need auth`));
-  if (byState.pending) parts.push(color('inactive', theme)(`${byState.pending} pending`));
-  if (byState.failed) parts.push(color('error', theme)(`${byState.failed} failed`));
+  if (byState.connected) parts.push(color('success', theme)(t('status.mcp.connected', { n: byState.connected })));
+  if (byState.needsAuth) parts.push(color('warning', theme)(t('status.mcp.needAuth', { n: byState.needsAuth })));
+  if (byState.pending) parts.push(color('inactive', theme)(t('status.mcp.pending', { n: byState.pending })));
+  if (byState.failed) parts.push(color('error', theme)(t('status.mcp.failed', { n: byState.failed })));
   return [{
-    label: 'MCP servers',
+    label: t('status.mcp.label'),
     value: `${parts.join(', ')} ${color('inactive', theme)('· /mcp')}`
   }];
 }
@@ -119,7 +120,7 @@ export async function buildMemoryDiagnostics(): Promise<Diagnostic[]> {
   const diagnostics: Diagnostic[] = [];
   largeFiles.forEach(file => {
     const displayPath = getDisplayPath(file.path);
-    diagnostics.push(`Large ${displayPath} will impact performance (${formatNumber(file.content.length)} chars > ${formatNumber(MAX_MEMORY_CHARACTER_COUNT)})`);
+    diagnostics.push(t('status.memory.largeFileWarning', { path: displayPath, chars: formatNumber(file.content.length), maxChars: formatNumber(MAX_MEMORY_CHARACTER_COUNT) }));
   });
   return diagnostics;
 }
@@ -142,11 +143,11 @@ export function buildSettingSourcesProperties(): Property[] {
       }
       switch (origin) {
         case 'remote':
-          return 'Enterprise managed settings (remote)';
+          return t('status.settingsSources.remote');
         case 'plist':
-          return 'Enterprise managed settings (plist)';
+          return t('status.settingsSources.plist');
         case 'hklm':
-          return 'Enterprise managed settings (HKLM)';
+          return t('status.settingsSources.hklm');
         case 'file':
           {
             const {
@@ -154,21 +155,21 @@ export function buildSettingSourcesProperties(): Property[] {
               hasDropIns
             } = getManagedFileSettingsPresence();
             if (hasBase && hasDropIns) {
-              return 'Enterprise managed settings (file + drop-ins)';
+              return t('status.settingsSources.fileDropins');
             }
             if (hasDropIns) {
-              return 'Enterprise managed settings (drop-ins)';
+              return t('status.settingsSources.dropins');
             }
-            return 'Enterprise managed settings (file)';
+            return t('status.settingsSources.file');
           }
         case 'hkcu':
-          return 'Enterprise managed settings (HKCU)';
+          return t('status.settingsSources.hkcu');
       }
     }
     return getSettingSourceDisplayNameCapitalized(source);
   }).filter((name): name is string => name !== null);
   return [{
-    label: 'Setting sources',
+    label: t('status.settingsSources.label'),
     value: sourceNames
   }];
 }
@@ -193,7 +194,7 @@ export async function buildInstallationHealthDiagnostics(): Promise<Diagnostic[]
     items.push(warning.issue);
   });
   if (diagnostic.hasUpdatePermissions === false) {
-    items.push('No write permissions for auto-updates (requires sudo)');
+    items.push(t('status.install.noWritePermissions'));
   }
   return items;
 }
@@ -205,19 +206,19 @@ export function buildAccountProperties(): Property[] {
   const properties: Property[] = [];
   if (accountInfo.subscription) {
     properties.push({
-      label: 'Login method',
+      label: t('status.account.loginMethod'),
       value: `${accountInfo.subscription} Account`
     });
   }
   if (accountInfo.tokenSource) {
     properties.push({
-      label: 'Auth token',
+      label: t('status.account.authToken'),
       value: accountInfo.tokenSource
     });
   }
   if (accountInfo.apiKeySource) {
     properties.push({
-      label: 'API key',
+      label: t('status.account.apiKey'),
       value: accountInfo.apiKeySource
     });
   }
@@ -231,7 +232,7 @@ export function buildAccountProperties(): Property[] {
   }
   if (accountInfo.email && !process.env.IS_DEMO) {
     properties.push({
-      label: 'Email',
+      label: t('status.account.email'),
       value: accountInfo.email
     });
   }
@@ -242,12 +243,12 @@ export function buildAPIProviderProperties(): Property[] {
   const properties: Property[] = [];
   if (apiProvider !== 'firstParty') {
     const providerLabel = {
-      bedrock: 'AWS Bedrock',
-      vertex: 'Google Vertex AI',
-      foundry: 'Microsoft Foundry'
+      bedrock: t('status.apiProvider.bedrock'),
+      vertex: t('status.apiProvider.vertex'),
+      foundry: t('status.apiProvider.foundry')
     }[apiProvider];
     properties.push({
-      label: 'API provider',
+      label: t('status.apiProvider.label'),
       value: providerLabel
     });
   }
@@ -255,7 +256,7 @@ export function buildAPIProviderProperties(): Property[] {
     const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL;
     if (anthropicBaseUrl) {
       properties.push({
-        label: 'API base URL',
+        label: t('status.apiProvider.baseUrl'),
         value: anthropicBaseUrl
       });
     }
@@ -263,31 +264,31 @@ export function buildAPIProviderProperties(): Property[] {
     const bedrockBaseUrl = process.env.BEDROCK_BASE_URL;
     if (bedrockBaseUrl) {
       properties.push({
-        label: 'Bedrock base URL',
+        label: t('status.apiProvider.bedrockBaseUrl'),
         value: bedrockBaseUrl
       });
     }
     properties.push({
-      label: 'AWS region',
+      label: t('status.apiProvider.awsRegion'),
       value: getAWSRegion()
     });
     if (isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)) {
       properties.push({
-        value: 'AWS auth skipped'
+        value: t('status.apiProvider.awsAuthSkipped')
       });
     }
   } else if (apiProvider === 'vertex') {
     const vertexBaseUrl = process.env.VERTEX_BASE_URL;
     if (vertexBaseUrl) {
       properties.push({
-        label: 'Vertex base URL',
+        label: t('status.apiProvider.vertexBaseUrl'),
         value: vertexBaseUrl
       });
     }
     const gcpProject = process.env.ANTHROPIC_VERTEX_PROJECT_ID;
     if (gcpProject) {
       properties.push({
-        label: 'GCP project',
+        label: t('status.apiProvider.gcpProject'),
         value: gcpProject
       });
     }
@@ -297,54 +298,54 @@ export function buildAPIProviderProperties(): Property[] {
     });
     if (isEnvTruthy(process.env.CLAUDE_CODE_SKIP_VERTEX_AUTH)) {
       properties.push({
-        value: 'GCP auth skipped'
+        value: t('status.apiProvider.gcpAuthSkipped')
       });
     }
   } else if (apiProvider === 'foundry') {
     const foundryBaseUrl = process.env.ANTHROPIC_FOUNDRY_BASE_URL;
     if (foundryBaseUrl) {
       properties.push({
-        label: 'Microsoft Foundry base URL',
+        label: t('status.apiProvider.foundryBaseUrl'),
         value: foundryBaseUrl
       });
     }
     const foundryResource = process.env.ANTHROPIC_FOUNDRY_RESOURCE;
     if (foundryResource) {
       properties.push({
-        label: 'Microsoft Foundry resource',
+        label: t('status.apiProvider.foundryResource'),
         value: foundryResource
       });
     }
     if (isEnvTruthy(process.env.CLAUDE_CODE_SKIP_FOUNDRY_AUTH)) {
       properties.push({
-        value: 'Microsoft Foundry auth skipped'
+        value: t('status.apiProvider.foundryAuthSkipped')
       });
     }
   }
   const proxyUrl = getProxyUrl();
   if (proxyUrl) {
     properties.push({
-      label: 'Proxy',
+      label: t('status.apiProvider.proxy'),
       value: proxyUrl
     });
   }
   const mtlsConfig = getMTLSConfig();
   if (process.env.NODE_EXTRA_CA_CERTS) {
     properties.push({
-      label: 'Additional CA cert(s)',
+      label: t('status.apiProvider.additionalCaCerts'),
       value: process.env.NODE_EXTRA_CA_CERTS
     });
   }
   if (mtlsConfig) {
     if (mtlsConfig.cert && process.env.CLAUDE_CODE_CLIENT_CERT) {
       properties.push({
-        label: 'mTLS client cert',
+        label: t('status.apiProvider.mtlsClientCert'),
         value: process.env.CLAUDE_CODE_CLIENT_CERT
       });
     }
     if (mtlsConfig.key && process.env.CLAUDE_CODE_CLIENT_KEY) {
       properties.push({
-        label: 'mTLS client key',
+        label: t('status.apiProvider.mtlsClientKey'),
         value: process.env.CLAUDE_CODE_CLIENT_KEY
       });
     }

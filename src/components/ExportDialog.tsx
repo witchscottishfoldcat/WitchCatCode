@@ -8,6 +8,7 @@ import { useKeybinding } from '../keybindings/useKeybinding.js';
 import { getCwd } from '../utils/cwd.js';
 import { writeFileSync_DEPRECATED } from '../utils/slowOperations.js';
 import { ConfigurableShortcutHint } from './ConfigurableShortcutHint.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { Select } from './CustomSelect/select.js';
 import { Byline } from './design-system/Byline.js';
 import { Dialog } from './design-system/Dialog.js';
@@ -27,6 +28,7 @@ export function ExportDialog({
   defaultFilename,
   onDone
 }: ExportDialogProps): React.ReactNode {
+  const { t } = useI18n();
   const [, setSelectedOption] = useState<ExportOption | null>(null);
   const [filename, setFilename] = useState<string>(defaultFilename);
   const [cursorOffset, setCursorOffset] = useState<number>(defaultFilename.length);
@@ -47,7 +49,7 @@ export function ExportDialog({
       if (raw) process.stdout.write(raw);
       onDone({
         success: true,
-        message: 'Conversation copied to clipboard'
+        message: t('export.copiedToClipboard')
       });
     } else if (value === 'file') {
       setSelectedOption('file');
@@ -64,12 +66,12 @@ export function ExportDialog({
       });
       onDone({
         success: true,
-        message: `Conversation exported to: ${filepath}`
+        message: t('export.exportedToFile', { filepath })
       });
     } catch (error) {
       onDone({
         success: false,
-        message: `Failed to export conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: t('export.exportFailed', { error: error instanceof Error ? error.message : 'Unknown error' })
       });
     }
   };
@@ -82,32 +84,32 @@ export function ExportDialog({
     } else {
       onDone({
         success: false,
-        message: 'Export cancelled'
+        message: t('export.cancelled')
       });
     }
   }, [showFilenameInput, handleGoBack, onDone]);
   const options = [{
-    label: 'Copy to clipboard',
+    label: t('export.copyToClipboard'),
     value: 'clipboard',
-    description: 'Copy the conversation to your system clipboard'
+    description: t('export.copyToClipboardDesc')
   }, {
-    label: 'Save to file',
+    label: t('export.saveToFile'),
     value: 'file',
-    description: 'Save the conversation to a file in the current directory'
+    description: t('export.saveToFileDesc')
   }];
 
   // Custom input guide that changes based on dialog state
   function renderInputGuide(exitState: ExitState): React.ReactNode {
     if (showFilenameInput) {
       return <Byline>
-          <KeyboardShortcutHint shortcut="Enter" action="save" />
-          <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+          <KeyboardShortcutHint shortcut="Enter" action={t('export.save')} />
+          <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={t('action.goBack')} />
         </Byline>;
     }
     if (exitState.pending) {
-      return <Text>Press {exitState.keyName} again to exit</Text>;
+      return <Text>{t('common.pressAgainToExit', { key: exitState.keyName })}</Text>;
     }
-    return <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />;
+    return <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description={t('action.cancel')} />;
   }
 
   // Use Settings context so 'n' key doesn't cancel (allows typing 'n' in filename input)
@@ -115,9 +117,9 @@ export function ExportDialog({
     context: 'Settings',
     isActive: showFilenameInput
   });
-  return <Dialog title="Export Conversation" subtitle="Select export method:" color="permission" onCancel={handleCancel} inputGuide={renderInputGuide} isCancelActive={!showFilenameInput}>
+  return <Dialog title={t('export.title')} subtitle={t('export.selectMethod')} color="permission" onCancel={handleCancel} inputGuide={renderInputGuide} isCancelActive={!showFilenameInput}>
       {!showFilenameInput ? <Select options={options} onChange={handleSelectOption} onCancel={handleCancel} /> : <Box flexDirection="column">
-          <Text>Enter filename:</Text>
+          <Text>{t('export.enterFilename')}</Text>
           <Box flexDirection="row" gap={1} marginTop={1}>
             <Text>&gt;</Text>
             <TextInput value={filename} onChange={setFilename} onSubmit={handleFilenameSubmit} focus={true} showCursor={true} columns={columns} cursorOffset={cursorOffset} onChangeCursorOffset={setCursorOffset} />

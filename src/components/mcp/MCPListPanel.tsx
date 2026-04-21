@@ -2,12 +2,13 @@ import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React, { useCallback, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import type { ConfigScope } from '../../services/mcp/types.js';
 import { describeMcpConfigFilePath } from '../../services/mcp/utils.js';
 import { isDebugMode } from '../../utils/debug.js';
-import { plural } from '../../utils/stringUtils.js';
+
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
@@ -37,33 +38,33 @@ type SelectableItem = {
 const SCOPE_ORDER: ConfigScope[] = ['project', 'local', 'user', 'enterprise'];
 
 // Get scope heading parts (label is bold, path is grey)
-function getScopeHeading(scope: ConfigScope): {
+function getScopeHeading(scope: ConfigScope, t: (key: string, params?: Record<string, string>) => string): {
   label: string;
   path?: string;
 } {
   switch (scope) {
     case 'project':
       return {
-        label: 'Project MCPs',
+        label: t('mcp.list.scopeProject'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'user':
       return {
-        label: 'User MCPs',
+        label: t('mcp.list.scopeUser'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'local':
       return {
-        label: 'Local MCPs',
+        label: t('mcp.list.scopeLocal'),
         path: describeMcpConfigFilePath(scope)
       };
     case 'enterprise':
       return {
-        label: 'Enterprise MCPs'
+        label: t('mcp.list.scopeEnterprise')
       };
     case 'dynamic':
       return {
-        label: 'Built-in MCPs',
+        label: t('mcp.list.scopeBuiltin'),
         path: 'always available'
       };
     default:
@@ -108,6 +109,7 @@ export function MCPListPanel(t0) {
   }
   const agentServers = t2;
   const [theme] = useTheme();
+  const { t } = useI18n();
   const [selectedIndex, setSelectedIndex] = useState(0);
   let t3;
   if ($[2] !== servers) {
@@ -137,14 +139,8 @@ export function MCPListPanel(t0) {
     t5 = $[7];
   }
   const dynamicServers = t5;
+  const dynamicHeading = getScopeHeading("dynamic", t);
   let t6;
-  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = getScopeHeading("dynamic");
-    $[8] = t6;
-  } else {
-    t6 = $[8];
-  }
-  const dynamicHeading = t6;
   let items;
   if ($[9] !== agentServers || $[10] !== claudeAiServers || $[11] !== dynamicServers || $[12] !== serversByScope) {
     items = [];
@@ -187,7 +183,7 @@ export function MCPListPanel(t0) {
   let t7;
   if ($[14] !== onComplete) {
     t7 = () => {
-      onComplete("MCP dialog dismissed", {
+      onComplete(t('mcp.list.dialogDismissed'), {
         display: "system"
       });
     };
@@ -303,11 +299,11 @@ export function MCPListPanel(t0) {
       let statusText;
       if (server_3.client.type === "disabled") {
         statusIcon = color("inactive", theme)(figures.radioOff);
-        statusText = "disabled";
+        statusText = t('mcp.list.statusDisabled');
       } else {
         if (server_3.client.type === "connected") {
           statusIcon = color("success", theme)(figures.tick);
-          statusText = "connected";
+          statusText = t('mcp.list.statusConnected');
         } else {
           if (server_3.client.type === "pending") {
             statusIcon = color("inactive", theme)(figures.radioOff);
@@ -316,17 +312,17 @@ export function MCPListPanel(t0) {
               maxReconnectAttempts
             } = server_3.client;
             if (reconnectAttempt && maxReconnectAttempts) {
-              statusText = `reconnecting (${reconnectAttempt}/${maxReconnectAttempts})…`;
+              statusText = t('mcp.list.statusReconnecting', { attempt: String(reconnectAttempt), max: String(maxReconnectAttempts) });
             } else {
-              statusText = "connecting\u2026";
+              statusText = t('mcp.list.statusConnecting');
             }
           } else {
             if (server_3.client.type === "needs-auth") {
               statusIcon = color("warning", theme)(figures.triangleUpOutline);
-              statusText = "needs authentication";
+              statusText = t('mcp.list.statusNeedsAuth');
             } else {
               statusIcon = color("error", theme)(figures.cross);
-              statusText = "failed";
+              statusText = t('mcp.list.statusFailed');
             }
           }
         }
@@ -347,7 +343,7 @@ export function MCPListPanel(t0) {
       const index_0 = getAgentServerIndex(agentServer_1);
       const isSelected_0 = selectedIndex === index_0;
       const statusIcon_0 = agentServer_1.needsAuth ? color("warning", theme)(figures.triangleUpOutline) : color("inactive", theme)(figures.radioOff);
-      const statusText_0 = agentServer_1.needsAuth ? "may need auth" : "agent-only";
+      const statusText_0 = agentServer_1.needsAuth ? t('mcp.list.statusMayNeedAuth') : t('mcp.list.statusAgentOnly');
       return <Box key={`agent-${agentServer_1.name}-${index_0}`}><Text color={isSelected_0 ? "suggestion" : undefined}>{isSelected_0 ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected_0 ? "suggestion" : undefined}>{agentServer_1.name}</Text><Text dimColor={!isSelected_0}> · {statusIcon_0} </Text><Text dimColor={!isSelected_0}>{statusText_0}</Text></Box>;
     };
     $[41] = getAgentServerIndex;
@@ -368,13 +364,13 @@ export function MCPListPanel(t0) {
   }
   let t20;
   if ($[46] !== totalServers) {
-    t20 = plural(totalServers, "server");
+    t20 = t('mcp.list.serverCount', { count: String(totalServers) });
     $[46] = totalServers;
     $[47] = t20;
   } else {
     t20 = $[47];
   }
-  const t21 = `${totalServers} ${t20}`;
+  const t21 = t20;
   let t22;
   if ($[48] !== renderServerItem || $[49] !== serversByScope) {
     t22 = SCOPE_ORDER.map(scope_0 => {
@@ -382,7 +378,7 @@ export function MCPListPanel(t0) {
       if (!scopeServers_0 || scopeServers_0.length === 0) {
         return null;
       }
-      const heading = getScopeHeading(scope_0);
+      const heading = getScopeHeading(scope_0, t);
       return <Box key={scope_0} flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{heading.label}</Text>{heading.path && <Text dimColor={true}> ({heading.path})</Text>}</Box>{scopeServers_0.map(server_4 => renderServerItem(server_4))}</Box>;
     });
     $[48] = renderServerItem;
@@ -402,7 +398,7 @@ export function MCPListPanel(t0) {
   }
   let t24;
   if ($[54] !== agentServers || $[55] !== renderAgentServerItem) {
-    t24 = agentServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Agent MCPs</Text></Box>{[...new Set(agentServers.flatMap(_temp6))].map(agentName => <Box key={agentName} flexDirection="column" marginTop={1}><Box paddingLeft={2}><Text dimColor={true}>@{agentName}</Text></Box>{agentServers.filter(s_3 => s_3.sourceAgents.includes(agentName)).map(agentServer_2 => renderAgentServerItem(agentServer_2))}</Box>)}</Box>;
+    t24 = agentServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>{t('mcp.list.agentMcpTitle')}</Text></Box>{[...new Set(agentServers.flatMap(_temp6))].map(agentName => <Box key={agentName} flexDirection="column" marginTop={1}><Box paddingLeft={2}><Text dimColor={true}>@{agentName}</Text></Box>{agentServers.filter(s_3 => s_3.sourceAgents.includes(agentName)).map(agentServer_2 => renderAgentServerItem(agentServer_2))}</Box>)}</Box>;
     $[54] = agentServers;
     $[55] = renderAgentServerItem;
     $[56] = t24;
@@ -420,15 +416,16 @@ export function MCPListPanel(t0) {
   }
   let t26;
   if ($[60] !== hasFailedClients) {
-    t26 = hasFailedClients && <Text dimColor={true}>{debugMode ? "\u203B Error logs shown inline with --debug" : "\u203B Run claude --debug to see error logs"}</Text>;
+    t26 = hasFailedClients && <Text dimColor={true}>{debugMode ? t('mcp.list.debugLogsInline') : t('mcp.list.debugLogsHint')}</Text>;
     $[60] = hasFailedClients;
     $[61] = t26;
   } else {
     t26 = $[61];
   }
+  const helpText = t('mcp.list.forHelp');
   let t27;
   if ($[62] === Symbol.for("react.memo_cache_sentinel")) {
-    t27 = <Text dimColor={true}><Link url="https://code.claude.com/docs/en/mcp">https://code.claude.com/docs/en/mcp</Link>{" "}for help</Text>;
+    t27 = <Text dimColor={true}><Link url="https://code.claude.com/docs/en/mcp">https://code.claude.com/docs/en/mcp</Link>{" "}{helpText}</Text>;
     $[62] = t27;
   } else {
     t27 = $[62];
@@ -455,7 +452,7 @@ export function MCPListPanel(t0) {
   }
   let t30;
   if ($[71] !== handleCancel || $[72] !== t21 || $[73] !== t29) {
-    t30 = <Dialog title="Manage MCP servers" subtitle={t21} onCancel={handleCancel} hideInputGuide={true}>{t29}</Dialog>;
+    t30 = <Dialog title={t('mcp.list.dialogTitle')} subtitle={t21} onCancel={handleCancel} hideInputGuide={true}>{t29}</Dialog>;
     $[71] = handleCancel;
     $[72] = t21;
     $[73] = t29;

@@ -14,6 +14,7 @@ import { useAppState, useSetAppState } from '../state/AppState.js';
 import { saveGlobalConfig } from '../utils/config.js';
 import { getBranch } from '../utils/git.js';
 import { Dialog } from './design-system/Dialog.js';
+import { useI18n } from '../hooks/useI18n.js';
 type Props = {
   onDone: () => void;
 };
@@ -34,6 +35,7 @@ export function BridgeDialog(t0) {
   const sessionId = useAppState(_temp9);
   const verbose = useAppState(_temp0);
   const setAppState = useSetAppState();
+  const { t } = useI18n();
   const [showQR, setShowQR] = useState(false);
   const [qrText, setQrText] = useState("");
   const [branchName, setBranchName] = useState("");
@@ -193,7 +195,7 @@ export function BridgeDialog(t0) {
     }
     footerText = t18;
     T1 = Dialog;
-    t15 = "Remote Control";
+    t15 = t('bridge.title');
     t16 = onDone;
     t17 = true;
     T0 = Box;
@@ -236,7 +238,7 @@ export function BridgeDialog(t0) {
     }
     let t23;
     if ($[60] !== environmentId || $[61] !== verbose) {
-      t23 = verbose && environmentId && <Text dimColor={true}>Environment: {environmentId}</Text>;
+      t23 = verbose && environmentId && <Text dimColor={true}>{t('bridge.environment')}: {environmentId}</Text>;
       $[60] = environmentId;
       $[61] = verbose;
       $[62] = t23;
@@ -245,7 +247,7 @@ export function BridgeDialog(t0) {
     }
     let t24;
     if ($[63] !== sessionId || $[64] !== verbose) {
-      t24 = verbose && sessionId && <Text dimColor={true}>Session: {sessionId}</Text>;
+      t24 = verbose && sessionId && <Text dimColor={true}>{t('bridge.session')}: {sessionId}</Text>;
       $[63] = sessionId;
       $[64] = verbose;
       $[65] = t24;
@@ -306,9 +308,10 @@ export function BridgeDialog(t0) {
   } else {
     t18 = $[72];
   }
+  const footerHint = t('bridge.footerHint');
   let t19;
   if ($[73] === Symbol.for("react.memo_cache_sentinel")) {
-    t19 = <Text dimColor={true}>d to disconnect · space for QR code · Enter/Esc to close</Text>;
+    t19 = <Text dimColor={true}>{footerHint}</Text>;
     $[73] = t19;
   } else {
     t19 = $[73];

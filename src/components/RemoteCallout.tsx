@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { isBridgeEnabled } from '../bridge/bridgeEnabled.js';
 import { Box, Text } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { getClaudeAIOAuthTokens } from '../utils/auth.js';
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
@@ -13,6 +14,7 @@ type Props = {
 export function RemoteCallout({
   onDone
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const handleCancel = useCallback((): void => {
@@ -33,26 +35,23 @@ export function RemoteCallout({
     onDoneRef.current(value);
   }, []);
   const options: OptionWithDescription<RemoteCalloutSelection>[] = [{
-    label: 'Enable Remote Control for this session',
-    description: 'Opens a secure connection to claude.ai.',
+    label: t('remoteCallout.optionEnable'),
+    description: t('remoteCallout.enableDescription'),
     value: 'enable'
   }, {
-    label: 'Never mind',
-    description: 'You can always enable it later with /remote-control.',
+    label: t('remoteCallout.optionDismiss'),
+    description: t('remoteCallout.dismissDescription'),
     value: 'dismiss'
   }];
-  return <PermissionDialog title="Remote Control">
+  return <PermissionDialog title={t('remoteCallout.title')}>
       <Box flexDirection="column" paddingX={2} paddingY={1}>
         <Box marginBottom={1} flexDirection="column">
           <Text>
-            Remote Control lets you access this CLI session from the web
-            (claude.ai/code) or the Claude app, so you can pick up where you
-            left off on any device.
+            {t('remoteCallout.description1')}
           </Text>
           <Text> </Text>
           <Text>
-            You can disconnect remote access anytime by running /remote-control
-            again.
+            {t('remoteCallout.description2')}
           </Text>
         </Box>
         <Box>

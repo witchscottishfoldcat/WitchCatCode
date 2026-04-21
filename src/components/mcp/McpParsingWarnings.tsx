@@ -5,23 +5,27 @@ import type { ConfigScope } from 'src/services/mcp/types.js';
 import { describeMcpConfigFilePath, getScopeLabel } from 'src/services/mcp/utils.js';
 import type { ValidationError } from 'src/utils/settings/validation.js';
 import { Box, Link, Text } from '../../ink.js';
+import { useI18n } from '../../hooks/useI18n.js';
 function McpConfigErrorSection(t0) {
-  const $ = _c(26);
+  const $ = _c(28);
   const {
     scope,
     parsingErrors,
     warnings
   } = t0;
+  const { t } = useI18n();
   const hasErrors = parsingErrors.length > 0;
   const hasWarnings = warnings.length > 0;
   if (!hasErrors && !hasWarnings) {
     return null;
   }
+  const statusText = hasErrors ? t('mcp.parsing.failedToParse') : t('mcp.parsing.containsWarnings');
+  const statusColor = hasErrors ? 'error' : 'warning';
   let t1;
-  if ($[0] !== hasErrors || $[1] !== hasWarnings) {
-    t1 = (hasErrors || hasWarnings) && <Text color={hasErrors ? "error" : "warning"}>[{hasErrors ? "Failed to parse" : "Contains warnings"}]{" "}</Text>;
-    $[0] = hasErrors;
-    $[1] = hasWarnings;
+  if ($[0] !== statusText || $[1] !== statusColor) {
+    t1 = <Text color={statusColor}>[{statusText}]{" "}</Text>;
+    $[0] = statusText;
+    $[1] = statusColor;
     $[2] = t1;
   } else {
     t1 = $[2];
@@ -51,12 +55,14 @@ function McpConfigErrorSection(t0) {
   } else {
     t4 = $[9];
   }
+  const locationLabel = t('mcp.parsing.location');
   let t5;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text dimColor={true}>Location: </Text>;
-    $[10] = t5;
+  if ($[10] !== locationLabel) {
+    t5 = <Text dimColor={true}>{locationLabel} </Text>;
+    $[10] = locationLabel;
+    $[11] = t5;
   } else {
-    t5 = $[10];
+    t5 = $[11];
   }
   let t6;
   if ($[11] !== scope) {
@@ -76,7 +82,7 @@ function McpConfigErrorSection(t0) {
   }
   let t8;
   if ($[15] !== parsingErrors) {
-    t8 = parsingErrors.map(_temp);
+    t8 = parsingErrors.map((e, i) => _temp(e, i, t));
     $[15] = parsingErrors;
     $[16] = t8;
   } else {
@@ -84,7 +90,7 @@ function McpConfigErrorSection(t0) {
   }
   let t9;
   if ($[17] !== warnings) {
-    t9 = warnings.map(_temp2);
+    t9 = warnings.map((w, i) => _temp2(w, i, t));
     $[17] = warnings;
     $[18] = t9;
   } else {
@@ -111,16 +117,17 @@ function McpConfigErrorSection(t0) {
   }
   return t11;
 }
-function _temp2(warning, i_0) {
+function _temp2(warning, i_0, t) {
   const serverName_0 = warning.mcpErrorMetadata?.serverName;
-  return <Box key={`warning-${i_0}`}><Text><Text dimColor={true}>└ </Text><Text color="warning">[Warning]</Text><Text dimColor={true}>{" "}{serverName_0 && `[${serverName_0}] `}{warning.path && warning.path !== "" ? `${warning.path}: ` : ""}{warning.message}</Text></Text></Box>;
+  return <Box key={`warning-${i_0}`}><Text><Text dimColor={true}>└ </Text><Text color="warning">[{t('mcp.parsing.warning')}]</Text><Text dimColor={true}>{" "}{serverName_0 && `[${serverName_0}] `}{warning.path && warning.path !== "" ? `${warning.path}: ` : ""}{warning.message}</Text></Text></Box>;
 }
-function _temp(error, i) {
+function _temp(error, i, t) {
   const serverName = error.mcpErrorMetadata?.serverName;
-  return <Box key={`error-${i}`}><Text><Text dimColor={true}>└ </Text><Text color="error">[Error]</Text><Text dimColor={true}>{" "}{serverName && `[${serverName}] `}{error.path && error.path !== "" ? `${error.path}: ` : ""}{error.message}</Text></Text></Box>;
+  return <Box key={`error-${i}`}><Text><Text dimColor={true}>└ </Text><Text color="error">[{t('mcp.parsing.error')}]</Text><Text dimColor={true}>{" "}{serverName && `[${serverName}] `}{error.path && error.path !== "" ? `${error.path}: ` : ""}{error.message}</Text></Text></Box>;
 }
 export function McpParsingWarnings() {
-  const $ = _c(6);
+  const $ = _c(8);
+  const { t } = useI18n();
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t0 = {
@@ -172,19 +179,27 @@ export function McpParsingWarnings() {
   if (!hasParsingErrors && !hasWarnings) {
     return null;
   }
+  const titleText = t('mcp.parsing.diagnosticsTitle');
+  const helpText = t('mcp.parsing.helpText');
+  const helpUrl = 'https://code.claude.com/docs/en/mcp';
   let t4;
-  if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <Text bold={true}>MCP Config Diagnostics</Text>;
-    $[4] = t4;
+  if ($[4] !== titleText || $[5] !== helpText || $[6] !== helpUrl) {
+    t4 = <Text bold={true}>{titleText}</Text>;
+    $[4] = titleText;
+    $[5] = helpText;
+    $[6] = t4;
   } else {
-    t4 = $[4];
+    t4 = $[6];
   }
   let t5;
-  if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Box flexDirection="column" marginTop={1} marginBottom={1}>{t4}<Box marginTop={1}><Text dimColor={true}>For help configuring MCP servers, see:{" "}<Link url="https://code.claude.com/docs/en/mcp">https://code.claude.com/docs/en/mcp</Link></Text></Box>{scopes.map(_temp5)}</Box>;
-    $[5] = t5;
+  if ($[7] !== t4 || $[8] !== helpText || $[9] !== helpUrl) {
+    t5 = <Box flexDirection="column" marginTop={1} marginBottom={1}>{t4}<Box marginTop={1}><Text dimColor={true}>{helpText}{" "}<Link url={helpUrl}>{helpUrl}</Link></Text></Box>{scopes.map(_temp5)}</Box>;
+    $[7] = t4;
+    $[8] = helpText;
+    $[9] = helpUrl;
+    $[10] = t5;
   } else {
-    t5 = $[5];
+    t5 = $[10];
   }
   return t5;
 }

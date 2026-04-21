@@ -7,6 +7,7 @@ import { getFileStatus, stashToCleanState } from '../utils/git.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
 import { Spinner } from './Spinner.js';
+import { useI18n } from '../hooks/useI18n.js';
 type TeleportStashProps = {
   onStashAndContinue: () => void;
   onCancel: () => void;
@@ -15,6 +16,7 @@ export function TeleportStash({
   onStashAndContinue,
   onCancel
 }: TeleportStashProps): React.ReactNode {
+  const { t } = useI18n();
   const [gitFileStatus, setGitFileStatus] = useState<GitFileStatus | null>(null);
   const changedFiles = gitFileStatus !== null ? [...gitFileStatus.tracked, ...gitFileStatus.untracked] : [];
   const [loading, setLoading] = useState(true);
@@ -32,7 +34,7 @@ export function TeleportStash({
         logForDebugging(`Error getting changed files: ${errorMessage}`, {
           level: 'error'
         });
-        setError('Failed to get changed files');
+        setError(t('teleportStash.failedGetFiles'));
       } finally {
         setLoading(false);
       }
@@ -48,14 +50,14 @@ export function TeleportStash({
         logForDebugging('Successfully stashed changes');
         onStashAndContinue();
       } else {
-        setError('Failed to stash changes');
+        setError(t('teleportStash.failedStash'));
       }
     } catch (err_0) {
       const errorMessage_0 = err_0 instanceof Error ? err_0.message : String(err_0);
       logForDebugging(`Error stashing changes: ${errorMessage_0}`, {
         level: 'error'
       });
-      setError('Failed to stash changes');
+      setError(t('teleportStash.failedStash'));
     } finally {
       setStashing(false);
     }
@@ -88,27 +90,27 @@ export function TeleportStash({
       </Box>;
   }
   const showFileCount = changedFiles.length > 8;
-  return <Dialog title="Working Directory Has Changes" onCancel={onCancel}>
+  return <Dialog title={t('teleportStash.workingDirChanges')} onCancel={onCancel}>
       <Text>
-        Teleport will switch git branches. The following changes were found:
+        {t('teleportStash.branchSwitchWarning')}
       </Text>
 
       <Box flexDirection="column" paddingLeft={2}>
-        {changedFiles.length > 0 ? showFileCount ? <Text>{changedFiles.length} files changed</Text> : changedFiles.map((file: string, index: number) => <Text key={index}>{file}</Text>) : <Text dimColor>No changes detected</Text>}
+        {changedFiles.length > 0 ? showFileCount ? <Text>{t('teleportStash.filesChanged', { count: changedFiles.length })}</Text> : changedFiles.map((file: string, index: number) => <Text key={index}>{file}</Text>) : <Text dimColor>{t('teleportStash.noChanges')}</Text>}
       </Box>
 
       <Text>
-        Would you like to stash these changes and continue with teleport?
+        {t('teleportStash.stashQuestion')}
       </Text>
 
       {stashing ? <Box>
           <Spinner />
-          <Text> Stashing changes...</Text>
+          <Text> {t('teleportStash.stashingChanges')}</Text>
         </Box> : <Select options={[{
-      label: 'Stash changes and continue',
+      label: t('teleportStash.stashAndContinue'),
       value: 'stash'
     }, {
-      label: 'Exit',
+      label: t('common.exit'),
       value: 'exit'
     }]} onChange={handleSelectChange} />}
     </Dialog>;

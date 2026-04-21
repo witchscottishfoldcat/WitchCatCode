@@ -5,6 +5,7 @@ import Fuse from 'fuse.js';
 import React from 'react';
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js';
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { useSearchInput } from '../hooks/useSearchInput.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { applyColor } from '../ink/colorize.js';
@@ -111,17 +112,19 @@ function buildLogLabel(log: LogOption, maxLabelWidth: number, options?: {
   isGroupHeader?: boolean;
   isChild?: boolean;
   forkCount?: number;
+  t?: (key: string, params?: Record<string, unknown>) => string;
 }): string {
   const {
     isGroupHeader = false,
     isChild = false,
-    forkCount = 0
+    forkCount = 0,
+    t
   } = options || {};
 
   // TreeSelect will add the prefix, so we just need to account for its width
   const prefixWidth = isGroupHeader && forkCount > 0 ? PARENT_PREFIX_WIDTH : isChild ? CHILD_PREFIX_WIDTH : 0;
-  const sessionCountSuffix = isGroupHeader && forkCount > 0 ? ` (+${forkCount} other ${forkCount === 1 ? 'session' : 'sessions'})` : '';
-  const sidechainSuffix = log.isSidechain ? ' (sidechain)' : '';
+  const sessionCountSuffix = isGroupHeader && forkCount > 0 ? t ? ` (+${forkCount} ${t(forkCount === 1 ? 'logSelector.otherSession' : 'logSelector.otherSessions', { count: forkCount })})` : ` (+${forkCount} other ${forkCount === 1 ? 'session' : 'sessions'})` : '';
+  const sidechainSuffix = log.isSidechain ? t ? ` (${t('logSelector.sidechain')})` : ' (sidechain)' : '';
   const maxSummaryWidth = maxLabelWidth - prefixWidth - sidechainSuffix.length - sessionCountSuffix.length;
   const truncatedSummary = normalizeAndTruncateToWidth(getLogDisplayTitle(log), maxSummaryWidth);
   return `${truncatedSummary}${sidechainSuffix}${sessionCountSuffix}`;
@@ -141,7 +144,7 @@ function buildLogMetadata(log: LogOption, options?: {
   return childPadding + baseMetadata + projectSuffix;
 }
 export function LogSelector(t0) {
-  const $ = _c(247);
+  const $ = _c(260);
   const {
     logs,
     maxHeight: t1,
@@ -157,6 +160,7 @@ export function LogSelector(t0) {
   } = t0;
   const maxHeight = t1 === undefined ? Infinity : t1;
   const showAllProjects = t2 === undefined ? false : t2;
+  const { t } = useI18n();
   const terminalSize = useTerminalSize();
   const columns = forceWidth === undefined ? terminalSize.columns : forceWidth;
   const exitState = useExitOnCtrlCDWithKeybindings(onCancel);
@@ -332,10 +336,11 @@ export function LogSelector(t0) {
   const uniqueTags = t20;
   const hasTags = uniqueTags.length > 0;
   let t21;
-  if ($[21] !== hasTags || $[22] !== uniqueTags) {
-    t21 = hasTags ? ["All", ...uniqueTags] : [];
+  if ($[21] !== hasTags || $[22] !== uniqueTags || $[247] !== t) {
+    t21 = hasTags ? [t('logSelector.all'), ...uniqueTags] : [];
     $[21] = hasTags;
     $[22] = uniqueTags;
+    $[247] = t;
     $[23] = t21;
   } else {
     t21 = $[23];
@@ -343,7 +348,7 @@ export function LogSelector(t0) {
   const tagTabs = t21;
   const effectiveTagIndex = tagTabs.length > 0 && selectedTagIndex < tagTabs.length ? selectedTagIndex : 0;
   const selectedTab = tagTabs[effectiveTagIndex];
-  const tagFilter = selectedTab === "All" ? undefined : selectedTab;
+  const tagFilter = selectedTab === t('logSelector.all') ? undefined : selectedTab;
   const tagTabsLines = hasTags ? 1 : 0;
   let filtered = logs;
   if (isResumeWithRenameEnabled) {
@@ -575,7 +580,7 @@ export function LogSelector(t0) {
       break bb2;
     }
     let t30;
-    if ($[66] !== displayedLogs || $[67] !== highlightColor || $[68] !== maxLabelWidth || $[69] !== showAllProjects || $[70] !== snippets) {
+    if ($[66] !== displayedLogs || $[67] !== highlightColor || $[68] !== maxLabelWidth || $[69] !== showAllProjects || $[70] !== snippets || $[258] !== t) {
       const sessionGroups = groupLogsBySessionId(displayedLogs);
       t30 = Array.from(sessionGroups.entries()).map(t31 => {
         const [sessionId, groupLogs] = t31;
@@ -593,7 +598,7 @@ export function LogSelector(t0) {
               log: latestLog,
               indexInFiltered
             },
-            label: buildLogLabel(latestLog, maxLabelWidth),
+            label: buildLogLabel(latestLog, maxLabelWidth, { t }),
             description: snippetStr ? `${metadata}\n  ${snippetStr}` : metadata,
             dimDescription: true
           };
@@ -614,7 +619,8 @@ export function LogSelector(t0) {
               indexInFiltered: childIndexInFiltered
             },
             label: buildLogLabel(log_8, maxLabelWidth, {
-              isChild: true
+              isChild: true,
+              t
             }),
             description: childSnippetStr ? `${childMetadata}\n      ${childSnippetStr}` : childMetadata,
             dimDescription: true
@@ -631,7 +637,8 @@ export function LogSelector(t0) {
           },
           label: buildLogLabel(latestLog, maxLabelWidth, {
             isGroupHeader: true,
-            forkCount
+            forkCount,
+            t
           }),
           description: snippetStr ? `${parentMetadata}\n  ${snippetStr}` : parentMetadata,
           dimDescription: true,
@@ -643,6 +650,7 @@ export function LogSelector(t0) {
       $[68] = maxLabelWidth;
       $[69] = showAllProjects;
       $[70] = snippets;
+      $[258] = t;
       $[71] = t30;
     } else {
       t30 = $[71];
@@ -666,10 +674,10 @@ export function LogSelector(t0) {
     let t31;
     if ($[73] !== displayedLogs || $[74] !== highlightColor || $[75] !== maxLabelWidth || $[76] !== showAllProjects || $[77] !== snippets) {
       let t32;
-      if ($[79] !== highlightColor || $[80] !== maxLabelWidth || $[81] !== showAllProjects || $[82] !== snippets) {
+      if ($[79] !== highlightColor || $[80] !== maxLabelWidth || $[81] !== showAllProjects || $[82] !== snippets || $[259] !== t) {
         t32 = (log_9, index_0) => {
           const rawSummary = getLogDisplayTitle(log_9);
-          const summaryWithSidechain = rawSummary + (log_9.isSidechain ? " (sidechain)" : "");
+          const summaryWithSidechain = rawSummary + (log_9.isSidechain ? ` (${t('logSelector.sidechain')})` : "");
           const summary = normalizeAndTruncateToWidth(summaryWithSidechain, maxLabelWidth);
           const baseDescription = formatLogMetadata(log_9);
           const projectSuffix = showAllProjects && log_9.projectPath ? ` · ${log_9.projectPath}` : "";
@@ -686,6 +694,7 @@ export function LogSelector(t0) {
         $[80] = maxLabelWidth;
         $[81] = showAllProjects;
         $[82] = snippets;
+        $[259] = t;
         $[83] = t32;
       } else {
         t32 = $[83];
@@ -705,7 +714,7 @@ export function LogSelector(t0) {
   const flatOptions = t30;
   const focusedLog = focusedNode?.value.log ?? null;
   let t31;
-  if ($[84] !== displayedLogs || $[85] !== expandedGroupSessionIds || $[86] !== focusedLog) {
+  if ($[84] !== displayedLogs || $[85] !== expandedGroupSessionIds || $[86] !== focusedLog || $[249] !== t) {
     t31 = () => {
       if (!isResumeWithRenameEnabled || !focusedLog) {
         return "";
@@ -722,13 +731,14 @@ export function LogSelector(t0) {
       const isExpanded = expandedGroupSessionIds.has(sessionId_0);
       const isChildNode = sessionLogs.indexOf(focusedLog) > 0;
       if (isChildNode) {
-        return "\u2190 to collapse";
+        return t('logSelector.toCollapse');
       }
-      return isExpanded ? "\u2190 to collapse" : "\u2192 to expand";
+      return isExpanded ? t('logSelector.toCollapse') : t('logSelector.toExpand');
     };
     $[84] = displayedLogs;
     $[85] = expandedGroupSessionIds;
     $[86] = focusedLog;
+    $[249] = t;
     $[87] = t31;
   } else {
     t31 = $[87];
@@ -1084,7 +1094,7 @@ export function LogSelector(t0) {
               const newIndex = (current + tagTabs.length + offset) % tagTabs.length;
               const newTab = tagTabs[newIndex];
               logEvent("tengu_session_tag_filter_changed", {
-                is_all: newTab === "All",
+                is_all: newTab === t('logSelector.all'),
                 tag_count: uniqueTags.length
               });
               return newIndex;
@@ -1178,18 +1188,19 @@ export function LogSelector(t0) {
   }
   useInput(t53, t54);
   let filterIndicators;
-  if ($[149] !== branchFilterEnabled || $[150] !== currentBranch || $[151] !== hasMultipleWorktrees || $[152] !== showAllWorktrees) {
+  if ($[149] !== branchFilterEnabled || $[150] !== currentBranch || $[151] !== hasMultipleWorktrees || $[152] !== showAllWorktrees || $[248] !== t) {
     filterIndicators = [];
     if (branchFilterEnabled && currentBranch) {
       filterIndicators.push(currentBranch);
     }
     if (hasMultipleWorktrees && !showAllWorktrees) {
-      filterIndicators.push("current worktree");
+      filterIndicators.push(t('logSelector.currentWorktree'));
     }
     $[149] = branchFilterEnabled;
     $[150] = currentBranch;
     $[151] = hasMultipleWorktrees;
     $[152] = showAllWorktrees;
+    $[248] = t;
     $[153] = filterIndicators;
   } else {
     filterIndicators = $[153];
@@ -1262,8 +1273,8 @@ export function LogSelector(t0) {
     t59 = $[165];
   }
   let t60;
-  if ($[166] !== columns || $[167] !== displayedLogs.length || $[168] !== effectiveTagIndex || $[169] !== focusedIndex || $[170] !== hasTags || $[171] !== showAllProjects || $[172] !== tagTabs || $[173] !== viewMode || $[174] !== visibleCount) {
-    t60 = hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">Resume Session{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}({focusedIndex} of {displayedLogs.length})</Text>}</Text></Box>;
+  if ($[166] !== columns || $[167] !== displayedLogs.length || $[168] !== effectiveTagIndex || $[169] !== focusedIndex || $[170] !== hasTags || $[171] !== showAllProjects || $[172] !== tagTabs || $[173] !== viewMode || $[174] !== visibleCount || $[250] !== t) {
+    t60 = hasTags ? <TagTabs tabs={tagTabs} selectedIndex={effectiveTagIndex} availableWidth={columns} showAllProjects={showAllProjects} /> : <Box flexShrink={0}><Text bold={true} color="suggestion">{t('logSelector.resumeSession')}{viewMode === "list" && displayedLogs.length > visibleCount && <Text dimColor={true}>{" "}{t('logSelector.sessionCount', { current: focusedIndex, total: displayedLogs.length })}</Text>}</Text></Box>;
     $[166] = columns;
     $[167] = displayedLogs.length;
     $[168] = effectiveTagIndex;
@@ -1273,6 +1284,7 @@ export function LogSelector(t0) {
     $[172] = tagTabs;
     $[173] = viewMode;
     $[174] = visibleCount;
+    $[250] = t;
     $[175] = t60;
   } else {
     t60 = $[175];
@@ -1306,55 +1318,60 @@ export function LogSelector(t0) {
     t64 = $[184];
   }
   let t65;
-  if ($[185] !== agenticSearchState.status) {
-    t65 = agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> Searching…</Text></Box>;
+  if ($[185] !== agenticSearchState.status || $[251] !== t) {
+    t65 = agenticSearchState.status === "searching" && <Box paddingLeft={1} flexShrink={0}><Spinner /><Text> {t('logSelector.searching')}</Text></Box>;
     $[185] = agenticSearchState.status;
+    $[251] = t;
     $[186] = t65;
   } else {
     t65 = $[186];
   }
   let t66;
-  if ($[187] !== agenticSearchState.results || $[188] !== agenticSearchState.status) {
-    t66 = agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>Claude found these results:</Text></Box>;
+  if ($[187] !== agenticSearchState.results || $[188] !== agenticSearchState.status || $[252] !== t) {
+    t66 = agenticSearchState.status === "results" && agenticSearchState.results.length > 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{t('logSelector.claudeFoundResults')}</Text></Box>;
     $[187] = agenticSearchState.results;
     $[188] = agenticSearchState.status;
+    $[252] = t;
     $[189] = t66;
   } else {
     t66 = $[189];
   }
   let t67;
-  if ($[190] !== agenticSearchState.results || $[191] !== agenticSearchState.status || $[192] !== filteredLogs) {
-    t67 = agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>No matching sessions found.</Text></Box>;
+  if ($[190] !== agenticSearchState.results || $[191] !== agenticSearchState.status || $[192] !== filteredLogs || $[253] !== t) {
+    t67 = agenticSearchState.status === "results" && agenticSearchState.results.length === 0 && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{t('logSelector.noMatchingSessions')}</Text></Box>;
     $[190] = agenticSearchState.results;
     $[191] = agenticSearchState.status;
     $[192] = filteredLogs;
+    $[253] = t;
     $[193] = t67;
   } else {
     t67 = $[193];
   }
   let t68;
-  if ($[194] !== agenticSearchState.status || $[195] !== filteredLogs) {
-    t68 = agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>No matching sessions found.</Text></Box>;
+  if ($[194] !== agenticSearchState.status || $[195] !== filteredLogs || $[254] !== t) {
+    t68 = agenticSearchState.status === "error" && filteredLogs.length === 0 && <Box paddingLeft={1} marginBottom={1} flexShrink={0}><Text dimColor={true} italic={true}>{t('logSelector.noMatchingSessions')}</Text></Box>;
     $[194] = agenticSearchState.status;
     $[195] = filteredLogs;
+    $[254] = t;
     $[196] = t68;
   } else {
     t68 = $[196];
   }
   let t69;
-  if ($[197] !== agenticSearchState.status || $[198] !== isAgenticSearchOptionFocused || $[199] !== onAgenticSearch || $[200] !== searchQuery) {
-    t69 = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>Search deeply using Claude →</Text></Box><Box height={1} /></Box>;
+  if ($[197] !== agenticSearchState.status || $[198] !== isAgenticSearchOptionFocused || $[199] !== onAgenticSearch || $[200] !== searchQuery || $[255] !== t) {
+    t69 = Boolean(searchQuery.trim()) && onAgenticSearch && false && agenticSearchState.status !== "searching" && agenticSearchState.status !== "results" && agenticSearchState.status !== "error" && <Box flexShrink={0} flexDirection="column"><Box flexDirection="row" gap={1}><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined}>{isAgenticSearchOptionFocused ? figures.pointer : " "}</Text><Text color={isAgenticSearchOptionFocused ? "suggestion" : undefined} bold={isAgenticSearchOptionFocused}>{t('logSelector.searchDeeplyWithClaude')}</Text></Box><Box height={1} /></Box>;
     $[197] = agenticSearchState.status;
     $[198] = isAgenticSearchOptionFocused;
     $[199] = onAgenticSearch;
     $[200] = searchQuery;
+    $[255] = t;
     $[201] = t69;
   } else {
     t69 = $[201];
   }
   let t70;
-  if ($[202] !== agenticSearchState.status || $[203] !== branchFilterEnabled || $[204] !== columns || $[205] !== displayedLogs || $[206] !== expandedGroupSessionIds || $[207] !== flatOptions || $[208] !== focusedLog || $[209] !== focusedNode?.id || $[210] !== handleFlatOptionsSelectFocus || $[211] !== handleRenameSubmit || $[212] !== handleTreeSelectFocus || $[213] !== isAgenticSearchOptionFocused || $[214] !== onCancel || $[215] !== onSelect || $[216] !== renameCursorOffset || $[217] !== renameValue || $[218] !== treeNodes || $[219] !== viewMode || $[220] !== visibleCount) {
-    t70 = agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>Rename session:</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, "Enter new session name")} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={node_0 => {
+  if ($[202] !== agenticSearchState.status || $[203] !== branchFilterEnabled || $[204] !== columns || $[205] !== displayedLogs || $[206] !== expandedGroupSessionIds || $[207] !== flatOptions || $[208] !== focusedLog || $[209] !== focusedNode?.id || $[210] !== handleFlatOptionsSelectFocus || $[211] !== handleRenameSubmit || $[212] !== handleTreeSelectFocus || $[213] !== isAgenticSearchOptionFocused || $[214] !== onCancel || $[215] !== onSelect || $[216] !== renameCursorOffset || $[217] !== renameValue || $[218] !== treeNodes || $[219] !== viewMode || $[220] !== visibleCount || $[256] !== t) {
+    t70 = agenticSearchState.status === "searching" ? null : viewMode === "rename" && focusedLog ? <Box paddingLeft={2} flexDirection="column"><Text bold={true}>{t('logSelector.renameSession')}</Text><Box paddingTop={1}><TextInput value={renameValue} onChange={setRenameValue} onSubmit={handleRenameSubmit} placeholder={getLogDisplayTitle(focusedLog, t('logSelector.enterNewSessionName'))} columns={columns} cursorOffset={renameCursorOffset} onChangeCursorOffset={setRenameCursorOffset} showCursor={true} /></Box></Box> : isResumeWithRenameEnabled ? <TreeSelect nodes={treeNodes} onSelect={node_0 => {
       onSelect(node_0.value.log);
     }} onFocus={handleTreeSelectFocus} onCancel={onCancel} focusNodeId={focusedNode?.id} visibleOptionCount={visibleCount} layout="expanded" isDisabled={viewMode === "search" || isAgenticSearchOptionFocused} hideIndexes={false} isNodeExpanded={nodeId => {
       if (viewMode === "search" || branchFilterEnabled) {
@@ -1403,13 +1420,14 @@ export function LogSelector(t0) {
     $[218] = treeNodes;
     $[219] = viewMode;
     $[220] = visibleCount;
+    $[256] = t;
     $[221] = t70;
   } else {
     t70 = $[221];
   }
   let t71;
-  if ($[222] !== agenticSearchState.status || $[223] !== currentBranch || $[224] !== exitState.keyName || $[225] !== exitState.pending || $[226] !== getExpandCollapseHint || $[227] !== hasMultipleWorktrees || $[228] !== isAgenticSearchOptionFocused || $[229] !== isSearching || $[230] !== onToggleAllProjects || $[231] !== showAllProjects || $[232] !== showAllWorktrees || $[233] !== viewMode) {
-    t71 = <Box paddingLeft={2}>{exitState.pending ? <Text dimColor={true}>Press {exitState.keyName} again to exit</Text> : viewMode === "rename" ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="save" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : agenticSearchState.status === "searching" ? <Text dimColor={true}><Byline><Text>Searching with Claude…</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : isAgenticSearchOptionFocused ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="search" /><KeyboardShortcutHint shortcut={"\u2193"} action="skip" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : viewMode === "search" ? <Text dimColor={true}><Byline><Text>{isSearching && false ? "Searching\u2026" : "Type to Search"}</Text><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="clear" /></Byline></Text> : <Text dimColor={true}><Byline>{onToggleAllProjects && <KeyboardShortcutHint shortcut="Ctrl+A" action={`show ${showAllProjects ? "current dir" : "all projects"}`} />}{currentBranch && <KeyboardShortcutHint shortcut="Ctrl+B" action="toggle branch" />}{hasMultipleWorktrees && <KeyboardShortcutHint shortcut="Ctrl+W" action={`show ${showAllWorktrees ? "current worktree" : "all worktrees"}`} />}<KeyboardShortcutHint shortcut="Ctrl+V" action="preview" /><KeyboardShortcutHint shortcut="Ctrl+R" action="rename" /><Text>Type to search</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />{getExpandCollapseHint() && <Text>{getExpandCollapseHint()}</Text>}</Byline></Text>}</Box>;
+  if ($[222] !== agenticSearchState.status || $[223] !== currentBranch || $[224] !== exitState.keyName || $[225] !== exitState.pending || $[226] !== getExpandCollapseHint || $[227] !== hasMultipleWorktrees || $[228] !== isAgenticSearchOptionFocused || $[229] !== isSearching || $[230] !== onToggleAllProjects || $[231] !== showAllProjects || $[232] !== showAllWorktrees || $[233] !== viewMode || $[257] !== t) {
+    t71 = <Box paddingLeft={2}>{exitState.pending ? <Text dimColor={true}>{t('logSelector.pressAgainToExit', { key: exitState.keyName })}</Text> : viewMode === "rename" ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="save" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : agenticSearchState.status === "searching" ? <Text dimColor={true}><Byline><Text>{t('logSelector.searchingWithClaude')}</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : isAgenticSearchOptionFocused ? <Text dimColor={true}><Byline><KeyboardShortcutHint shortcut="Enter" action="search" /><KeyboardShortcutHint shortcut={"\u2193"} action="skip" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline></Text> : viewMode === "search" ? <Text dimColor={true}><Byline><Text>{isSearching && false ? t('logSelector.searching') : t('logSelector.typeToSearch')}</Text><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="clear" /></Byline></Text> : <Text dimColor={true}><Byline>{onToggleAllProjects && <KeyboardShortcutHint shortcut="Ctrl+A" action={showAllProjects ? t('logSelector.showCurrentDir') : t('logSelector.showAllProjects')} />}{currentBranch && <KeyboardShortcutHint shortcut="Ctrl+B" action="toggle branch" />}{hasMultipleWorktrees && <KeyboardShortcutHint shortcut="Ctrl+W" action={showAllWorktrees ? t('logSelector.showCurrentWorktree') : t('logSelector.showAllWorktrees')} />}<KeyboardShortcutHint shortcut="Ctrl+V" action="preview" /><KeyboardShortcutHint shortcut="Ctrl+R" action="rename" /><Text>{t('logSelector.typeToSearch')}</Text><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" />{getExpandCollapseHint() && <Text>{getExpandCollapseHint()}</Text>}</Byline></Text>}</Box>;
     $[222] = agenticSearchState.status;
     $[223] = currentBranch;
     $[224] = exitState.keyName;
@@ -1422,6 +1440,7 @@ export function LogSelector(t0) {
     $[231] = showAllProjects;
     $[232] = showAllWorktrees;
     $[233] = viewMode;
+    $[257] = t;
     $[234] = t71;
   } else {
     t71 = $[234];

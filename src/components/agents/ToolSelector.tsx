@@ -25,6 +25,7 @@ import { WebSearchTool } from 'src/tools/WebSearchTool/WebSearchTool.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { count } from '../../utils/array.js';
 import { plural } from '../../utils/stringUtils.js';
 import { Divider } from '../design-system/Divider.js';
@@ -46,28 +47,28 @@ type ToolBuckets = {
   MCP: ToolBucket;
   OTHER: ToolBucket;
 };
-function getToolBuckets(): ToolBuckets {
+function getToolBuckets(t: (key: string, params?: Record<string, unknown>) => string = (k) => k): ToolBuckets {
   return {
     READ_ONLY: {
-      name: 'Read-only tools',
+      name: t('agent.toolSelector.bucket.readOnly'),
       toolNames: new Set([GlobTool.name, GrepTool.name, ExitPlanModeV2Tool.name, FileReadTool.name, WebFetchTool.name, TodoWriteTool.name, WebSearchTool.name, TaskStopTool.name, TaskOutputTool.name, ListMcpResourcesTool.name, ReadMcpResourceTool.name])
     },
     EDIT: {
-      name: 'Edit tools',
+      name: t('agent.toolSelector.bucket.edit'),
       toolNames: new Set([FileEditTool.name, FileWriteTool.name, NotebookEditTool.name])
     },
     EXECUTION: {
-      name: 'Execution tools',
+      name: t('agent.toolSelector.bucket.execution'),
       toolNames: new Set([BashTool.name, "external" === 'ant' ? TungstenTool.name : undefined].filter(n => n !== undefined))
     },
     MCP: {
-      name: 'MCP tools',
+      name: t('agent.toolSelector.bucket.mcp'),
       toolNames: new Set(),
       // Dynamic - no static list
       isMcp: true
     },
     OTHER: {
-      name: 'Other tools',
+      name: t('agent.toolSelector.bucket.other'),
       toolNames: new Set() // Dynamic - catch-all for uncategorized tools
     }
   };
@@ -102,6 +103,16 @@ export function ToolSelector(t0) {
     onComplete,
     onCancel
   } = t0;
+  const { t } = useI18n();
+  const continueLabel = t('agent.toolSelector.continue');
+  const hideAdvancedLabel = t('agent.toolSelector.hideAdvanced');
+  const showAdvancedLabel = t('agent.toolSelector.showAdvanced');
+  const mcpServersLabel = t('agent.toolSelector.mcpServers');
+  const individualToolsLabel = t('agent.toolSelector.individualTools');
+  const allToolsLabel = t('agent.toolSelector.allTools');
+  const toolStr = t('agent.toolSelector.tool');
+  const allToolsSelectedLabel = t('agent.toolSelector.allToolsSelected');
+  const continueBracketLabel = t('agent.toolSelector.continueBracket');
   let t1;
   if ($[0] !== tools) {
     t1 = filterToolsForAgent({
@@ -165,6 +176,7 @@ export function ToolSelector(t0) {
   }
   const selectedSet = t5;
   const isAllSelected = validSelectedTools.length === customAgentTools.length && customAgentTools.length > 0;
+  const toolsSelectedLabel = t('agent.toolSelector.toolsSelected', { selected: selectedSet.size, total: customAgentTools.length });
   let t6;
   if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
     t6 = toolName => {
@@ -213,7 +225,7 @@ export function ToolSelector(t0) {
   const handleConfirm = t8;
   let buckets;
   if ($[20] !== customAgentTools) {
-    const toolBuckets = getToolBuckets();
+    const toolBuckets = getToolBuckets(t);
     buckets = {
       readOnly: [] as Tool[],
       edit: [] as Tool[],
@@ -269,7 +281,7 @@ export function ToolSelector(t0) {
     navigableItems = [];
     navigableItems.push({
       id: "continue",
-      label: "Continue",
+      label: continueLabel,
       action: handleConfirm,
       isContinue: true
     });
@@ -287,10 +299,10 @@ export function ToolSelector(t0) {
     }
     navigableItems.push({
       id: "bucket-all",
-      label: `${isAllSelected ? figures.checkboxOn : figures.checkboxOff} All tools`,
+      label: `${isAllSelected ? figures.checkboxOn : figures.checkboxOff} ${allToolsLabel}`,
       action: t10
     });
-    const toolBuckets_0 = getToolBuckets();
+    const toolBuckets_0 = getToolBuckets(t);
     const bucketConfigs = [{
       id: "bucket-readonly",
       name: toolBuckets_0.READ_ONLY.name,
@@ -347,7 +359,7 @@ export function ToolSelector(t0) {
     }
     navigableItems.push({
       id: "toggle-individual",
-      label: showIndividualTools ? "Hide advanced options" : "Show advanced options",
+      label: showIndividualTools ? hideAdvancedLabel : showAdvancedLabel,
       action: t12,
       isToggle: true
     });
@@ -356,7 +368,7 @@ export function ToolSelector(t0) {
       if (mcpServerBuckets.length > 0) {
         navigableItems.push({
           id: "mcp-servers-header",
-          label: "MCP Servers:",
+          label: mcpServersLabel,
           action: _temp6,
           isHeader: true
         });
@@ -369,7 +381,7 @@ export function ToolSelector(t0) {
           const isFullySelected_0 = selected_1 === serverTools.length;
           navigableItems.push({
             id: `mcp-server-${serverName}`,
-            label: `${isFullySelected_0 ? figures.checkboxOn : figures.checkboxOff} ${serverName} (${serverTools.length} ${plural(serverTools.length, "tool")})`,
+            label: `${isFullySelected_0 ? figures.checkboxOn : figures.checkboxOff} ${serverName} (${serverTools.length} ${plural(serverTools.length, toolStr)})`,
             action: () => {
               const toolNames_2 = serverTools.map(_temp7);
               handleToggleTools(toolNames_2, !isFullySelected_0);
@@ -378,7 +390,7 @@ export function ToolSelector(t0) {
         });
         navigableItems.push({
           id: "tools-header",
-          label: "Individual Tools:",
+          label: individualToolsLabel,
           action: _temp8,
           isHeader: true
         });
@@ -480,7 +492,7 @@ export function ToolSelector(t0) {
   const t15 = focusIndex === 0 ? `${figures.pointer} ` : "  ";
   let t16;
   if ($[52] !== t13 || $[53] !== t14 || $[54] !== t15) {
-    t16 = <Text color={t13} bold={t14}>{t15}[ Continue ]</Text>;
+    t16 = <Text color={t13} bold={t14}>{t15}[ {continueBracketLabel} ]</Text>;
     $[52] = t13;
     $[53] = t14;
     $[54] = t15;
@@ -517,7 +529,7 @@ export function ToolSelector(t0) {
   } else {
     t19 = $[61];
   }
-  const t20 = isAllSelected ? "All tools selected" : `${selectedSet.size} of ${customAgentTools.length} tools selected`;
+  const t20 = isAllSelected ? allToolsSelectedLabel : toolsSelectedLabel;
   let t21;
   if ($[62] !== t20) {
     t21 = <Box marginTop={1} flexDirection="column"><Text dimColor={true}>{t20}</Text></Box>;

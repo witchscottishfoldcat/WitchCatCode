@@ -29,6 +29,7 @@ import { Byline } from './design-system/Byline.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { Pane } from './design-system/Pane.js';
 import { effortLevelToSymbol } from './EffortIndicator.js';
+import { useI18n } from '../hooks/useI18n.js';
 
 export type Props = {
   initial: string | null;
@@ -76,6 +77,7 @@ export function ModelPicker({
   customOptions,
 }: Props) {
   const setAppState = useSetAppState();
+  const { t } = useI18n();
   const exitState = useExitOnCtrlCDWithKeybindings();
   const isFastMode = useAppState(s => (isFastModeEnabled() ? s.fastMode : false));
   const effortValue = useAppState(s => s.effortValue);
@@ -112,7 +114,7 @@ export function ModelPicker({
       {
         value: initialValue,
         label: modelDisplayString(initial),
-        description: 'Current model',
+        description: t('modelPicker.currentModel'),
         model: initial,
       },
     ];
@@ -221,11 +223,11 @@ export function ModelPicker({
   const content = (
     <Box flexDirection="column">
       <Box marginBottom={1} flexDirection="column">
-        <Text color="remember" bold={true}>Select model</Text>
-        <Text dimColor={true}>{headerText ?? 'Switch between models. Applies to this session and future Claude Code sessions. For other/previous model names, specify with --model.'}</Text>
+        <Text color="remember" bold={true}>{t('modelPicker.selectModel')}</Text>
+        <Text dimColor={true}>{headerText ?? t('modelPicker.description')}</Text>
         {sessionModel && (
           <Text dimColor={true}>
-            Currently using {modelDisplayString(sessionModel)} for this session (set by plan mode). Selecting a model will undo this.
+            {t('modelPicker.sessionModelNote', { model: modelDisplayString(sessionModel) })}
           </Text>
         )}
       </Box>
@@ -244,7 +246,7 @@ export function ModelPicker({
         </Box>
         {hiddenCount > 0 && (
           <Box paddingLeft={3}>
-            <Text dimColor={true}>and {hiddenCount} more…</Text>
+            <Text dimColor={true}>{t('modelPicker.andMore', { count: hiddenCount })}</Text>
           </Box>
         )}
       </Box>
@@ -253,11 +255,11 @@ export function ModelPicker({
         {focusedSpec.supportsAdjustment ? (
           <Text dimColor={true}>
             <EffortLevelIndicator effort={resolvedSelection.mode === 'anthropic-effort' ? resolvedSelection.effort : undefined} />{' '}
-            {capitalize(indicatorLabel)} <Text color="subtle">← → to adjust</Text>
+            {capitalize(indicatorLabel)} <Text color="subtle">{t('modelPicker.adjustHint')}</Text>
           </Text>
         ) : (
           <Text color="subtle">
-            <EffortLevelIndicator effort={undefined} /> {focusedSpec.unsupportedLabel ?? `Effort not supported${focusedModelName ? ` for ${focusedModelName}` : ''}`}
+            <EffortLevelIndicator effort={undefined} /> {focusedSpec.unsupportedLabel ?? t('modelPicker.effortNotSupported', focusedModelName ? { model: focusedModelName } : undefined)}
           </Text>
         )}
       </Box>
@@ -265,23 +267,23 @@ export function ModelPicker({
       {isFastModeEnabled() ? (showFastModeNotice ? (
         <Box marginBottom={1}>
           <Text dimColor={true}>
-            Fast mode is <Text bold={true}>ON</Text> and available with {FAST_MODE_MODEL_DISPLAY} only (/fast). Switching to other models turn off fast mode.
+            {t('modelPicker.fastModeOn', { model: FAST_MODE_MODEL_DISPLAY })}
           </Text>
         </Box>
       ) : isFastModeAvailable() && !isFastModeCooldown() ? (
         <Box marginBottom={1}>
-          <Text dimColor={true}>Use <Text bold={true}>/fast</Text> to turn on Fast mode ({FAST_MODE_MODEL_DISPLAY} only).</Text>
+          <Text dimColor={true}>{t('modelPicker.fastModeAvailable', { model: FAST_MODE_MODEL_DISPLAY })}</Text>
         </Box>
       ) : null) : null}
 
       {isStandaloneCommand && (
         <Text dimColor={true} italic={true}>
           {exitState.pending ? (
-            <>Press {exitState.keyName} again to exit</>
+            <>{t('common.pressAgainToExit', { key: exitState.keyName })}</>
           ) : (
             <Byline>
               <KeyboardShortcutHint shortcut="Enter" action="confirm" />
-              <ConfigurableShortcutHint action="select:cancel" context="Select" fallback="Esc" description="exit" />
+              <ConfigurableShortcutHint action="select:cancel" context="Select" fallback="Esc" description={t('action.exit')} />
             </Byline>
           )}
         </Text>

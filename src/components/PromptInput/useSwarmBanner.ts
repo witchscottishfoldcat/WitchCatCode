@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { t } from '../../i18n/core.js'
 import { useAppState, useAppStateStore } from '../../state/AppState.js'
 import {
   getActiveAgentForInput,
@@ -85,7 +86,7 @@ export function useSwarmBanner(): SwarmBannerInfo {
 
     if (insideTmux === false && !inProcessMode && !nativePanes) {
       return {
-        text: `View teammates: \`tmux -L ${getSwarmSocketName()} a\``,
+        text: t('promptInput.swarm.viewTeammates', { command: `tmux -L ${getSwarmSocketName()} a` }),
         bgColor: viewedColor,
       }
     }

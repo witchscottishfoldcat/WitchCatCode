@@ -5,6 +5,7 @@ import { useCallback, useEffect } from 'react';
 import { getOriginalCwd } from '../../../bootstrap/state.js';
 import type { CommandResultDisplay } from '../../../commands.js';
 import { Select } from '../../../components/CustomSelect/select.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 import { Box, Text } from '../../../ink.js';
 import type { ToolPermissionContext } from '../../../Tool.js';
 import { useTabHeaderFocus } from '../../design-system/Tabs.js';
@@ -35,6 +36,9 @@ export function WorkspaceTab(t0) {
     headerFocused,
     focusHeader
   } = useTabHeaderFocus();
+  const { t } = useI18n();
+  const _addDirectory = t('permission.workspaceTab.addDirectory');
+  const _originalDir = t('permission.workspaceTab.originalDir');
   let t1;
   let t2;
   if ($[0] !== headerFocused || $[1] !== onHeaderFocusChange) {
@@ -97,7 +101,7 @@ export function WorkspaceTab(t0) {
     let t6;
     if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
       t6 = {
-        label: `Add directory${figures.ellipsis}`,
+        label: `${_addDirectory}${figures.ellipsis}`,
         value: "add-directory"
       };
       $[14] = t6;
@@ -113,7 +117,7 @@ export function WorkspaceTab(t0) {
   const options = opts;
   let t6;
   if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>(Original working directory)</Text></Box>;
+    t6 = <Box flexDirection="row" marginTop={1} marginLeft={2} gap={1}><Text>{`-  ${getOriginalCwd()}`}</Text><Text dimColor={true}>{_originalDir}</Text></Box>;
     $[15] = t6;
   } else {
     t6 = $[15];

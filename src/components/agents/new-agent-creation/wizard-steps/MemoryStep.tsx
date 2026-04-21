@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { type ReactNode } from 'react';
 import { Box } from '../../../../ink.js';
+import { useI18n } from '../../../../hooks/useI18n.js';
 import { useKeybinding } from '../../../../keybindings/useKeybinding.js';
 import { isAutoMemoryEnabled } from '../../../../memdir/paths.js';
 import { type AgentMemoryScope, loadAgentMemoryPrompt } from '../../../../tools/AgentTool/agentMemory.js';
@@ -23,6 +24,14 @@ export function MemoryStep() {
     updateWizardData,
     wizardData
   } = useWizard();
+  const { t } = useI18n();
+  const _subtitle = t('agent.wizard.memory.subtitle');
+  const _userScopeRec = t('agent.wizard.memory.userScopeRecommended');
+  const _projectScope = t('agent.wizard.memory.projectScope');
+  const _none = t('agent.wizard.memory.none');
+  const _projectScopeRec = t('agent.wizard.memory.projectScopeRecommended');
+  const _userScope = t('agent.wizard.memory.userScope');
+  const _localScope = t('agent.wizard.memory.localScope');
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t0 = {
@@ -37,28 +46,28 @@ export function MemoryStep() {
   let t1;
   if ($[1] !== isUserScope) {
     t1 = isUserScope ? [{
-      label: "User scope (~/.witchcat/agent-memory/) (Recommended)",
+      label: _userScopeRec,
       value: "user"
     }, {
-      label: "None (no persistent memory)",
+      label: _none,
       value: "none"
     }, {
-      label: "Project scope (.claude/agent-memory/)",
+      label: _projectScope,
       value: "project"
     }, {
-      label: "Local scope (.claude/agent-memory-local/)",
+      label: _localScope,
       value: "local"
     }] : [{
-      label: "Project scope (.claude/agent-memory/) (Recommended)",
+      label: _projectScopeRec,
       value: "project"
     }, {
-      label: "None (no persistent memory)",
+      label: _none,
       value: "none"
     }, {
-      label: "User scope (~/.witchcat/agent-memory/)",
+      label: _userScope,
       value: "user"
     }, {
-      label: "Local scope (.claude/agent-memory-local/)",
+      label: _localScope,
       value: "local"
     }];
     $[1] = isUserScope;
@@ -100,7 +109,7 @@ export function MemoryStep() {
   }
   let t4;
   if ($[9] !== goBack || $[10] !== handleSelect || $[11] !== memoryOptions) {
-    t4 = <WizardDialogLayout subtitle="Configure agent memory" footerText={t3}><Box><Select key="memory-select" options={memoryOptions} onChange={handleSelect} onCancel={goBack} /></Box></WizardDialogLayout>;
+    t4 = <WizardDialogLayout subtitle={_subtitle} footerText={t3}><Box><Select key="memory-select" options={memoryOptions} onChange={handleSelect} onCancel={goBack} /></Box></WizardDialogLayout>;
     $[9] = goBack;
     $[10] = handleSelect;
     $[11] = memoryOptions;

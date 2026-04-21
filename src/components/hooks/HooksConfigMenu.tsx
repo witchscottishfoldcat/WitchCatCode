@@ -17,6 +17,7 @@ import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js';
 import { useAppState, useAppStateStore } from 'src/state/AppState.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useSettingsChange } from '../../hooks/useSettingsChange.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { getHookEventMetadata, getHooksForMatcher, getMatcherMetadata, getSortedMatchersForEvent, groupHooksByEventAndMatcher } from '../../utils/hooks/hooksConfigManager.js';
@@ -54,6 +55,22 @@ export function HooksConfigMenu(t0) {
     toolNames,
     onExit
   } = t0;
+  const { t } = useI18n();
+  const dialogDismissed = t('hooksConfig.dialogDismissed');
+  const disabledText = t('hooksConfig.disabled');
+  const managedSettingsText = t('hooksConfig.managedSettings');
+  const configuredText = t('hooksConfig.configured');
+  const hookText = t('hooksConfig.hook');
+  const hookIsText = t('hooksConfig.hookIs');
+  const hookAreText = t('hooksConfig.hookAre');
+  const notRunningText = t('hooksConfig.notRunning');
+  const whenDisabledTitle = t('hooksConfig.whenDisabledTitle');
+  const noCommandsExecute = t('hooksConfig.noCommandsExecute');
+  const statusLineNotDisplayed = t('hooksConfig.statusLineNotDisplayed');
+  const toolOpsNoValidation = t('hooksConfig.toolOpsNoValidation');
+  const reEnableHint = t('hooksConfig.reEnableHint');
+  const hookConfigDisabledTitle = t('hooksConfig.hookConfigDisabledTitle');
+  const escToClose = t('hooksConfig.escToClose');
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     t1 = {
@@ -130,7 +147,7 @@ export function HooksConfigMenu(t0) {
   let t7;
   if ($[15] !== onExit) {
     t7 = () => {
-      onExit("Hooks dialog dismissed", {
+      onExit(dialogDismissed, {
         display: "system"
       });
     };
@@ -281,12 +298,12 @@ export function HooksConfigMenu(t0) {
   if (hooksDisabled_1) {
     let t21;
     if ($[35] === Symbol.for("react.memo_cache_sentinel")) {
-      t21 = <Text bold={true}>disabled</Text>;
+      t21 = <Text bold={true}>{disabledText}</Text>;
       $[35] = t21;
     } else {
       t21 = $[35];
     }
-    const t22 = disabledByPolicy && " by a managed settings file";
+    const t22 = disabledByPolicy && managedSettingsText;
     let t23;
     if ($[36] !== totalHooksCount) {
       t23 = <Text bold={true}>{totalHooksCount}</Text>;
@@ -297,7 +314,7 @@ export function HooksConfigMenu(t0) {
     }
     let t24;
     if ($[38] !== totalHooksCount) {
-      t24 = plural(totalHooksCount, "hook");
+      t24 = plural(totalHooksCount, hookText);
       $[38] = totalHooksCount;
       $[39] = t24;
     } else {
@@ -305,7 +322,7 @@ export function HooksConfigMenu(t0) {
     }
     let t25;
     if ($[40] !== totalHooksCount) {
-      t25 = plural(totalHooksCount, "is", "are");
+      t25 = plural(totalHooksCount, hookIsText, hookAreText);
       $[40] = totalHooksCount;
       $[41] = t25;
     } else {
@@ -313,7 +330,7 @@ export function HooksConfigMenu(t0) {
     }
     let t26;
     if ($[42] !== t22 || $[43] !== t23 || $[44] !== t24 || $[45] !== t25) {
-      t26 = <Text>All hooks are currently {t21}{t22}. You have{" "}{t23} configured{" "}{t24} that{" "}{t25} not running.</Text>;
+      t26 = <Text>{t('hooksConfig.allHooksCurrently')} {t21}{t22}. {t('hooksConfig.youHave')}{" "}{t23} {configuredText}{" "}{t24} {t('hooksConfig.that')}{" "}{t25} {notRunningText}.</Text>;
       $[42] = t22;
       $[43] = t23;
       $[44] = t24;
@@ -327,10 +344,10 @@ export function HooksConfigMenu(t0) {
     let t29;
     let t30;
     if ($[47] === Symbol.for("react.memo_cache_sentinel")) {
-      t27 = <Box marginTop={1}><Text dimColor={true}>When hooks are disabled:</Text></Box>;
-      t28 = <Text dimColor={true}>· No hook commands will execute</Text>;
-      t29 = <Text dimColor={true}>· StatusLine will not be displayed</Text>;
-      t30 = <Text dimColor={true}>· Tool operations will proceed without hook validation</Text>;
+      t27 = <Box marginTop={1}><Text dimColor={true}>{whenDisabledTitle}</Text></Box>;
+      t28 = <Text dimColor={true}>{noCommandsExecute}</Text>;
+      t29 = <Text dimColor={true}>{statusLineNotDisplayed}</Text>;
+      t30 = <Text dimColor={true}>{toolOpsNoValidation}</Text>;
       $[47] = t27;
       $[48] = t28;
       $[49] = t29;
@@ -351,7 +368,7 @@ export function HooksConfigMenu(t0) {
     }
     let t32;
     if ($[53] !== disabledByPolicy) {
-      t32 = !disabledByPolicy && <Text dimColor={true}>To re-enable hooks, remove "disableAllHooks" from settings.json or ask Claude.</Text>;
+      t32 = !disabledByPolicy && <Text dimColor={true}>{reEnableHint}</Text>;
       $[53] = disabledByPolicy;
       $[54] = t32;
     } else {
@@ -368,7 +385,7 @@ export function HooksConfigMenu(t0) {
     }
     let t34;
     if ($[58] !== handleExit || $[59] !== t33) {
-      t34 = <Dialog title="Hook Configuration - Disabled" onCancel={handleExit} inputGuide={_temp6}>{t33}</Dialog>;
+      t34 = <Dialog title={hookConfigDisabledTitle} onCancel={handleExit} inputGuide={() => <Text>{escToClose}</Text>}>{t33}</Dialog>;
       $[58] = handleExit;
       $[59] = t33;
       $[60] = t34;
@@ -554,9 +571,6 @@ export function HooksConfigMenu(t0) {
         return t25;
       }
   }
-}
-function _temp6() {
-  return <Text>Esc to close</Text>;
 }
 function _temp5(sum, hooks) {
   return sum + hooks.length;

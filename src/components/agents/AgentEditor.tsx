@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
 import { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../hooks/useI18n.js';
 import { useSetAppState } from 'src/state/AppState.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Text } from '../../ink.js';
@@ -33,6 +34,7 @@ export function AgentEditor({
   onSaved,
   onBack
 }: Props): React.ReactNode {
+  const { t } = useI18n();
   const setAppState = useSetAppState();
   const [editMode, setEditMode] = useState<EditMode>('menu');
   const [selectedMenuIndex, setSelectedMenuIndex] = useState(0);
@@ -44,7 +46,7 @@ export function AgentEditor({
     if (result.error) {
       setError(result.error);
     } else {
-      onSaved(`Opened ${agent.agentType} in editor. If you made edits, restart to load the latest version.`);
+      onSaved(t('agent.editor.openedInEditor', { agentType: agent.agentType }));
     }
   }, [agent, onSaved]);
   const handleSave = useCallback(async (changes: SaveChanges = {}) => {
@@ -89,23 +91,23 @@ export function AgentEditor({
       onSaved(`Updated agent: ${chalk.bold(agent.agentType)}`);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save agent');
+      setError(err instanceof Error ? err.message : t('agent.editor.failedToSave'));
       return false;
     }
   }, [agent, selectedColor, onSaved, setAppState]);
   const menuItems = useMemo(() => [{
-    label: 'Open in editor',
+    label: t('agent.editor.openInEditor'),
     action: handleOpenInEditor
   }, {
-    label: 'Edit tools',
+    label: t('agent.editor.editTools'),
     action: () => setEditMode('edit-tools')
   }, {
-    label: 'Edit model',
+    label: t('agent.editor.editModel'),
     action: () => setEditMode('edit-model')
   }, {
-    label: 'Edit color',
+    label: t('agent.editor.editColor'),
     action: () => setEditMode('edit-color')
-  }], [handleOpenInEditor]);
+  }], [handleOpenInEditor, t]);
   const handleEscape = useCallback(() => {
     setError(null);
     if (editMode === 'menu') {

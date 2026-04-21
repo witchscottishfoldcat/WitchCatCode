@@ -3,6 +3,7 @@ import type { StructuredPatchHunk } from 'diff';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import { useRegisterOverlay } from '../../context/overlayContext.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { type DiffData, useDiffData } from '../../hooks/useDiffData.js';
 import { type TurnDiff, useTurnDiffs } from '../../hooks/useTurnDiffs.js';
 import { Box, Text } from '../../ink.js';
@@ -58,6 +59,7 @@ export function DiffDialog(t0) {
     messages,
     onDone
   } = t0;
+  const { t } = useI18n();
   const gitDiffData = useDiffData();
   const turnDiffs = useTurnDiffs(messages);
   const [viewMode, setViewMode] = useState("list");
@@ -256,13 +258,14 @@ export function DiffDialog(t0) {
     t17 = $[39];
   }
   const subtitle = t17;
-  const headerTitle = currentTurn ? `Turn ${currentTurn.turnIndex}` : "Uncommitted changes";
-  const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : "(git diff HEAD)";
+  const headerTitle = currentTurn ? t('diff.turn', { turnIndex: currentTurn.turnIndex }) : t('diff.uncommittedChanges');
+  const headerSubtitle = currentTurn ? currentTurn.userPromptPreview ? `"${currentTurn.userPromptPreview}"` : "" : t('diff.gitDiffHead');
+  const currentLabel = t('diff.current');
   let t18;
   if ($[40] !== sourceIndex || $[41] !== sources) {
     t18 = sources.length > 1 ? <Box>{sourceIndex > 0 && <Text dimColor={true}>◀ </Text>}{sources.map((source, i) => {
         const isSelected = i === sourceIndex;
-        const label = source.type === "current" ? "Current" : `T${source.turn.turnIndex}`;
+        const label = source.type === "current" ? currentLabel : `T${source.turn.turnIndex}`;
         return <Text key={i} dimColor={!isSelected} bold={isSelected}>{i > 0 ? " \xB7 " : ""}{label}</Text>;
       })}{sourceIndex < sources.length - 1 && <Text dimColor={true}> ▶</Text>}</Box> : null;
     $[40] = sourceIndex;
@@ -273,23 +276,18 @@ export function DiffDialog(t0) {
   }
   const sourceSelector = t18;
   const dismissShortcut = useShortcutDisplay("diff:dismiss", "DiffDialog", "esc");
-  let t19;
-  bb0: {
+  const emptyMessage = useMemo(() => {
     if (diffData.loading) {
-      t19 = "Loading diff\u2026";
-      break bb0;
+      return t('diff.loadingDiff');
     }
     if (currentTurn) {
-      t19 = "No file changes in this turn";
-      break bb0;
+      return t('diff.noFileChangesInTurn');
     }
     if (diffData.stats && diffData.stats.filesCount > 0 && diffData.files.length === 0) {
-      t19 = "Too many files to display details";
-      break bb0;
+      return t('diff.tooManyFiles');
     }
-    t19 = "Working tree is clean";
-  }
-  const emptyMessage = t19;
+    return t('diff.workingTreeClean');
+  }, [diffData.loading, diffData.stats, diffData.files.length, currentTurn, t]);
   let t20;
   if ($[43] !== headerSubtitle) {
     t20 = headerSubtitle && <Text dimColor={true}> {headerSubtitle}</Text>;
@@ -308,13 +306,14 @@ export function DiffDialog(t0) {
     t21 = $[47];
   }
   const title = t21;
+  const diffDialogDismissed = t('diff.dialogDismissed');
   let t22;
   if ($[48] !== onDone || $[49] !== viewMode) {
     t22 = function handleCancel() {
       if (viewMode === "detail") {
         setViewMode("list");
       } else {
-        onDone("Diff dialog dismissed", {
+        onDone(diffDialogDismissed, {
           display: "system"
         });
       }

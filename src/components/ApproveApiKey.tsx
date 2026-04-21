@@ -1,6 +1,7 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Text } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
 import { saveGlobalConfig } from '../utils/config.js';
 import { Select } from './CustomSelect/index.js';
 import { Dialog } from './design-system/Dialog.js';
@@ -9,11 +10,12 @@ type Props = {
   onDone(approved: boolean): void;
 };
 export function ApproveApiKey(t0) {
-  const $ = _c(17);
+  const $ = _c(22);
   const {
     customApiKeyTruncated,
     onDone
   } = t0;
+  const { t, locale } = useI18n();
   let t1;
   if ($[0] !== customApiKeyTruncated || $[1] !== onDone) {
     t1 = function onChange(value) {
@@ -67,56 +69,61 @@ export function ApproveApiKey(t0) {
   }
   let t4;
   if ($[6] !== customApiKeyTruncated) {
-    t4 = <Text>{t3}<Text>: sk-ant-...{customApiKeyTruncated}</Text></Text>;
+    t4 = <Text>{t3}<Text>{t('approveApiKey.keySuffix', { key: customApiKeyTruncated })}</Text></Text>;
     $[6] = customApiKeyTruncated;
     $[7] = t4;
   } else {
     t4 = $[7];
   }
   let t5;
-  if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Text>Do you want to use this API key?</Text>;
-    $[8] = t5;
+  if ($[8] !== locale) {
+    t5 = <Text>{t('approveApiKey.confirmUse')}</Text>;
+    $[8] = locale;
+    $[9] = t5;
   } else {
-    t5 = $[8];
+    t5 = $[9];
   }
   let t6;
-  if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[10] !== locale) {
     t6 = {
-      label: "Yes",
+      label: t('common.yes'),
       value: "yes"
     };
-    $[9] = t6;
+    $[10] = locale;
+    $[11] = t6;
   } else {
-    t6 = $[9];
+    t6 = $[11];
   }
   let t7;
-  if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[12] !== locale || $[13] !== t6) {
     t7 = [t6, {
-      label: <Text>No (<Text bold={true}>recommended</Text>)</Text>,
+      label: <Text>{t('approveApiKey.no')} (<Text bold={true}>{t('approveApiKey.recommended')}</Text>)</Text>,
       value: "no"
     }];
-    $[10] = t7;
+    $[12] = locale;
+    $[13] = t6;
+    $[14] = t7;
   } else {
-    t7 = $[10];
+    t7 = $[14];
   }
   let t8;
-  if ($[11] !== onChange) {
+  if ($[15] !== onChange) {
     t8 = <Select defaultValue="no" defaultFocusValue="no" options={t7} onChange={value_0 => onChange(value_0 as 'yes' | 'no')} onCancel={() => onChange("no")} />;
-    $[11] = onChange;
-    $[12] = t8;
+    $[15] = onChange;
+    $[16] = t8;
   } else {
-    t8 = $[12];
+    t8 = $[16];
   }
   let t9;
-  if ($[13] !== t2 || $[14] !== t4 || $[15] !== t8) {
-    t9 = <Dialog title="Detected a custom API key in your environment" color="warning" onCancel={t2}>{t4}{t5}{t8}</Dialog>;
-    $[13] = t2;
-    $[14] = t4;
-    $[15] = t8;
-    $[16] = t9;
+  if ($[17] !== locale || $[18] !== t2 || $[19] !== t4 || $[20] !== t8) {
+    t9 = <Dialog title={t('approveApiKey.title')} color="warning" onCancel={t2}>{t4}{t5}{t8}</Dialog>;
+    $[17] = locale;
+    $[18] = t2;
+    $[19] = t4;
+    $[20] = t8;
+    $[21] = t9;
   } else {
-    t9 = $[16];
+    t9 = $[21];
   }
   return t9;
 }

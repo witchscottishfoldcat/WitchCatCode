@@ -4,7 +4,7 @@ import { verifyApiKey } from '../services/api/claude.js'
 import {
   getAnthropicApiKeyWithSource,
   getApiKeyFromApiKeyHelper,
-  hasGeminiCustomAuth,
+  hasCustomProviderAuth,
   isAnthropicAuthEnabled,
   isClaudeAISubscriber,
 } from '../utils/auth.js'
@@ -24,7 +24,7 @@ export type ApiKeyVerificationResult = {
 
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    if (hasGeminiCustomAuth() || !isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
+    if (hasCustomProviderAuth() || !isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
       return 'valid'
     }
     // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
@@ -42,7 +42,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [error, setError] = useState<Error | null>(null)
 
   const verify = useCallback(async (): Promise<void> => {
-    if (hasGeminiCustomAuth() || !isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
+    if (hasCustomProviderAuth() || !isAnthropicAuthEnabled() || isClaudeAISubscriber()) {
       setStatus('valid')
       return
     }

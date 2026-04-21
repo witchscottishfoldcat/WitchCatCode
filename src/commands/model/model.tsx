@@ -1,6 +1,7 @@
 ﻿﻿import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import * as React from 'react';
+import { t } from '../../i18n/core.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import { ModelPicker } from '../../components/ModelPicker.js';
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
@@ -23,14 +24,15 @@ import {
   getReasoningMode,
 } from '../../utils/modelReasoning.js';
 import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
+import { getModelOptions, type ModelOption } from '../../utils/model/modelOptions.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
 
 function extractAccountName(baseURL: string | undefined, providerId: string): string {
   if (providerId === 'anthropic-like') {
-    return baseURL ? tryExtractHost(baseURL) : 'Anthropic';
+    return baseURL ? tryExtractHost(baseURL) : t('model.accountName.anthropic');
   }
-  if (!baseURL) return providerId === 'gemini-like' ? 'Gemini-compatible' : 'OpenAI-compatible';
+  if (!baseURL) return providerId === 'gemini-like' ? t('model.accountName.geminiCompatible') : t('model.accountName.openaiCompatible');
   return tryExtractHost(baseURL);
 }
 
@@ -79,29 +81,29 @@ function getConfiguredModelOptions(): ConfiguredModelOption[] {
   const providers = storage.providers ?? [];
   return providers.flatMap(provider => {
     const providerLabel = provider.kind === 'openai-like'
-      ? 'OpenAI-compatible'
+      ? t('model.providerLabel.openaiCompatible')
       : provider.kind === 'gemini-like'
-        ? 'Gemini-compatible'
+        ? t('model.providerLabel.geminiCompatible')
         : provider.kind === 'glm-like'
-          ? 'GLM (智谱AI)'
-          : 'Anthropic-compatible';
+          ? t('model.providerLabel.glmZhipu')
+          : t('model.providerLabel.anthropicCompatible');
     const authLabel = provider.authMode === 'api-key'
-      ? 'API key'
+      ? t('model.authLabel.apiKey')
       : provider.authMode === 'chat-completions'
-        ? 'chat-completions'
+        ? t('model.authLabel.chatCompletions')
         : provider.authMode === 'responses'
-          ? 'responses'
+          ? t('model.authLabel.responses')
           : provider.authMode === 'oauth'
-            ? 'OAuth'
+            ? t('model.authLabel.oauth')
             : provider.authMode === 'vertex-compatible'
-              ? 'Vertex-compatible'
+              ? t('model.authLabel.vertexCompatible')
               : provider.authMode === 'gemini-cli-oauth'
-                ? 'Gemini CLI OAuth'
+                ? t('model.authLabel.geminiCliOauth')
                 : provider.kind === 'openai-like'
-                  ? 'chat-completions'
+                  ? t('model.authLabel.chatCompletions')
                   : provider.kind === 'gemini-like'
-                    ? 'Vertex-compatible'
-                    : 'API key';
+                    ? t('model.authLabel.vertexCompatible')
+                    : t('model.authLabel.apiKey');
     const accountName = provider.id || extractAccountName(provider.baseURL, provider.kind);
     return provider.models.map(model => ({
       value: makeConfiguredOptionValue(provider.kind, provider.id, provider.baseURL, provider.authMode, model),
@@ -120,6 +122,28 @@ function getConfiguredModelOptions(): ConfiguredModelOption[] {
         model === storage.activeModel,
     }));
   });
+}
+
+function isConfiguredProviderValue(value: string): boolean {
+  return value.includes('::')
+}
+
+const BUILTIN_NO_PREFERENCE = '__NO_PREFERENCE__'
+
+function getUnifiedModelOptions(fastMode: boolean): ConfiguredModelOption[] {
+  const configuredOptions = getConfiguredModelOptions();
+  const builtinOptions = getModelOptions(fastMode);
+  const builtinAsConfigured: ConfiguredModelOption[] = builtinOptions.map(opt => ({
+    value: opt.value ?? BUILTIN_NO_PREFERENCE,
+    label: opt.label,
+    description: opt.description,
+    model: opt.value ?? '',
+    providerId: 'builtin',
+    providerKind: 'anthropic-like' as const,
+    authMode: 'api-key' as ProviderAuthMode,
+    isCurrent: false,
+  }));
+  return [...builtinAsConfigured, ...configuredOptions];
 }
 
 function parseConfiguredOptionValue(value: string): {
@@ -234,17 +258,17 @@ function persistSelectedConfiguredModel(
 }
 
 function formatReasoningMessage(model: string | null, reasoning: ReasoningSelection | undefined): string {
-  let message = `Set model to ${chalk.bold(renderModelLabel(model))}`;
+  let message = t('model.setModelTo', { model: chalk.bold(renderModelLabel(model)) });
   if (!reasoning) return message;
   if (reasoning.mode === 'anthropic-effort') {
-    return `${message} with ${chalk.bold(reasoning.effort)} effort`;
+    return `${message} ${t('model.withEffort', { effort: chalk.bold(reasoning.effort) })}`;
   }
   if (
     reasoning.mode === 'openai-chat-completions' ||
     reasoning.mode === 'openai-responses' ||
     reasoning.mode === 'openai-codex-oauth'
   ) {
-    return `${message} with ${chalk.bold(reasoning.effort)} reasoning`;
+    return `${message} ${t('model.withReasoning', { effort: chalk.bold(reasoning.effort) })}`;
   }
   return message;
 }
@@ -261,22 +285,36 @@ function ModelPickerWrapper({
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession);
   const isFastMode = useAppState(s => s.fastMode);
   const setAppState = useSetAppState();
-  const configuredOptions = getConfiguredModelOptions();
-  const currentConfiguredValue = configuredOptions.find(option => option.isCurrent)?.value ?? mainLoopModel;
+  const unifiedOptions = getUnifiedModelOptions(isFastMode ?? false);
+  const currentConfiguredValue = unifiedOptions.find(option => option.isCurrent)?.value ?? mainLoopModel;
 
   function handleCancel(): void {
     logEvent('tengu_model_command_menu', {
       action: 'cancel' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     });
     const displayModel = renderModelLabel(mainLoopModel);
-    onDone(`Kept model as ${chalk.bold(displayModel)}`, {
+    onDone(t('model.keptModel', { model: chalk.bold(displayModel) }), {
       display: 'system',
     });
   }
 
   function handleSelect(model: string | null, reasoning: ReasoningSelection | undefined): void {
-    const persistedModel = persistSelectedConfiguredModel(model, reasoning);
-    const selectedModel = persistedModel ?? model;
+    if (!model || model === '__NO_PREFERENCE__') {
+      setAppState(prev => ({
+        ...prev,
+        mainLoopModel: null,
+        mainLoopModelForSession: null,
+      }));
+      onDone(t('model.resetToDefault'));
+      return;
+    }
+
+    let selectedModel: string | null;
+    if (isConfiguredProviderValue(model)) {
+      selectedModel = persistSelectedConfiguredModel(model, reasoning) ?? model;
+    } else {
+      selectedModel = model;
+    }
     logEvent('tengu_model_command_menu', {
       action: selectedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       from_model:
@@ -304,7 +342,7 @@ function ModelPickerWrapper({
         isFastModeAvailable() &&
         isFastMode
       ) {
-        message += ' · Fast mode ON';
+        message += ` · ${t('model.fastModeOn')}`;
         wasFastModeToggledOn = true;
       }
     }
@@ -316,10 +354,10 @@ function ModelPickerWrapper({
         isOpus1mMergeEnabled(),
       )
     ) {
-      message += ' · Billed as extra usage';
+      message += ` · ${t('model.billedAsExtraUsage')}`;
     }
     if (wasFastModeToggledOn === false) {
-      message += ' · Fast mode OFF';
+      message += ` · ${t('model.fastModeOff')}`;
     }
     onDone(message);
   }
@@ -338,12 +376,8 @@ function ModelPickerWrapper({
       onCancel={handleCancel}
       isStandaloneCommand={true}
       showFastModeNotice={showFastModeNotice}
-      headerText={
-        configuredOptions.length > 0
-          ? 'Switch between all configured models. Selecting one also switches the active provider for this session and future Witchcat sessions.'
-          : undefined
-      }
-      customOptions={configuredOptions.length > 0 ? configuredOptions : undefined}
+      headerText={t('model.headerText')}
+      customOptions={unifiedOptions}
       skipSettingsWrite={false}
     />
   );
@@ -364,20 +398,20 @@ function SetModelAndClose({
   React.useEffect(() => {
     async function handleModelChange(): Promise<void> {
       if (model && !isModelAllowed(model)) {
-        onDone(`Model '${model}' is not available. Your organization restricts model selection.`, {
+        onDone(t('model.notAvailable', { model }), {
           display: 'system'
         });
         return;
       }
 
       if (model && isOpus1mUnavailable(model)) {
-        onDone(`Opus 4.6 with 1M context is not available for your account. Learn more: https://code.claude.com/docs/en/model-config#extended-context-with-1m`, {
+        onDone(`${t('model.opus1mUnavailable')} ${t('model.learnMore', { url: 'https://code.claude.com/docs/en/model-config#extended-context-with-1m' })}`, {
           display: 'system'
         });
         return;
       }
       if (model && isSonnet1mUnavailable(model)) {
-        onDone(`Sonnet 4.6 with 1M context is not available for your account. Learn more: https://code.claude.com/docs/en/model-config#extended-context-with-1m`, {
+        onDone(`${t('model.sonnet1mUnavailable')} ${t('model.learnMore', { url: 'https://code.claude.com/docs/en/model-config#extended-context-with-1m' })}`, {
           display: 'system'
         });
         return;
@@ -401,12 +435,12 @@ function SetModelAndClose({
         if (valid) {
           setModel(model);
         } else {
-          onDone(error_0 || `Model '${model}' not found`, {
+          onDone(error_0 || t('model.notFound', { model }), {
             display: 'system'
           });
         }
       } catch (error) {
-        onDone(`Failed to validate model: ${(error as Error).message}`, {
+        onDone(t('model.validationFailed', { error: (error as Error).message }), {
           display: 'system'
         });
       }
@@ -418,7 +452,7 @@ function SetModelAndClose({
         mainLoopModel: modelValue,
         mainLoopModelForSession: null
       }));
-      let message = `Set model to ${chalk.bold(renderModelLabel(modelValue))}`;
+      let message = t('model.setModelTo', { model: chalk.bold(renderModelLabel(modelValue)) });
       let wasFastModeToggledOn = undefined;
       if (isFastModeEnabled()) {
         clearFastModeCooldown();
@@ -429,15 +463,15 @@ function SetModelAndClose({
           }));
           wasFastModeToggledOn = false;
         } else if (isFastModeSupportedByModel(modelValue) && isFastMode) {
-          message += ` · Fast mode ON`;
+          message += ` · ${t('model.fastModeOn')}`;
           wasFastModeToggledOn = true;
         }
       }
       if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isOpus1mMergeEnabled())) {
-        message += ` · Billed as extra usage`;
+        message += ` · ${t('model.billedAsExtraUsage')}`;
       }
       if (wasFastModeToggledOn === false) {
-        message += ` · Fast mode OFF`;
+        message += ` · ${t('model.fastModeOff')}`;
       }
       onDone(message);
     }
@@ -465,11 +499,11 @@ function ShowModelAndClose(t0) {
   const mainLoopModelForSession = useAppState(_temp8);
   const effortValue = useAppState(_temp9);
   const displayModel = renderModelLabel(mainLoopModel);
-  const effortInfo = effortValue !== undefined ? ` (effort: ${effortValue})` : "";
+  const effortInfo = effortValue !== undefined ? ` ${t('model.effortLabel', { effort: effortValue })}` : "";
   if (mainLoopModelForSession) {
-    onDone(`Current model: ${chalk.bold(renderModelLabel(mainLoopModelForSession))} (session override from plan mode)\nBase model: ${displayModel}${effortInfo}`);
+    onDone(`${t('model.currentModel', { model: chalk.bold(renderModelLabel(mainLoopModelForSession)) })} ${t('model.sessionOverride')}\n${t('model.baseModel', { model: displayModel })}${effortInfo}`);
   } else {
-    onDone(`Current model: ${displayModel}${effortInfo}`);
+    onDone(`${t('model.currentModel', { model: displayModel })}${effortInfo}`);
   }
   return null;
 }
@@ -491,7 +525,7 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     return <ShowModelAndClose onDone={onDone} />;
   }
   if (COMMON_HELP_ARGS.includes(args)) {
-    onDone('Run /model to open the model selection menu, or /model [modelName] to set the model.', {
+    onDone(t('model.helpText'), {
       display: 'system'
     });
     return;
@@ -510,5 +544,5 @@ function renderModelLabel(model: string | null): string {
     return persistedCustomModel;
   }
   const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting());
-  return model === null ? `${rendered} (default)` : rendered;
+  return model === null ? `${rendered} ${t('model.defaultLabel')}` : rendered;
 }

@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { useI18n } from '../hooks/useI18n.js';
 import { Text } from '../ink.js';
 import type { ValidationError } from '../utils/settings/validation.js';
 import { Select } from './CustomSelect/index.js';
@@ -16,12 +17,13 @@ type Props = {
  * User must choose to continue (skipping invalid files) or exit to fix them.
  */
 export function InvalidSettingsDialog(t0) {
-  const $ = _c(13);
+  const $ = _c(14);
   const {
     settingsErrors,
     onContinue,
     onExit
   } = t0;
+  const { t } = useI18n();
   let t1;
   if ($[0] !== onContinue || $[1] !== onExit) {
     t1 = function handleSelect(value) {
@@ -48,7 +50,7 @@ export function InvalidSettingsDialog(t0) {
   }
   let t3;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text dimColor={true}>Files with errors are skipped entirely, not just the invalid settings.</Text>;
+    t3 = <Text dimColor={true}>{t('invalidSettings.skipNotice')}</Text>;
     $[5] = t3;
   } else {
     t3 = $[5];
@@ -56,10 +58,10 @@ export function InvalidSettingsDialog(t0) {
   let t4;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
     t4 = [{
-      label: "Exit and fix manually",
+      label: t('invalidSettings.exitAndFix'),
       value: "exit"
     }, {
-      label: "Continue without these settings",
+      label: t('invalidSettings.continueWithout'),
       value: "continue"
     }];
     $[6] = t4;
@@ -76,7 +78,7 @@ export function InvalidSettingsDialog(t0) {
   }
   let t6;
   if ($[9] !== onExit || $[10] !== t2 || $[11] !== t5) {
-    t6 = <Dialog title="Settings Error" onCancel={onExit} color="warning">{t2}{t3}{t5}</Dialog>;
+    t6 = <Dialog title={t('invalidSettings.title')} onCancel={onExit} color="warning">{t2}{t3}{t5}</Dialog>;
     $[9] = onExit;
     $[10] = t2;
     $[11] = t5;

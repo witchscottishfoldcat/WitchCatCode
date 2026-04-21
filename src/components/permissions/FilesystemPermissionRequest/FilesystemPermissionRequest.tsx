@@ -5,6 +5,7 @@ import { FallbackPermissionRequest } from '../FallbackPermissionRequest.js';
 import { FilePermissionDialog } from '../FilePermissionDialog/FilePermissionDialog.js';
 import type { ToolInput } from '../FilePermissionDialog/useFilePermissionDialog.js';
 import type { PermissionRequestProps, ToolUseConfirm } from '../PermissionRequest.js';
+import { useI18n } from '../../../hooks/useI18n.js';
 function pathFromToolUse(toolUseConfirm: ToolUseConfirm): string | null {
   const tool = toolUseConfirm.tool;
   if ('getPath' in tool && typeof tool.getPath === 'function') {
@@ -18,6 +19,7 @@ function pathFromToolUse(toolUseConfirm: ToolUseConfirm): string | null {
 }
 export function FilesystemPermissionRequest(t0) {
   const $ = _c(30);
+  const { t } = useI18n();
   const {
     toolUseConfirm,
     onDone,
@@ -47,8 +49,8 @@ export function FilesystemPermissionRequest(t0) {
   }
   const userFacingName = t2;
   const isReadOnly = toolUseConfirm.tool.isReadOnly(toolUseConfirm.input);
-  const userFacingReadOrEdit = isReadOnly ? "Read" : "Edit";
-  const title = `${userFacingReadOrEdit} file`;
+  const userFacingReadOrEdit = isReadOnly ? t('common.read') : t('common.edit');
+  const title = isReadOnly ? t('permission.filesystem.readFile') : t('permission.filesystem.editFile');
   const parseInput = _temp;
   if (!path) {
     let t3;

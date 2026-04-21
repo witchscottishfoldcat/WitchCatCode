@@ -8,7 +8,8 @@ import type { LogOption } from '../../types/logs.js';
 import { getCwd } from '../../utils/cwd.js';
 import { formatRelativeTimeAgo } from '../../utils/format.js';
 import type { FeedConfig, FeedLine } from './Feed.js';
-export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
+import type { TFunc } from '../../i18n/core.js';
+export function createRecentActivityFeed(activities: LogOption[], t: TFunc): FeedConfig {
   const lines: FeedLine[] = activities.map(log => {
     const time = formatRelativeTimeAgo(log.modified);
     const description = log.summary && log.summary !== 'No prompt' ? log.summary : log.firstPrompt;
@@ -18,13 +19,13 @@ export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
     };
   });
   return {
-    title: 'Recent activity',
+    title: t('feed.recentActivity'),
     lines,
     footer: lines.length > 0 ? '/resume for more' : undefined,
-    emptyMessage: 'No recent activity'
+    emptyMessage: t('feed.noRecentActivity')
   };
 }
-export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
+export function createWhatsNewFeed(releaseNotes: string[], t: TFunc): FeedConfig {
   const lines: FeedLine[] = releaseNotes.map(note => {
     if ("external" === 'ant') {
       const match = note.match(/^(\d+\s+\w+\s+ago)\s+(.+)$/);
@@ -39,15 +40,15 @@ export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
       text: note
     };
   });
-  const emptyMessage = "external" === 'ant' ? 'Unable to fetch latest claude-cli-internal commits' : 'Check the Claude Code changelog for updates';
+  const emptyMessage = "external" === 'ant' ? t('feed.antEmptyMessage') : t('feed.changelogMessage');
   return {
-    title: "external" === 'ant' ? "What's new [ANT-ONLY: Latest CC commits]" : "What's new",
+    title: "external" === 'ant' ? t('feed.antWhatsNew') : t('feed.whatsNew'),
     lines,
     footer: lines.length > 0 ? '/release-notes for more' : undefined,
     emptyMessage
   };
 }
-export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
+export function createProjectOnboardingFeed(steps: Step[], t: TFunc): FeedConfig {
   const enabledSteps = steps.filter(({
     isEnabled
   }) => isEnabled).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
@@ -60,20 +61,20 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
       text: `${checkmark}${text}`
     };
   });
-  const warningText = getCwd() === homedir() ? 'Note: You have launched claude in your home directory. For the best experience, launch it in a project directory instead.' : undefined;
+  const warningText = getCwd() === homedir() ? t('feed.homeDirWarning') : undefined;
   if (warningText) {
     lines.push({
       text: warningText
     });
   }
   return {
-    title: 'Tips for getting started',
+    title: t('feed.tipsTitle'),
     lines
   };
 }
-export function createGuestPassesFeed(): FeedConfig {
+export function createGuestPassesFeed(t: TFunc): FeedConfig {
   const reward = getCachedReferrerReward();
-  const subtitle = reward ? `Share Claude Code and earn ${formatCreditAmount(reward)} of extra usage` : 'Share Claude Code with friends';
+  const subtitle = reward ? t('feed.shareTextWithReward', { amount: formatCreditAmount(reward) }) : t('feed.shareText');
   return {
     title: '3 guest passes',
     lines: [],

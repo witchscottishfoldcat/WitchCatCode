@@ -1,11 +1,11 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Text } from '../../ink.js';
 import { extractMcpToolDisplayName, getMcpDisplayName } from '../../services/mcp/mcpStringUtils.js';
 import { filterToolsByServer } from '../../services/mcp/utils.js';
 import { useAppState } from '../../state/AppState.js';
 import type { Tool } from '../../Tool.js';
-import { plural } from '../../utils/stringUtils.js';
 import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Select } from '../CustomSelect/index.js';
 import { Byline } from '../design-system/Byline.js';
@@ -18,12 +18,13 @@ type Props = {
   onBack: () => void;
 };
 export function MCPToolListView(t0) {
-  const $ = _c(21);
+  const $ = _c(22);
   const {
     server,
     onSelectTool,
     onBack
   } = t0;
+  const { t } = useI18n();
   const mcpTools = useAppState(_temp);
   let t1;
   bb0: {
@@ -63,13 +64,13 @@ export function MCPToolListView(t0) {
         const isOpenWorld = tool.isOpenWorld?.({}) ?? false;
         const annotations = [];
         if (isReadOnly) {
-          annotations.push("read-only");
+          annotations.push(t('mcp.toolDetail.readOnly'));
         }
         if (isDestructive) {
-          annotations.push("destructive");
+          annotations.push(t('mcp.toolDetail.destructive'));
         }
         if (isOpenWorld) {
-          annotations.push("open-world");
+          annotations.push(t('mcp.toolDetail.openWorld'));
         }
         return {
           label: displayName,
@@ -91,20 +92,12 @@ export function MCPToolListView(t0) {
     t2 = $[6];
   }
   const toolOptions = t2;
-  const t3 = `Tools for ${server.name}`;
+  const t3 = t('mcp.toolList.title', { serverName: server.name });
   const t4 = serverTools.length;
-  let t5;
-  if ($[9] !== serverTools.length) {
-    t5 = plural(serverTools.length, "tool");
-    $[9] = serverTools.length;
-    $[10] = t5;
-  } else {
-    t5 = $[10];
-  }
-  const t6 = `${t4} ${t5}`;
+  const t6 = t('mcp.toolList.toolCount', { count: String(t4) });
   let t7;
   if ($[11] !== onBack || $[12] !== onSelectTool || $[13] !== serverTools || $[14] !== toolOptions) {
-    t7 = serverTools.length === 0 ? <Text dimColor={true}>No tools available</Text> : <Select options={toolOptions} onChange={value => {
+    t7 = serverTools.length === 0 ? <Text dimColor={true}>{t('mcp.toolList.noTools')}</Text> : <Select options={toolOptions} onChange={value => {
       const index_0 = parseInt(value);
       const tool_0 = serverTools[index_0];
       if (tool_0) {
@@ -119,21 +112,20 @@ export function MCPToolListView(t0) {
   } else {
     t7 = $[15];
   }
+  const pressAgainText = t('mcp.remote.pressAgainToExit');
   let t8;
-  if ($[16] !== onBack || $[17] !== t3 || $[18] !== t6 || $[19] !== t7) {
-    t8 = <Dialog title={t3} subtitle={t6} onCancel={onBack} inputGuide={_temp2}>{t7}</Dialog>;
+  if ($[16] !== onBack || $[17] !== pressAgainText || $[18] !== t3 || $[19] !== t6 || $[20] !== t7) {
+    t8 = <Dialog title={t3} subtitle={t6} onCancel={onBack} inputGuide={exitState => exitState.pending ? <Text>{pressAgainText}</Text> : <Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" /></Byline>}>{t7}</Dialog>;
     $[16] = onBack;
-    $[17] = t3;
-    $[18] = t6;
-    $[19] = t7;
-    $[20] = t8;
+    $[17] = pressAgainText;
+    $[18] = t3;
+    $[19] = t6;
+    $[20] = t7;
+    $[21] = t8;
   } else {
-    t8 = $[20];
+    t8 = $[21];
   }
   return t8;
-}
-function _temp2(exitState) {
-  return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut={"\u2191\u2193"} action="navigate" /><KeyboardShortcutHint shortcut="Enter" action="select" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="back" /></Byline>;
 }
 function _temp(s) {
   return s.mcp.tools;

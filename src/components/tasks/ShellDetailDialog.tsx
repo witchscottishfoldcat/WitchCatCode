@@ -10,6 +10,7 @@ import type { LocalShellTaskState } from '../../tasks/LocalShellTask/guards.js';
 import { formatDuration, formatFileSize, truncateToWidth } from '../../utils/format.js';
 import { tailFile } from '../../utils/fsOperations.js';
 import { getTaskOutputPath } from '../../utils/task/diskOutput.js';
+import { useI18n } from '../../hooks/useI18n.js';
 import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
@@ -161,7 +162,13 @@ export function ShellDetailDialog(t0) {
     t8 = $[18];
   }
   const displayCommand = t8;
-  const t9 = isMonitor ? "Monitor details" : "Shell details";
+  const { t } = useI18n();
+  const t9 = isMonitor ? t('task.shell.monitorDetails') : t('task.shell.shellDetails');
+  const statusLabel = t('task.shell.status');
+  const runtimeLabel = t('task.shell.runtime');
+  const commandLabel = isMonitor ? t('task.shell.script') : t('task.shell.command');
+  const outputLabel = t('task.shell.output');
+  const loadingOutputText = t('task.shell.loadingOutput');
   let t10;
   if ($[19] !== onBack || $[20] !== onKillShell || $[21] !== shell.status) {
     t10 = exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>{onBack && <KeyboardShortcutHint shortcut={"\u2190"} action="go back" />}<KeyboardShortcutHint shortcut="Esc/Enter/Space" action="close" />{shell.status === "running" && onKillShell && <KeyboardShortcutHint shortcut="x" action="stop" />}</Byline>;
@@ -174,7 +181,7 @@ export function ShellDetailDialog(t0) {
   }
   let t11;
   if ($[23] === Symbol.for("react.memo_cache_sentinel")) {
-    t11 = <Text bold={true}>Status:</Text>;
+    t11 = <Text bold={true}>{statusLabel}</Text>;
     $[23] = t11;
   } else {
     t11 = $[23];
@@ -190,7 +197,7 @@ export function ShellDetailDialog(t0) {
   }
   let t13;
   if ($[27] === Symbol.for("react.memo_cache_sentinel")) {
-    t13 = <Text bold={true}>Runtime:</Text>;
+    t13 = <Text bold={true}>{runtimeLabel}</Text>;
     $[27] = t13;
   } else {
     t13 = $[27];
@@ -220,7 +227,7 @@ export function ShellDetailDialog(t0) {
   } else {
     t17 = $[33];
   }
-  const t18 = isMonitor ? "Script:" : "Command:";
+  const t18 = commandLabel;
   let t19;
   if ($[34] !== t18) {
     t19 = <Text bold={true}>{t18}</Text>;
@@ -250,14 +257,14 @@ export function ShellDetailDialog(t0) {
   }
   let t22;
   if ($[43] === Symbol.for("react.memo_cache_sentinel")) {
-    t22 = <Text bold={true}>Output:</Text>;
+    t22 = <Text bold={true}>{outputLabel}</Text>;
     $[43] = t22;
   } else {
     t22 = $[43];
   }
   let t23;
   if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
-    t23 = <Text dimColor={true}>Loading output…</Text>;
+    t23 = <Text dimColor={true}>{loadingOutputText}</Text>;
     $[44] = t23;
   } else {
     t23 = $[44];
@@ -311,10 +318,12 @@ function ShellOutputContent(t0) {
     content,
     bytesTotal
   } = use(outputPromise);
+  const { t } = useI18n();
+  const noOutputText = t('task.shell.noOutput');
   if (!content) {
     let t1;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true}>No output available</Text>;
+      t1 = <Text dimColor={true}>{noOutputText}</Text>;
       $[0] = t1;
     } else {
       t1 = $[0];
@@ -368,10 +377,10 @@ function ShellOutputContent(t0) {
   } else {
     t3 = $[9];
   }
-  const t4 = `Showing ${rendered.length} lines`;
+  const t4 = t('task.shell.showingLines', { count: rendered.length });
   let t5;
   if ($[10] !== bytesTotal || $[11] !== isIncomplete) {
-    t5 = isIncomplete ? ` of ${formatFileSize(bytesTotal)}` : "";
+    t5 = isIncomplete ? t('task.shell.ofSize', { size: formatFileSize(bytesTotal) }) : "";
     $[10] = bytesTotal;
     $[11] = isIncomplete;
     $[12] = t5;

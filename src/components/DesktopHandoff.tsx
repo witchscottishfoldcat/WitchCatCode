@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import type { CommandResultDisplay } from '../commands.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw input for "any key" dismiss and y/n prompt
 import { Box, Text, useInput } from '../ink.js';
+import { useI18n } from '../hooks/useI18n.js';
+import { t as translate } from '../i18n/core.js';
 import { openBrowser } from '../utils/browser.js';
 import { getDesktopInstallStatus, openCurrentSessionInDesktop } from '../utils/desktopDeepLink.js';
 import { errorMessage } from '../utils/errors.js';
@@ -25,15 +27,16 @@ type Props = {
   }) => void;
 };
 export function DesktopHandoff(t0) {
-  const $ = _c(20);
+  const $ = _c(28);
   const {
     onDone
   } = t0;
+  const { t, locale } = useI18n();
   const [state, setState] = useState("checking");
   const [error, setError] = useState(null);
   const [downloadMessage, setDownloadMessage] = useState("");
   let t1;
-  if ($[0] !== error || $[1] !== onDone || $[2] !== state) {
+  if ($[0] !== error || $[1] !== locale || $[2] !== onDone || $[3] !== state) {
     t1 = input => {
       if (state === "error") {
         onDone(error ?? "Unknown error", {
@@ -44,12 +47,12 @@ export function DesktopHandoff(t0) {
       if (state === "prompt-download") {
         if (input === "y" || input === "Y") {
           openBrowser(getDownloadUrl()).catch(_temp);
-          onDone(`Starting download. Re-run /desktop once you\u2019ve installed the app.\nLearn more at ${DESKTOP_DOCS_URL}`, {
+          onDone(`${t('desktopHandoff.startingDownload')}\n${t('desktopHandoff.learnMore', { url: DESKTOP_DOCS_URL })}`, {
             display: "system"
           });
         } else {
           if (input === "n" || input === "N") {
-            onDone(`The desktop app is required for /desktop. Learn more at ${DESKTOP_DOCS_URL}`, {
+            onDone(t('desktopHandoff.desktopRequired', { url: DESKTOP_DOCS_URL }), {
               display: "system"
             });
           }
@@ -57,27 +60,28 @@ export function DesktopHandoff(t0) {
       }
     };
     $[0] = error;
-    $[1] = onDone;
-    $[2] = state;
-    $[3] = t1;
+    $[1] = locale;
+    $[2] = onDone;
+    $[3] = state;
+    $[4] = t1;
   } else {
-    t1 = $[3];
+    t1 = $[4];
   }
   useInput(t1);
   let t2;
   let t3;
-  if ($[4] !== onDone) {
+  if ($[5] !== locale || $[6] !== onDone) {
     t2 = () => {
       const performHandoff = async function performHandoff() {
         setState("checking");
         const installStatus = await getDesktopInstallStatus();
         if (installStatus.status === "not-installed") {
-          setDownloadMessage("Claude Desktop is not installed.");
+          setDownloadMessage(t('desktopHandoff.notInstalled'));
           setState("prompt-download");
           return;
         }
         if (installStatus.status === "version-too-old") {
-          setDownloadMessage(`Claude Desktop needs to be updated (found v${installStatus.version}, need v1.1.2396+).`);
+          setDownloadMessage(t('desktopHandoff.versionTooOld', { version: installStatus.version }));
           setState("prompt-download");
           return;
         }
@@ -86,7 +90,7 @@ export function DesktopHandoff(t0) {
         setState("opening");
         const result = await openCurrentSessionInDesktop();
         if (!result.success) {
-          setError(result.error ?? "Failed to open Claude Desktop");
+          setError(result.error ?? t('desktopHandoff.failedToOpen'));
           setState("error");
           return;
         }
@@ -99,92 +103,99 @@ export function DesktopHandoff(t0) {
       });
     };
     t3 = [onDone];
-    $[4] = onDone;
-    $[5] = t2;
-    $[6] = t3;
+    $[5] = locale;
+    $[6] = onDone;
+    $[7] = t2;
+    $[8] = t3;
   } else {
-    t2 = $[5];
-    t3 = $[6];
+    t2 = $[7];
+    t3 = $[8];
   }
   useEffect(t2, t3);
   if (state === "error") {
     let t4;
-    if ($[7] !== error) {
-      t4 = <Text color="error">Error: {error}</Text>;
-      $[7] = error;
-      $[8] = t4;
+    if ($[9] !== error || $[10] !== locale) {
+      t4 = <Text color="error">{t('desktopHandoff.errorPrefix')}{error}</Text>;
+      $[9] = error;
+      $[10] = locale;
+      $[11] = t4;
     } else {
-      t4 = $[8];
+      t4 = $[11];
     }
     let t5;
-    if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <Text dimColor={true}>Press any key to continue…</Text>;
-      $[9] = t5;
+    if ($[12] !== locale) {
+      t5 = <Text dimColor={true}>{t('desktopHandoff.pressAnyKey')}</Text>;
+      $[12] = locale;
+      $[13] = t5;
     } else {
-      t5 = $[9];
+      t5 = $[13];
     }
     let t6;
-    if ($[10] !== t4) {
+    if ($[14] !== t4 || $[15] !== t5) {
       t6 = <Box flexDirection="column" paddingX={2}>{t4}{t5}</Box>;
-      $[10] = t4;
-      $[11] = t6;
-    } else {
-      t6 = $[11];
-    }
-    return t6;
-  }
-  if (state === "prompt-download") {
-    let t4;
-    if ($[12] !== downloadMessage) {
-      t4 = <Text>{downloadMessage}</Text>;
-      $[12] = downloadMessage;
-      $[13] = t4;
-    } else {
-      t4 = $[13];
-    }
-    let t5;
-    if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
-      t5 = <Text>Download now? (y/n)</Text>;
-      $[14] = t5;
-    } else {
-      t5 = $[14];
-    }
-    let t6;
-    if ($[15] !== t4) {
-      t6 = <Box flexDirection="column" paddingX={2}>{t4}{t5}</Box>;
-      $[15] = t4;
+      $[14] = t4;
+      $[15] = t5;
       $[16] = t6;
     } else {
       t6 = $[16];
     }
     return t6;
   }
+  if (state === "prompt-download") {
+    let t4;
+    if ($[17] !== downloadMessage) {
+      t4 = <Text>{downloadMessage}</Text>;
+      $[17] = downloadMessage;
+      $[18] = t4;
+    } else {
+      t4 = $[18];
+    }
+    let t5;
+    if ($[19] !== locale) {
+      t5 = <Text>{t('desktopHandoff.downloadNow')}</Text>;
+      $[19] = locale;
+      $[20] = t5;
+    } else {
+      t5 = $[20];
+    }
+    let t6;
+    if ($[21] !== t4 || $[22] !== t5) {
+      t6 = <Box flexDirection="column" paddingX={2}>{t4}{t5}</Box>;
+      $[21] = t4;
+      $[22] = t5;
+      $[23] = t6;
+    } else {
+      t6 = $[23];
+    }
+    return t6;
+  }
   let t4;
-  if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
+  if ($[24] !== locale) {
     t4 = {
-      checking: "Checking for Claude Desktop\u2026",
-      flushing: "Saving session\u2026",
-      opening: "Opening Claude Desktop\u2026",
-      success: "Opening in Claude Desktop\u2026"
+      checking: t('desktopHandoff.checking'),
+      flushing: t('desktopHandoff.saving'),
+      opening: t('desktopHandoff.opening'),
+      success: t('desktopHandoff.openingInDesktop')
     };
-    $[17] = t4;
+    $[24] = locale;
+    $[25] = t4;
   } else {
-    t4 = $[17];
+    t4 = $[25];
   }
   const messages = t4;
   const t5 = messages[state];
   let t6;
-  if ($[18] !== t5) {
+  if ($[26] !== t5) {
     t6 = <LoadingState message={t5} />;
-    $[18] = t5;
-    $[19] = t6;
+    $[26] = t5;
+    $[27] = t6;
   } else {
-    t6 = $[19];
+    t6 = $[27];
   }
   return t6;
 }
 async function _temp2(onDone_0) {
-  onDone_0("Session transferred to Claude Desktop", {
+  onDone_0(translate('desktopHandoff.sessionTransferred'), {
     display: "system"
   });
   await gracefulShutdown(0, "other");
