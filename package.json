@@ -3,9 +3,27 @@
   "version": "1.0.1",
   "private": false,
   "description": "WitchcatCode - Multi-provider native CLI for AI code assistants",
+  "keywords": [
+    "cli",
+    "ai",
+    "code-assistant",
+    "anthropic",
+    "openai",
+    "gemini",
+    "glm",
+    "mcp",
+    "agent",
+    "llm",
+    "witchcat"
+  ],
+  "author": "witchscottishfoldcat",
   "license": "MIT",
   "type": "module",
   "packageManager": "bun@1.3.5",
+  "homepage": "https://github.com/witchscottishfoldcat/WitchCatCode#readme",
+  "bugs": {
+    "url": "https://github.com/witchscottishfoldcat/WitchCatCode/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/witchscottishfoldcat/WitchCatCode.git"
