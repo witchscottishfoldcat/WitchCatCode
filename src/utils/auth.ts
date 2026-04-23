@@ -1,3 +1,4 @@
+import { appendFileSync } from 'fs'
 import chalk from 'chalk'
 import { exec } from 'child_process'
 import { execa } from 'execa'
@@ -1965,20 +1966,26 @@ export type OrgValidationResult =
  * token's org (network error, missing profile data), validation fails.
  */
 export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
+  appendFileSync('./startup-debug.log', `[VFO] enter at ${Date.now()}\n`)
   // `claude ssh` remote: real auth lives on the local machine and is injected
   // by the proxy. The placeholder token can't be validated against the profile
   // endpoint. The local side already ran this check before establishing the session.
   if (process.env.ANTHROPIC_UNIX_SOCKET) {
+    appendFileSync('./startup-debug.log', `[VFO] exit via unix-socket at ${Date.now()}\n`)
     return { valid: true }
   }
 
   if (!isAnthropicAuthEnabled()) {
+    appendFileSync('./startup-debug.log', `[VFO] exit via !isAnthropicAuthEnabled at ${Date.now()}\n`)
     return { valid: true }
   }
+  appendFileSync('./startup-debug.log', `[VFO] after isAnthropicAuthEnabled at ${Date.now()}\n`)
 
   const requiredOrgUuid =
     getSettingsForSource('policySettings')?.forceLoginOrgUUID
+  appendFileSync('./startup-debug.log', `[VFO] requiredOrgUuid=${String(requiredOrgUuid)} at ${Date.now()}\n`)
   if (!requiredOrgUuid) {
+    appendFileSync('./startup-debug.log', `[VFO] exit via no-requiredOrgUuid at ${Date.now()}\n`)
     return { valid: true }
   }
 

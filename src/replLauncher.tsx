@@ -1,4 +1,5 @@
 import React from 'react';
+import { appendFileSync } from 'fs';
 import type { StatsStore } from './context/stats.js';
 import type { Root } from './ink.js';
 import type { Props as REPLProps } from './screens/REPL.js';
@@ -10,13 +11,17 @@ type AppWrapperProps = {
   initialState: AppState;
 };
 export async function launchRepl(root: Root, appProps: AppWrapperProps, replProps: REPLProps, renderAndRun: (root: Root, element: React.ReactNode) => Promise<void>): Promise<void> {
+  appendFileSync('./startup-debug.log', `[REPL] before import App at ${Date.now()}\n`);
   const {
     App
   } = await import('./components/App.js');
+  appendFileSync('./startup-debug.log', `[REPL] after import App at ${Date.now()}\n`);
   const {
     REPL
   } = await import('./screens/REPL.js');
+  appendFileSync('./startup-debug.log', `[REPL] after import REPL at ${Date.now()}\n`);
   await renderAndRun(root, <App {...appProps}>
       <REPL {...replProps} />
     </App>);
+  appendFileSync('./startup-debug.log', `[REPL] renderAndRun returned at ${Date.now()}\n`);
 }

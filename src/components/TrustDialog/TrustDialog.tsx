@@ -237,7 +237,7 @@ export function TrustDialog(t0) {
   }
   let t21;
   if ($[25] !== onChange) {
-    t21 = <Select options={t20} onChange={value_0 => onChange(value_0 as 'enable_all' | 'exit')} onCancel={() => onChange("exit")} />;
+    t21 = <Select options={t20} defaultValue="enable_all" defaultFocusValue="enable_all" onChange={value_0 => onChange(value_0 as 'enable_all' | 'exit')} onCancel={() => onChange("exit")} />;
     $[25] = onChange;
     $[26] = t21;
   } else {

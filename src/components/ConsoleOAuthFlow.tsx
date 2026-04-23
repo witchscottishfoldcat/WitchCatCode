@@ -1090,6 +1090,7 @@ function OAuthStatusMessage({
   handleDeleteAccountConfirm,
   onDone,
 }: OAuthStatusMessageProps) {
+  const { t } = useI18n()
   void isCustomInputPasting;
   void compatibleApiProvider;
 

@@ -21,7 +21,7 @@ startKeychainPrefetch();
 import { feature } from 'bun:bundle';
 import { Command as CommanderCommand, InvalidArgumentError, Option } from '@commander-js/extra-typings';
 import chalk from 'chalk';
-import { readFileSync } from 'fs';
+import { appendFileSync, readFileSync } from 'fs';
 import mapValues from 'lodash-es/mapValues.js';
 import pickBy from 'lodash-es/pickBy.js';
 import uniqBy from 'lodash-es/uniqBy.js';
@@ -2221,6 +2221,15 @@ async function run(): Promise<CommanderCommand> {
     let getFpsMetrics!: () => FpsMetrics | undefined;
     let stats!: StatsStore;
 
+    // DIAG: step tracer for first-run hang investigation. Hoisted out of the
+    // `if (!isNonInteractiveSession)` block so post-setup code paths
+    // (validate-org, lsp, settings, prefetches...) can read/write them.
+    let stepInterval: ReturnType<typeof setInterval> | undefined;
+    let currentStep = 'post-setup';
+    // onboardingShown is read later in initialState.authVersion — must be in
+    // scope outside the `if (!isNonInteractiveSession)` block where it's set.
+    let onboardingShown = false;
+
     // Show setup screens after commands are loaded
     if (!isNonInteractiveSession) {
       const ctx = getRenderContext(false);
@@ -2245,8 +2254,19 @@ async function run(): Promise<CommanderCommand> {
       });
       logForDebugging('[STARTUP] Running showSetupScreens()...');
       const setupScreensStart = Date.now();
-      const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
+      onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
+      appendFileSync('./startup-debug.log', `[MAIN] showSetupScreens done at ${Date.now()}\n`);
+
+      if (!isNonInteractiveSession) {
+        const { Text } = await import('./ink.js');
+        stepInterval = setInterval(() => {
+          root.render(<Text dimColor>Starting... ({currentStep})</Text>);
+        }, 400);
+      }
+
+      currentStep = 'bridge';
+      appendFileSync('./startup-debug.log', `[MAIN] step=bridge at ${Date.now()}\n`);
 
       // Now that trust is established and GrowthBook has auth headers,
       // resolve the --remote-control / --rc entitlement gate.
@@ -2260,6 +2280,9 @@ async function run(): Promise<CommanderCommand> {
           process.stderr.write(chalk.yellow(`${disabledReason}\n--rc flag ignored.\n`));
         }
       }
+
+      currentStep = 'agent-memory';
+      appendFileSync('./startup-debug.log', `[MAIN] step=agent-memory at ${Date.now()}\n`);
 
       // Check for pending agent memory snapshot updates (only for --agent mode, ant-only)
       if (feature('AGENT_MEMORY_SNAPSHOT') && mainThreadAgentDefinition && isCustomAgent(mainThreadAgentDefinition) && mainThreadAgentDefinition.memory && mainThreadAgentDefinition.pendingSnapshotUpdate) {
@@ -2278,6 +2301,9 @@ async function run(): Promise<CommanderCommand> {
         }
         agentDef.pendingSnapshotUpdate = undefined;
       }
+
+      currentStep = 'onboarding';
+      appendFileSync('./startup-debug.log', `[MAIN] step=onboarding at ${Date.now()}\n`);
 
       // Skip executing /login if we just completed onboarding for it
       if (onboardingShown && prompt?.trim().toLowerCase() === '/login') {
@@ -2304,32 +2330,32 @@ async function run(): Promise<CommanderCommand> {
         });
 
         resetBypassPermissionsCheck();
-        updateAppState(prev => {
-          const next = {
-            ...prev,
-            authVersion: prev.authVersion + 1,
-          }
-          void checkAndDisableBypassPermissionsIfNeeded(
-            next.toolPermissionContext,
-            updateAppState,
-          )
-          if (feature('TRANSCRIPT_CLASSIFIER')) {
-            resetAutoModeGateCheck()
-            void checkAndDisableAutoModeIfNeeded(
-              next.toolPermissionContext,
-              updateAppState,
-              next.fastMode,
-            )
-          }
-          return next
-        });
+        // NOTE: updateAppState was lost during source restoration. The authVersion bump
+        // and killswitch checks are deferred to REPL mount (useKickOffCheckAndDisable*).
+        // We set authVersion in initialState below instead.
       }
 
       // Validate that the active token's org matches forceLoginOrgUUID (if set
       // in managed settings). Runs after onboarding so managed settings and
       // login state are fully loaded.
-      const orgValidation = await validateForceLoginOrg();
+      currentStep = 'validate-org';
+      appendFileSync('./startup-debug.log', `[MAIN] step=validate-org at ${Date.now()}\n`);
+      // Defensive 5s timeout: on Windows reg.exe subprocesses or a bad
+      // network path on the OAuth-profile endpoint can stall this. Since
+      // no managed-settings/forceLoginOrgUUID means the check is a no-op
+      // anyway, a timeout-as-valid keeps startup unblocked. If a real
+      // forceLoginOrgUUID is configured, the check runs normally inside
+      // the 5s budget.
+      const orgValidation = await Promise.race([
+        validateForceLoginOrg(),
+        new Promise<OrgValidationResult>(resolve => setTimeout(() => {
+          appendFileSync('./startup-debug.log', `[MAIN] validateForceLoginOrg timed out at ${Date.now()}\n`);
+          resolve({ valid: true });
+        }, 5000)),
+      ]);
+      appendFileSync('./startup-debug.log', `[MAIN] validate-org done valid=${orgValidation.valid} at ${Date.now()}\n`);
       if (!orgValidation.valid) {
+        clearInterval(stepInterval);
         await exitWithError(root, orgValidation.message);
       }
     }
@@ -2338,8 +2364,11 @@ async function run(): Promise<CommanderCommand> {
     // process.exitCode will be set. Skip all subsequent operations that could
     // trigger code execution before the process exits (e.g. we don't want apiKeyHelper
     // to run if trust was not established).
+    appendFileSync('./startup-debug.log', `[MAIN] process.exitCode=${String(process.exitCode)} at ${Date.now()}\n`);
     if (process.exitCode !== undefined) {
       logForDebugging('Graceful shutdown initiated, skipping further initialization');
+      appendFileSync('./startup-debug.log', `[MAIN] early-return via process.exitCode=${process.exitCode} at ${Date.now()}\n`);
+      clearInterval(stepInterval);
       return;
     }
 
@@ -2347,10 +2376,14 @@ async function run(): Promise<CommanderCommand> {
     // where trust is implicit). This prevents plugin LSP servers from executing
     // code in untrusted directories before user consent.
     // Must be after inline plugins are set (if any) so --plugin-dir LSP servers are included.
+    currentStep = 'lsp';
+    appendFileSync('./startup-debug.log', `[MAIN] step=lsp at ${Date.now()}\n`);
     initializeLspServerManager();
 
     // Show settings validation errors after trust is established
     // MCP config errors don't block settings from loading, so exclude them
+    currentStep = 'settings';
+    appendFileSync('./startup-debug.log', `[MAIN] step=settings at ${Date.now()}\n`);
     if (!isNonInteractiveSession) {
       const {
         errors
@@ -2363,6 +2396,9 @@ async function run(): Promise<CommanderCommand> {
         });
       }
     }
+
+    currentStep = 'prefetches';
+    appendFileSync('./startup-debug.log', `[MAIN] step=prefetches at ${Date.now()}\n`);
 
     // Check quota status, fast mode, passes eligibility, and bootstrap data
     // after trust is established. These make API calls which could trigger
@@ -2407,6 +2443,8 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Resolve MCP configs (started early, overlaps with setup/trust dialog work)
+    currentStep = 'mcp-configs';
+    appendFileSync('./startup-debug.log', `[MAIN] step=mcp-configs at ${Date.now()}\n`);
     const {
       servers: existingMcpConfigs
     } = await mcpConfigPromise;
@@ -2463,6 +2501,8 @@ async function run(): Promise<CommanderCommand> {
     // (handled via setupTrigger), and resume/continue (conversationRecovery.ts
     // fires 'resume' instead — without this guard, hooks fire TWICE on /resume
     // and the second systemMessage clobbers the first. gh-30825)
+    currentStep = 'hooks';
+    appendFileSync('./startup-debug.log', `[MAIN] step=hooks at ${Date.now()}\n`);
     const hooksPromise = initOnly || init || maintenance || isNonInteractiveSession || options.continue || options.resume ? null : processSessionStartHooks('startup', {
       agentType: mainThreadAgentDefinition?.agentType,
       model: resolvedInitialModel
@@ -2589,6 +2629,8 @@ async function run(): Promise<CommanderCommand> {
       profileCheckpoint('action_after_plugins_init');
       void cleanupOrphanedPluginVersionsInBackground().then(() => getGlobExclusionsForPluginCache());
     } else {
+      currentStep = 'plugins';
+      appendFileSync('./startup-debug.log', `[MAIN] step=plugins at ${Date.now()}\n`);
       // In interactive mode, fire-and-forget — this is purely bookkeeping
       // that doesn't affect runtime behavior of the current session
       void initializeVersionedPlugins().then(async () => {
@@ -2597,6 +2639,8 @@ async function run(): Promise<CommanderCommand> {
         void getGlobExclusionsForPluginCache();
       });
     }
+    currentStep = 'after-plugins-block';
+    appendFileSync('./startup-debug.log', `[MAIN] step=after-plugins-block at ${Date.now()}\n`);
     const setupTrigger = initOnly || init ? 'init' : maintenance ? 'maintenance' : null;
     if (initOnly) {
       applyConfigEnvironmentVariables();
@@ -2889,6 +2933,8 @@ async function run(): Promise<CommanderCommand> {
       return;
     }
 
+    currentStep = 'post-non-interactive';
+    appendFileSync('./startup-debug.log', `[MAIN] step=post-non-interactive at ${Date.now()}\n`);
     // Log model config at startup
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2935,6 +2981,8 @@ async function run(): Promise<CommanderCommand> {
         priority: 'high'
       });
     }
+    currentStep = 'post-notifications';
+    appendFileSync('./startup-debug.log', `[MAIN] step=post-notifications at ${Date.now()}\n`);
     const effectiveToolPermissionContext = {
       ...toolPermissionContext,
       mode: isAgentSwarmsEnabled() && getTeammateUtils().isPlanModeRequired() ? 'plan' as const : toolPermissionContext.mode
@@ -2952,43 +3000,66 @@ async function run(): Promise<CommanderCommand> {
       /* eslint-enable @typescript-eslint/no-require-imports */
       ccrMirrorEnabled = isCcrMirrorEnabled();
     }
-    const initialState: AppState = {
-      settings: getInitialSettings(),
+    currentStep = 'pre-initialState';
+    appendFileSync('./startup-debug.log', `[MAIN] step=pre-initialState at ${Date.now()}\n`);
+
+    // DIAG: pre-compute suspect sync calls so we can tell which one stalls.
+    appendFileSync('./startup-debug.log', `[IS] before getInitialSettings at ${Date.now()}\n`);
+    const _is_settings = getInitialSettings();
+    appendFileSync('./startup-debug.log', `[IS] after getInitialSettings at ${Date.now()}\n`);
+    const _is_verbose = verbose ?? getGlobalConfig().verbose ?? false;
+    appendFileSync('./startup-debug.log', `[IS] after getGlobalConfig(verbose) at ${Date.now()}\n`);
+    const _is_expandedView = getGlobalConfig().showSpinnerTree ? 'teammates' : getGlobalConfig().showExpandedTodos ? 'tasks' : 'none';
+    appendFileSync('./startup-debug.log', `[IS] after getGlobalConfig(expanded) at ${Date.now()}\n`);
+    const _is_effortValue = parseEffortValue(options.effort) ?? getInitialEffortSetting();
+    appendFileSync('./startup-debug.log', `[IS] after getInitialEffortSetting at ${Date.now()}\n`);
+    const _is_fastMode = getInitialFastModeSetting(resolvedInitialModel);
+    appendFileSync('./startup-debug.log', `[IS] after getInitialFastModeSetting at ${Date.now()}\n`);
+    const _is_advisor = isAdvisorEnabled();
+    appendFileSync('./startup-debug.log', `[IS] after isAdvisorEnabled at ${Date.now()}\n`);
+    const _is_teamContext = feature('KAIROS') ? assistantTeamContext ?? computeInitialTeamContext?.() : computeInitialTeamContext?.();
+    appendFileSync('./startup-debug.log', `[IS] after computeInitialTeamContext at ${Date.now()}\n`);
+    const _is_promptSuggestion = shouldEnablePromptSuggestion();
+    appendFileSync('./startup-debug.log', `[IS] after shouldEnablePromptSuggestion at ${Date.now()}\n`);
+    const _is_agentSwarm = isAgentSwarmsEnabled();
+    appendFileSync('./startup-debug.log', `[IS] after isAgentSwarmsEnabled at ${Date.now()}\n`);
+    const _is_attribution = createEmptyAttributionState();
+    appendFileSync('./startup-debug.log', `[IS] after createEmptyAttributionState at ${Date.now()}\n`);
+    const _is_initialMessage = inputPrompt ? { message: createUserMessage({ content: String(inputPrompt) }) } : null;
+    appendFileSync('./startup-debug.log', `[IS] after createUserMessage at ${Date.now()}\n`);
+
+    appendFileSync('./startup-debug.log', `[IS] before object-literal at ${Date.now()}\n`);
+    // Built as incremental Object.assign so each chunk is a statement —
+    // easier to bisect hangs than a 100-line object literal expression.
+    const initialState: AppState = {} as AppState;
+    appendFileSync('./startup-debug.log', `[IS] chunk-A at ${Date.now()}\n`);
+    Object.assign(initialState, {
+      settings: _is_settings,
       tasks: {},
       agentNameRegistry: new Map(),
-      verbose: verbose ?? getGlobalConfig().verbose ?? false,
+      verbose: _is_verbose,
       mainLoopModel: initialMainLoopModel,
       mainLoopModelForSession: null,
       isBriefOnly: initialIsBriefOnly,
-      expandedView: getGlobalConfig().showSpinnerTree ? 'teammates' : getGlobalConfig().showExpandedTodos ? 'tasks' : 'none',
-      showTeammateMessagePreview: isAgentSwarmsEnabled() ? false : undefined,
+      expandedView: _is_expandedView,
+      showTeammateMessagePreview: _is_agentSwarm ? false : undefined,
       selectedIPAgentIndex: -1,
       coordinatorTaskIndex: -1,
       viewSelectionMode: 'none',
       footerSelection: null,
+    });
+    appendFileSync('./startup-debug.log', `[IS] chunk-B at ${Date.now()}\n`);
+    Object.assign(initialState, {
       toolPermissionContext: effectiveToolPermissionContext,
       agent: mainThreadAgentDefinition?.agentType,
       agentDefinitions,
-      mcp: {
-        clients: [],
-        tools: [],
-        commands: [],
-        resources: {},
-        pluginReconnectKey: 0
-      },
-      plugins: {
-        enabled: [],
-        disabled: [],
-        commands: [],
-        errors: [],
-        installationStatus: {
-          marketplaces: [],
-          plugins: []
-        },
-        needsRefresh: false
-      },
+      mcp: { clients: [], tools: [], commands: [], resources: {}, pluginReconnectKey: 0 },
+      plugins: { enabled: [], disabled: [], commands: [], errors: [], installationStatus: { marketplaces: [], plugins: [] }, needsRefresh: false },
       statusLineText: undefined,
       kairosEnabled,
+    });
+    appendFileSync('./startup-debug.log', `[IS] chunk-C at ${Date.now()}\n`);
+    Object.assign(initialState, {
       remoteSessionUrl: undefined,
       remoteConnectionStatus: 'connecting',
       remoteBackgroundTaskCount: 0,
@@ -3005,65 +3076,54 @@ async function run(): Promise<CommanderCommand> {
       replBridgeError: undefined,
       replBridgeInitialName: remoteControlName,
       showRemoteCallout: false,
-      notifications: {
-        current: null,
-        queue: initialNotifications
-      },
-      elicitation: {
-        queue: []
-      },
+    });
+    appendFileSync('./startup-debug.log', `[IS] chunk-D at ${Date.now()}\n`);
+    Object.assign(initialState, {
+      notifications: { current: null, queue: initialNotifications },
+      elicitation: { queue: [] },
       todos: {},
       remoteAgentTaskSuggestions: [],
-      fileHistory: {
-        snapshots: [],
-        trackedFiles: new Set(),
-        snapshotSequence: 0
-      },
-      attribution: createEmptyAttributionState(),
+      fileHistory: { snapshots: [], trackedFiles: new Set(), snapshotSequence: 0 },
+      attribution: _is_attribution,
       thinkingEnabled,
-      promptSuggestionEnabled: shouldEnablePromptSuggestion(),
+      promptSuggestionEnabled: _is_promptSuggestion,
       sessionHooks: new Map(),
-      inbox: {
-        messages: []
-      },
-      promptSuggestion: {
-        text: null,
-        promptId: null,
-        shownAt: 0,
-        acceptedAt: 0,
-        generationRequestId: null
-      },
-      speculation: IDLE_SPECULATION_STATE,
-      speculationSessionTimeSavedMs: 0,
-      skillImprovement: {
-        suggestion: null
-      },
-      workerSandboxPermissions: {
-        queue: [],
-        selectedIndex: 0
-      },
-      pendingWorkerRequest: null,
-      pendingSandboxRequest: null,
-      authVersion: 0,
-      initialMessage: inputPrompt ? {
-        message: createUserMessage({
-          content: String(inputPrompt)
-        })
-      } : null,
-      effortValue: parseEffortValue(options.effort) ?? getInitialEffortSetting(),
+      inbox: { messages: [] },
+      promptSuggestion: { text: null, promptId: null, shownAt: 0, acceptedAt: 0, generationRequestId: null },
+    });
+    appendFileSync('./startup-debug.log', `[IS] chunk-E at ${Date.now()}\n`);
+    (initialState as AppState).speculation = IDLE_SPECULATION_STATE;
+    appendFileSync('./startup-debug.log', `[IS] chunk-E1 speculation at ${Date.now()}\n`);
+    (initialState as AppState).speculationSessionTimeSavedMs = 0;
+    appendFileSync('./startup-debug.log', `[IS] chunk-E2 sessionTime at ${Date.now()}\n`);
+    (initialState as AppState).skillImprovement = { suggestion: null };
+    appendFileSync('./startup-debug.log', `[IS] chunk-E3 skill at ${Date.now()}\n`);
+    (initialState as AppState).workerSandboxPermissions = { queue: [], selectedIndex: 0 };
+    appendFileSync('./startup-debug.log', `[IS] chunk-E4 worker at ${Date.now()}\n`);
+    (initialState as AppState).pendingWorkerRequest = null;
+    appendFileSync('./startup-debug.log', `[IS] chunk-E5 pendingWorker at ${Date.now()}\n`);
+    (initialState as AppState).pendingSandboxRequest = null;
+    appendFileSync('./startup-debug.log', `[IS] chunk-E6 pendingSandbox at ${Date.now()}\n`);
+    appendFileSync('./startup-debug.log', `[IS] onboardingShown typeof=${typeof onboardingShown} value=${String(onboardingShown)} at ${Date.now()}\n`);
+    (initialState as AppState).authVersion = onboardingShown ? 1 : 0;
+    appendFileSync('./startup-debug.log', `[IS] chunk-E7 authVersion at ${Date.now()}\n`);
+    appendFileSync('./startup-debug.log', `[IS] chunk-F at ${Date.now()}\n`);
+    Object.assign(initialState, {
+      initialMessage: _is_initialMessage,
+      effortValue: _is_effortValue,
       activeOverlays: new Set<string>(),
-      fastMode: getInitialFastModeSetting(resolvedInitialModel),
-      ...(isAdvisorEnabled() && advisorModel && {
-        advisorModel
-      }),
-      // Compute teamContext synchronously to avoid useEffect setState during render.
-      // KAIROS: assistantTeamContext takes precedence — set earlier in the
-      // KAIROS block so Agent(name: "foo") can spawn in-process teammates
-      // without TeamCreate. computeInitialTeamContext() is for tmux-spawned
-      // teammates reading their own identity, not the assistant-mode leader.
-      teamContext: feature('KAIROS') ? assistantTeamContext ?? computeInitialTeamContext?.() : computeInitialTeamContext?.()
-    };
+      fastMode: _is_fastMode,
+    });
+    appendFileSync('./startup-debug.log', `[IS] chunk-G at ${Date.now()}\n`);
+    if (_is_advisor && advisorModel) {
+      (initialState as AppState & { advisorModel?: typeof advisorModel }).advisorModel = advisorModel;
+    }
+    appendFileSync('./startup-debug.log', `[IS] chunk-H at ${Date.now()}\n`);
+    (initialState as AppState).teamContext = _is_teamContext;
+    appendFileSync('./startup-debug.log', `[IS] chunk-I at ${Date.now()}\n`);
 
+    currentStep = 'post-initialState';
+    appendFileSync('./startup-debug.log', `[MAIN] step=post-initialState at ${Date.now()}\n`);
     // Add CLI initial prompt to history
     if (inputPrompt) {
       addToHistory(String(inputPrompt));
@@ -3073,10 +3133,14 @@ async function run(): Promise<CommanderCommand> {
     // Increment numStartups synchronously — first-render readers like
     // shouldShowEffortCallout (via useState initializer) need the updated
     // value before setImmediate fires. Defer only telemetry.
+    currentStep = 'pre-saveGlobalConfig';
+    appendFileSync('./startup-debug.log', `[MAIN] step=pre-saveGlobalConfig at ${Date.now()}\n`);
     saveGlobalConfig(current => ({
       ...current,
       numStartups: (current.numStartups ?? 0) + 1
     }));
+    currentStep = 'post-saveGlobalConfig';
+    appendFileSync('./startup-debug.log', `[MAIN] step=post-saveGlobalConfig at ${Date.now()}\n`);
     setImmediate(() => {
       void logStartupTelemetry();
       logSessionTelemetry();
@@ -3127,6 +3191,8 @@ async function run(): Promise<CommanderCommand> {
       cliAgents,
       initialState
     };
+    currentStep = 'pre-resume-branches';
+    appendFileSync('./startup-debug.log', `[MAIN] step=pre-resume-branches continue=${!!options.continue} resume=${!!options.resume} teleport=${!!teleport} at ${Date.now()}\n`);
     if (options.continue) {
       // Continue the most recent conversation directly
       let resumeSucceeded = false;
@@ -3793,6 +3859,9 @@ async function run(): Promise<CommanderCommand> {
       // the first API call so the model always sees hook context.
       const pendingHookMessages = hooksPromise && hookMessages.length === 0 ? hooksPromise : undefined;
       profileCheckpoint('action_after_hooks');
+      clearInterval(stepInterval);
+      currentStep = 'launch-repl';
+      appendFileSync('./startup-debug.log', `[MAIN] step=launch-repl before call at ${Date.now()}\n`);
       maybeActivateProactive(options);
       maybeActivateBrief(options);
       // Persist the current mode for fresh sessions so future resumes know what mode was used
@@ -3824,6 +3893,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
       const initialMessages = deepLinkBanner ? [deepLinkBanner, ...hookMessages] : hookMessages.length > 0 ? hookMessages : undefined;
+      appendFileSync('./startup-debug.log', `[MAIN] calling launchRepl at ${Date.now()}\n`);
       await launchRepl(root, {
         getFpsMetrics,
         stats,
@@ -3833,6 +3903,7 @@ async function run(): Promise<CommanderCommand> {
         initialMessages,
         pendingHookMessages
       }, renderAndRun);
+      appendFileSync('./startup-debug.log', `[MAIN] launchRepl returned at ${Date.now()}\n`);
     }
   }).version(`${MACRO.VERSION} (WitchcatCode)`, '-v, --version', 'Output the version number');
 

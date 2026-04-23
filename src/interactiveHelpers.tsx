@@ -96,9 +96,13 @@ export function showSetupDialog<T = void>(root: Root, renderer: (done: (result: 
  * Handles the common epilogue: start deferred prefetches, wait for exit, graceful shutdown.
  */
 export async function renderAndRun(root: Root, element: React.ReactNode): Promise<void> {
+  appendFileSync('./startup-debug.log', `[RENDER] before root.render at ${Date.now()}\n`);
   root.render(element);
+  appendFileSync('./startup-debug.log', `[RENDER] after root.render at ${Date.now()}\n`);
   startDeferredPrefetches();
+  appendFileSync('./startup-debug.log', `[RENDER] after startDeferredPrefetches at ${Date.now()}\n`);
   await root.waitUntilExit();
+  appendFileSync('./startup-debug.log', `[RENDER] after waitUntilExit at ${Date.now()}\n`);
   await gracefulShutdown(0);
 }
 export async function showSetupScreens(root: Root, permissionMode: PermissionMode, allowDangerouslySkipPermissions: boolean, commands?: Command[], claudeInChrome?: boolean, devChannels?: ChannelEntry[]): Promise<boolean> {
