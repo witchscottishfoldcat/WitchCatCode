@@ -3198,6 +3198,7 @@ async function run(): Promise<CommanderCommand> {
       let resumeSucceeded = false;
       try {
         const resumeStart = performance.now();
+        clearInterval(stepInterval);
 
         // Clear stale caches before resuming to ensure fresh file/skill discovery
         const {
@@ -3841,6 +3842,7 @@ async function run(): Promise<CommanderCommand> {
       } else {
         // Show interactive selector (includes same-repo worktrees)
         // Note: ResumeConversation loads logs internally to ensure proper GC after selection
+        clearInterval(stepInterval);
         await launchResumeChooser(root, {
           getFpsMetrics,
           stats,
