@@ -265,13 +265,23 @@ export class LogUpdate {
       // scrollback, so we need a full reset.
       //
       // Also full-reset on terminals with the cursor-up viewport-yank bug
-      // (Windows conhost / WT_SESSION). eraseLines uses cursorUp to move
-      // upward while clearing, which yanks the viewport to the top of the
-      // scrollback mid-stream (microsoft/terminal#14774).
-      if (
-        linesToClear > prev.viewport.height ||
-        hasCursorUpViewportYankBug()
-      ) {
+      // (Windows conhost / WT_SESSION) when the cursorUp emitted by eraseLines
+      // would actually cross above the visible viewport top — that's when
+      // microsoft/terminal#14774 fires. The blanket "any Windows shrink →
+      // full reset" was over-eager: the spinner/streaming preview shrinks
+      // by 1–3 rows per frame, and a full reset on every frame re-emits
+      // ESC[2J/ESC[3J which itself yanks the viewport to cursor-home in
+      // Windows consoles — the exact symptom we were trying to avoid.
+      // eraseLines(n) emits cursorUp(n-1); it stays safely in-viewport
+      // when n-1 <= cursor-to-viewport-top distance.
+      const cursorToViewportTop = Math.min(
+        prev.cursor.y,
+        prev.viewport.height - 1,
+      )
+      const cursorUpWouldYank =
+        hasCursorUpViewportYankBug() &&
+        linesToClear - 1 > cursorToViewportTop
+      if (linesToClear > prev.viewport.height || cursorUpWouldYank) {
         return fullResetSequence_CAUSES_FLICKER(
           next,
           'offscreen',
