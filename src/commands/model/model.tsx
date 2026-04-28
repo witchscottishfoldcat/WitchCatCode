@@ -1,4 +1,4 @@
-﻿﻿import { c as _c } from "react/compiler-runtime";
+﻿﻿﻿import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import * as React from 'react';
 import { t } from '../../i18n/core.js';
@@ -533,7 +533,8 @@ function ModelPickerWrapper({
   const providerName = selectedProvider
     ? getProviderDisplayName(selectedProvider)
     : 'Anthropic';
-  const currentModelValue = modelOptions.find(opt => opt.isCurrent)?.value ?? modelOptions[0]?.value;
+  const currentModelOption = modelOptions.find(opt => opt.isCurrent);
+  const currentModelValue = currentModelOption?.value;
 
   return (
     <Pane color="permission">
@@ -545,6 +546,7 @@ function ModelPickerWrapper({
         <Box flexDirection="column" marginBottom={1}>
           <Select
             defaultValue={currentModelValue}
+            defaultFocusValue={currentModelOption?.value ?? modelOptions[0]?.value}
             options={modelOptions.map(opt => ({
               ...opt,
               label: opt.isCurrent ? `${opt.label} current` : opt.label,
