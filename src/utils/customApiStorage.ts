@@ -9,6 +9,9 @@ export type CompatibleProviderKind =
 export const GLM_DEFAULT_BASE_URL = 'https://open.bigmodel.cn/api/anthropic'
 export const GLM_DEFAULT_MODELS = ['glm-4.5-air', 'glm-5-turbo', 'glm-5.1']
 
+export const DEEPSEEK_DEFAULT_BASE_URL = 'https://api.deepseek.com'
+export const DEEPSEEK_DEFAULT_MODELS = ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner']
+
 export function isGlmLike(kind: CompatibleProviderKind | undefined): boolean {
   return kind === 'glm-like'
 }

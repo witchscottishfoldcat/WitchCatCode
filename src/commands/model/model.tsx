@@ -111,22 +111,26 @@ function getConfiguredModelOptions(): ConfiguredModelOption[] {
                     ? t('model.authLabel.vertexCompatible')
                     : t('model.authLabel.apiKey');
     const accountName = provider.id || extractAccountName(provider.baseURL, provider.kind);
-    return provider.models.map(model => ({
-      value: makeConfiguredOptionValue(provider.kind, provider.id, provider.baseURL, provider.authMode, model),
-      label: `${model} (${accountName})`,
-      description: `${providerLabel} · ${authLabel}`,
-      model,
-      providerId: provider.id,
-      providerKind: provider.kind,
-      authMode: provider.authMode,
-      reasoning: provider.reasoning,
-      isCurrent:
-        provider.kind === storage.providerKind &&
-        provider.id === activeProviderId &&
-        (provider.baseURL ?? undefined) === (storage.baseURL ?? undefined) &&
-        provider.authMode === (storage.activeAuthMode ?? storage.authMode) &&
-        model === storage.activeModel,
-    }));
+    return provider.models.map(model => {
+      const detected = getDetectedModelInfo(model);
+      const displayName = detected ? `${detected.name}` : model;
+      return {
+        value: makeConfiguredOptionValue(provider.kind, provider.id, provider.baseURL, provider.authMode, model),
+        label: `${displayName} (${accountName})`,
+        description: `${providerLabel} · ${authLabel}`,
+        model,
+        providerId: provider.id,
+        providerKind: provider.kind,
+        authMode: provider.authMode,
+        reasoning: provider.reasoning,
+        isCurrent:
+          provider.kind === storage.providerKind &&
+          provider.id === activeProviderId &&
+          (provider.baseURL ?? undefined) === (storage.baseURL ?? undefined) &&
+          provider.authMode === (storage.activeAuthMode ?? storage.authMode) &&
+          model === storage.activeModel,
+      };
+    });
   });
 }
 

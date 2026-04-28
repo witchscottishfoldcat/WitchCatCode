@@ -22,11 +22,9 @@ const KNOWN_MODEL_CONTEXT_WINDOWS: Array<{
   name: string
 }> = [
   // DeepSeek
-  { pattern: /deepseek[\-_]?r1/i, contextWindow: 64_000, name: 'DeepSeek R1' },
-  { pattern: /deepseek[\-_]?v3/i, contextWindow: 64_000, name: 'DeepSeek V3' },
-  { pattern: /deepseek[\-_]?v2/i, contextWindow: 128_000, name: 'DeepSeek V2' },
+  { pattern: /deepseek[\-_]?coder/i, contextWindow: 1_000_000, name: 'DeepSeek V4 Pro' },
+  { pattern: /deepseek[\-_]?reasoner/i, contextWindow: 1_000_000, name: 'DeepSeek V4 Flash' },
   { pattern: /deepseek[\-_]?chat/i, contextWindow: 64_000, name: 'DeepSeek Chat' },
-  { pattern: /deepseek/i, contextWindow: 64_000, name: 'DeepSeek' },
 
   // OpenAI GPT
   { pattern: /gpt[\-_]?4\.1/i, contextWindow: 1_000_000, name: 'GPT-4.1' },
