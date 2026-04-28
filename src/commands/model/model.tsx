@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import * as React from 'react';
 import { t } from '../../i18n/core.js';
 import type { CommandResultDisplay } from '../../commands.js';
-import { ModelPicker } from '../../components/ModelPicker.js';
+
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
 import { useAppState, useSetAppState } from '../../state/AppState.js';
@@ -14,6 +14,7 @@ import { clearFastModeCooldown, isFastModeAvailable, isFastModeEnabled, isFastMo
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
 import { checkOpus1mAccess, checkSonnet1mAccess } from '../../utils/model/check1mAccess.js';
 import {
+  getActiveProviderConfig,
   getProviderKeyFromConfig,
   readCustomApiStorage,
   writeCustomApiStorage,
@@ -22,10 +23,9 @@ import {
 } from '../../utils/customApiStorage.js';
 import {
   type ReasoningSelection,
-  getReasoningMode,
 } from '../../utils/modelReasoning.js';
 import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultModelSetting } from '../../utils/model/model.js';
-import { getModelOptions, type ModelOption } from '../../utils/model/modelOptions.js';
+import { getModelOptions } from '../../utils/model/modelOptions.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
 import { tokenCountWithEstimation } from '../../utils/tokens.js';
@@ -33,6 +33,9 @@ import { getContextWindowForModel } from '../../utils/context.js';
 import { getEffectiveContextWindowSize, getAutoCompactThreshold } from '../../services/compact/autoCompact.js';
 import { formatTokens } from '../../utils/format.js';
 import { getDetectedModelInfo } from '../../utils/model/contextWindowDetection.js';
+import { Box, Text } from '../../ink.js';
+import { Select } from '../../components/CustomSelect/index.js';
+import { Pane } from '../../components/design-system/Pane.js';
 
 function extractAccountName(baseURL: string | undefined, providerId: string): string {
   if (providerId === 'anthropic-like') {
@@ -59,18 +62,6 @@ function tryExtractHost(url: string): string {
   }
 }
 
-type ConfiguredModelOption = {
-  value: string;
-  label: string;
-  description: string;
-  model: string;
-  providerId: string;
-  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
-  authMode: ProviderAuthMode;
-  reasoning?: ProviderConfig['reasoning'];
-  isCurrent?: boolean;
-};
-
 function makeConfiguredOptionValue(
   providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like',
   providerId: string,
@@ -81,80 +72,11 @@ function makeConfiguredOptionValue(
   return `${providerKind}::${providerId}::${baseURL ?? ''}::${authMode}::${model}`;
 }
 
-function getConfiguredModelOptions(): ConfiguredModelOption[] {
-  const storage = readCustomApiStorage();
-  const activeProviderId = storage.activeProvider ?? storage.providerId;
-  const providers = storage.providers ?? [];
-  return providers.flatMap(provider => {
-    const providerLabel = provider.kind === 'openai-like'
-      ? t('model.providerLabel.openaiCompatible')
-      : provider.kind === 'gemini-like'
-        ? t('model.providerLabel.geminiCompatible')
-        : provider.kind === 'glm-like'
-          ? t('model.providerLabel.glmZhipu')
-          : t('model.providerLabel.anthropicCompatible');
-    const authLabel = provider.authMode === 'api-key'
-      ? t('model.authLabel.apiKey')
-      : provider.authMode === 'chat-completions'
-        ? t('model.authLabel.chatCompletions')
-        : provider.authMode === 'responses'
-          ? t('model.authLabel.responses')
-          : provider.authMode === 'oauth'
-            ? t('model.authLabel.oauth')
-            : provider.authMode === 'vertex-compatible'
-              ? t('model.authLabel.vertexCompatible')
-              : provider.authMode === 'gemini-cli-oauth'
-                ? t('model.authLabel.geminiCliOauth')
-                : provider.kind === 'openai-like'
-                  ? t('model.authLabel.chatCompletions')
-                  : provider.kind === 'gemini-like'
-                    ? t('model.authLabel.vertexCompatible')
-                    : t('model.authLabel.apiKey');
-    const accountName = provider.id || extractAccountName(provider.baseURL, provider.kind);
-    return provider.models.map(model => {
-      const detected = getDetectedModelInfo(model);
-      const displayName = detected ? `${detected.name}` : model;
-      return {
-        value: makeConfiguredOptionValue(provider.kind, provider.id, provider.baseURL, provider.authMode, model),
-        label: `${displayName} (${accountName})`,
-        description: `${providerLabel} · ${authLabel}`,
-        model,
-        providerId: provider.id,
-        providerKind: provider.kind,
-        authMode: provider.authMode,
-        reasoning: provider.reasoning,
-        isCurrent:
-          provider.kind === storage.providerKind &&
-          provider.id === activeProviderId &&
-          (provider.baseURL ?? undefined) === (storage.baseURL ?? undefined) &&
-          provider.authMode === (storage.activeAuthMode ?? storage.authMode) &&
-          model === storage.activeModel,
-      };
-    });
-  });
-}
-
 function isConfiguredProviderValue(value: string): boolean {
   return value.includes('::')
 }
 
 const BUILTIN_NO_PREFERENCE = '__NO_PREFERENCE__'
-
-function getUnifiedModelOptions(fastMode: boolean): ConfiguredModelOption[] {
-  const configuredOptions = getConfiguredModelOptions();
-  const builtinOptions = getModelOptions(fastMode);
-  const builtinAsConfigured: ConfiguredModelOption[] = builtinOptions.map(opt => ({
-    value: opt.value ?? BUILTIN_NO_PREFERENCE,
-    label: opt.label,
-    description: opt.description,
-    model: opt.value ?? '',
-    providerId: 'builtin',
-    providerKind: 'anthropic-like' as const,
-    authMode: 'api-key' as ProviderAuthMode,
-    isCurrent: false,
-  }));
-  return [...builtinAsConfigured, ...configuredOptions];
-}
 
 function parseConfiguredOptionValue(value: string): {
   providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
@@ -283,6 +205,173 @@ function formatReasoningMessage(model: string | null, reasoning: ReasoningSelect
   return message;
 }
 
+// Helper to get provider display name
+function getProviderDisplayName(provider: ProviderConfig): string {
+  if (provider.id) return provider.id;
+  if (provider.baseURL) return extractAccountName(provider.baseURL, provider.kind);
+  return provider.kind === 'anthropic-like' ? 'Anthropic'
+    : provider.kind === 'openai-like' ? 'OpenAI Compatible'
+    : provider.kind === 'gemini-like' ? 'Gemini Compatible'
+    : 'GLM Zhipu';
+}
+
+// Helper to get provider icon/emoji
+function getProviderIcon(kind: string): string {
+  switch (kind) {
+    case 'anthropic-like': return '◆';
+    case 'openai-like': return '◇';
+    case 'gemini-like': return '▲';
+    case 'glm-like': return '▼';
+    default: return '●';
+  }
+}
+
+type ProviderSelectOption = {
+  value: string;
+  label: string;
+  description: string;
+  provider: ProviderConfig | null; // null = builtin Anthropic
+  disabled?: boolean;
+};
+
+function getProviderOptions(): ProviderSelectOption[] {
+  const storage = readCustomApiStorage();
+  const providers = storage.providers ?? [];
+  const activeProvider = getActiveProviderConfig(storage);
+  const activeProviderKey = activeProvider ? getProviderKeyFromConfig(activeProvider) : 'builtin';
+
+  // Sort providers: active first, then by kind
+  const providerOrder = ['anthropic-like', 'openai-like', 'gemini-like', 'glm-like'];
+  const sortedProviders = [...providers].sort((a, b) => {
+    const aKey = getProviderKeyFromConfig(a);
+    const bKey = getProviderKeyFromConfig(b);
+    if (aKey === activeProviderKey) return -1;
+    if (bKey === activeProviderKey) return 1;
+    const orderA = providerOrder.indexOf(a.kind);
+    const orderB = providerOrder.indexOf(b.kind);
+    return orderA - orderB;
+  });
+
+  const result: ProviderSelectOption[] = [];
+
+  // Builtin Anthropic provider (always shown)
+  const isBuiltinActive = activeProvider === undefined;
+  result.push({
+    value: 'builtin',
+    label: `${getProviderIcon('anthropic-like')} Anthropic`,
+    description: 'Built-in Claude models',
+    provider: null,
+  });
+
+  // Custom providers
+  for (const provider of sortedProviders) {
+    const isActive = getProviderKeyFromConfig(provider) === activeProviderKey;
+    const icon = getProviderIcon(provider.kind);
+    const name = getProviderDisplayName(provider);
+    const modelCount = provider.models.length;
+    result.push({
+      value: getProviderKeyFromConfig(provider),
+      label: `${icon} ${name}${isActive ? ' (current)' : ''}`,
+      description: `${provider.models.length} model${modelCount > 1 ? 's' : ''} · ${provider.kind.replace('-like', '')}`,
+      provider,
+    });
+  }
+
+  return result;
+}
+
+type ModelSelectOption = {
+  value: string;
+  label: string;
+  description: string;
+  model: string;
+  providerId: string;
+  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
+  authMode: ProviderAuthMode;
+  reasoning?: ProviderConfig['reasoning'];
+  isCurrent?: boolean;
+};
+
+function getModelsForProvider(provider: ProviderConfig | null, fastMode: boolean): ModelSelectOption[] {
+  const storage = readCustomApiStorage();
+  const activeProvider = getActiveProviderConfig(storage);
+  const isBuiltinActive = activeProvider === undefined;
+  const activeModel = storage.activeModel ?? storage.model;
+
+  if (provider === null) {
+    // Builtin Anthropic models - hardcode standard options to avoid picking up custom models
+    const builtinOptions: Array<{ value: string; label: string; description: string }> = [
+      { value: 'sonnet', label: 'Sonnet', description: 'Sonnet 4.6 · Best for everyday tasks' },
+      { value: 'opus', label: 'Opus', description: 'Opus 4.6 · Most capable for complex work' },
+      { value: 'haiku', label: 'Haiku', description: 'Haiku 4.5 · Fastest for quick answers' },
+    ];
+    // Add 1M context variants if available
+    if (process.env.ANTHROPIC_ENABLE_SONNET_1M === 'true' || process.env.ANTHROPIC_ENABLE_SONNET_1M === '1') {
+      builtinOptions.splice(1, 0, { value: 'sonnet[1m]', label: 'Sonnet (1M context)', description: 'Sonnet 4.6 with 1M context' });
+    }
+    if (process.env.ANTHROPIC_ENABLE_OPUS_1M === 'true' || process.env.ANTHROPIC_ENABLE_OPUS_1M === '1') {
+      builtinOptions.splice(2, 0, { value: 'opus[1m]', label: 'Opus (1M context)', description: 'Opus 4.6 with 1M context' });
+    }
+    return builtinOptions.map(opt => ({
+      value: opt.value,
+      label: opt.label,
+      description: opt.description,
+      model: opt.value,
+      providerId: 'builtin',
+      providerKind: 'anthropic-like' as const,
+      authMode: 'api-key' as ProviderAuthMode,
+      isCurrent: isBuiltinActive && opt.value === activeModel,
+    }));
+  }
+
+  // Custom provider models
+  const providerLabel = provider.kind === 'openai-like'
+    ? t('model.providerLabel.openaiCompatible')
+    : provider.kind === 'gemini-like'
+      ? t('model.providerLabel.geminiCompatible')
+      : provider.kind === 'glm-like'
+        ? t('model.providerLabel.glmZhipu')
+        : t('model.providerLabel.anthropicCompatible');
+  const authLabel = provider.authMode === 'api-key'
+    ? t('model.authLabel.apiKey')
+    : provider.authMode === 'chat-completions'
+      ? t('model.authLabel.chatCompletions')
+      : provider.authMode === 'responses'
+        ? t('model.authLabel.responses')
+        : provider.authMode === 'oauth'
+          ? t('model.authLabel.oauth')
+          : provider.authMode === 'vertex-compatible'
+            ? t('model.authLabel.vertexCompatible')
+            : provider.authMode === 'gemini-cli-oauth'
+              ? t('model.authLabel.geminiCliOauth')
+              : provider.kind === 'openai-like'
+                ? t('model.authLabel.chatCompletions')
+                : provider.kind === 'gemini-like'
+                  ? t('model.authLabel.vertexCompatible')
+                  : t('model.authLabel.apiKey');
+
+  return provider.models.map(model => {
+    const detected = getDetectedModelInfo(model);
+    const displayName = detected ? detected.name : model;
+    return {
+      value: makeConfiguredOptionValue(provider.kind, provider.id, provider.baseURL, provider.authMode, model),
+      label: displayName,
+      description: `${providerLabel} · ${authLabel}`,
+      model,
+      providerId: provider.id,
+      providerKind: provider.kind,
+      authMode: provider.authMode,
+      reasoning: provider.reasoning,
+      isCurrent:
+        provider.kind === storage.providerKind &&
+        provider.id === (storage.activeProvider ?? storage.providerId) &&
+        (provider.baseURL ?? undefined) === (storage.baseURL ?? undefined) &&
+        provider.authMode === (storage.activeAuthMode ?? storage.authMode) &&
+        model === storage.activeModel,
+    };
+  });
+}
+
 function ModelPickerWrapper({
   onDone,
 }: {
@@ -295,8 +384,21 @@ function ModelPickerWrapper({
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession);
   const isFastMode = useAppState(s => s.fastMode);
   const setAppState = useSetAppState();
-  const unifiedOptions = getUnifiedModelOptions(isFastMode ?? false);
-  const currentConfiguredValue = unifiedOptions.find(option => option.isCurrent)?.value ?? mainLoopModel;
+
+  // Two-level state
+  const [level, setLevel] = React.useState<'provider' | 'model'>('provider');
+  const [selectedProvider, setSelectedProvider] = React.useState<ProviderConfig | null>(null);
+
+  const storage = readCustomApiStorage();
+  const activeProvider = getActiveProviderConfig(storage);
+  const currentModelName = storage.activeModel ?? storage.model ?? mainLoopModel;
+  const currentModelDisplay = (() => {
+    const detected = getDetectedModelInfo(currentModelName);
+    return detected ? detected.name : renderModelLabel(currentModelName);
+  })();
+  const currentProviderName = activeProvider
+    ? getProviderDisplayName(activeProvider)
+    : 'Anthropic';
 
   function handleCancel(): void {
     logEvent('tengu_model_command_menu', {
@@ -308,8 +410,22 @@ function ModelPickerWrapper({
     });
   }
 
-  function handleSelect(model: string | null, reasoning: ReasoningSelection | undefined): void {
-    if (!model || model === '__NO_PREFERENCE__') {
+  function handleBackToProvider(): void {
+    setLevel('provider');
+    setSelectedProvider(null);
+  }
+
+  function handleProviderSelect(providerKey: string): void {
+    const providers = storage.providers ?? [];
+    const provider = providerKey === 'builtin'
+      ? null
+      : providers.find(p => getProviderKeyFromConfig(p) === providerKey) ?? null;
+    setSelectedProvider(provider);
+    setLevel('model');
+  }
+
+  function handleModelSelect(modelValue: string): void {
+    if (!modelValue || modelValue === '__NO_PREFERENCE__') {
       setAppState(prev => ({
         ...prev,
         mainLoopModel: null,
@@ -320,23 +436,25 @@ function ModelPickerWrapper({
     }
 
     let selectedModel: string | null;
-    if (isConfiguredProviderValue(model)) {
-      selectedModel = persistSelectedConfiguredModel(model, reasoning) ?? model;
+    if (isConfiguredProviderValue(modelValue)) {
+      selectedModel = persistSelectedConfiguredModel(modelValue) ?? modelValue;
     } else {
-      selectedModel = model;
+      selectedModel = modelValue;
     }
+
     logEvent('tengu_model_command_menu', {
       action: selectedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      from_model:
-        mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      from_model: mainLoopModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       to_model: selectedModel as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     });
+
     setAppState(prev => ({
       ...prev,
       mainLoopModel: selectedModel,
       mainLoopModelForSession: null,
     }));
-    let message = formatReasoningMessage(selectedModel, reasoning);
+
+    let message = t('model.setModelTo', { model: chalk.bold(renderModelLabel(selectedModel)) });
 
     let wasFastModeToggledOn = undefined;
     if (isFastModeEnabled()) {
@@ -372,24 +490,76 @@ function ModelPickerWrapper({
     onDone(message);
   }
 
-  const showFastModeNotice =
-    isFastModeEnabled() &&
-    isFastMode &&
-    isFastModeSupportedByModel(mainLoopModel) &&
-    isFastModeAvailable();
+  // Provider level
+  if (level === 'provider') {
+    const providerOptions = getProviderOptions();
+    const activeProviderKey = activeProvider ? getProviderKeyFromConfig(activeProvider) : 'builtin';
+    const defaultValue = activeProviderKey;
+
+    return (
+      <Pane color="permission">
+        <Box flexDirection="column">
+          {/* Current model display - no index */}
+          <Box marginBottom={1} flexDirection="column">
+            <Text color="remember" bold={true}>{t('modelPicker.selectModel')}</Text>
+            <Text dimColor={true}>{t('model.headerText')}</Text>
+          </Box>
+
+          <Box marginBottom={1} paddingLeft={1} flexDirection="column">
+            <Text color="success" bold={true}>→ {currentModelDisplay}</Text>
+            <Text dimColor={true}>  via {currentProviderName}</Text>
+          </Box>
+
+          <Box flexDirection="column" marginBottom={1}>
+            <Select
+              defaultValue={defaultValue}
+              options={providerOptions}
+              onChange={handleProviderSelect}
+              onCancel={handleCancel}
+              visibleOptionCount={Math.min(8, providerOptions.length)}
+            />
+          </Box>
+
+          <Text dimColor={true} italic={true}>
+            <Text color="subtle">Enter</Text> select provider · <Text color="subtle">Esc</Text> exit
+          </Text>
+        </Box>
+      </Pane>
+    );
+  }
+
+  // Model level
+  const modelOptions = getModelsForProvider(selectedProvider, isFastMode ?? false);
+  const providerName = selectedProvider
+    ? getProviderDisplayName(selectedProvider)
+    : 'Anthropic';
+  const currentModelValue = modelOptions.find(opt => opt.isCurrent)?.value ?? modelOptions[0]?.value;
 
   return (
-    <ModelPicker
-      initial={currentConfiguredValue}
-      sessionModel={mainLoopModelForSession}
-      onSelect={handleSelect}
-      onCancel={handleCancel}
-      isStandaloneCommand={true}
-      showFastModeNotice={showFastModeNotice}
-      headerText={t('model.headerText')}
-      customOptions={unifiedOptions}
-      skipSettingsWrite={false}
-    />
+    <Pane color="permission">
+      <Box flexDirection="column">
+        <Box marginBottom={1} flexDirection="column">
+          <Text color="remember" bold={true}>{providerName} › {t('modelPicker.selectModel')}</Text>
+        </Box>
+
+        <Box flexDirection="column" marginBottom={1}>
+          <Select
+            defaultValue={currentModelValue}
+            options={modelOptions.map(opt => ({
+              ...opt,
+              label: opt.isCurrent ? `${opt.label} current` : opt.label,
+            }))}
+            onChange={handleModelSelect}
+            onCancel={handleBackToProvider}
+            visibleOptionCount={Math.min(8, modelOptions.length)}
+          />
+        </Box>
+
+        <Text dimColor={true} italic={true}>
+          <Text color="subtle">Enter</Text> select model · <Text color="subtle">Esc/←</Text> back
+        </Text>
+      </Box>
+    </Pane>
   );
 }
 

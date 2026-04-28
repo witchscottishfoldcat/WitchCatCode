@@ -49,6 +49,7 @@ export type Props = {
     providerKind?: CompatibleProviderKind;
     authMode?: ProviderAuthMode;
     reasoning?: ProviderReasoningConfig;
+    disabled?: boolean;
   }>;
 };
 
@@ -61,6 +62,7 @@ type PickerOption = {
   providerKind?: CompatibleProviderKind;
   authMode?: ProviderAuthMode;
   reasoning?: ProviderReasoningConfig;
+  disabled?: boolean;
 };
 
 const NO_PREFERENCE = '__NO_PREFERENCE__';
