@@ -60,6 +60,8 @@ export type ProviderConfig = {
   apiKey?: string
   models: string[]
   maxTokens?: number
+  /** Custom context window size in tokens. Overrides heuristic detection. */
+  contextWindow?: number
   reasoning?: ProviderReasoningConfig
   oauth?: GeminiOAuthConfig | OpenAIOAuthConfig
 }
@@ -303,6 +305,7 @@ function normalizeProviderConfig(value: Record<string, unknown>): ProviderConfig
     apiKey: typeof value.apiKey === 'string' ? value.apiKey : undefined,
     models: dedupeModels(value.models),
     maxTokens: typeof value.maxTokens === 'number' ? value.maxTokens : undefined,
+    contextWindow: typeof value.contextWindow === 'number' ? value.contextWindow : undefined,
     reasoning: normalizeProviderReasoning(value.reasoning),
     oauth:
       kind === 'openai-like'

@@ -4,6 +4,14 @@ import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
 import { getCanonicalName } from './model/model.js'
 import { getModelCapability } from './model/modelCapabilities.js'
+import {
+  detectContextWindowFromModelName,
+  getContextWindowForCustomModel,
+} from './model/contextWindowDetection.js'
+import {
+  getActiveProviderConfig,
+  readCustomApiStorage,
+} from './customApiStorage.js'
 
 // Model context window size (200k tokens for all models right now)
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
@@ -94,6 +102,31 @@ export function getContextWindowForModel(
       return antModel.contextWindow
     }
   }
+
+  // For custom API providers (OpenAI-compatible, Gemini, GLM, etc.),
+  // check user-configured context window and heuristic model name detection.
+  // This runs after Anthropic-specific checks so it doesn't interfere
+  // with first-party model resolution.
+  const providerConfig = getActiveProviderConfig(readCustomApiStorage())
+  if (providerConfig && providerConfig.kind !== 'anthropic-like') {
+    const customWindow = getContextWindowForCustomModel(
+      model,
+      providerConfig.contextWindow,
+    )
+    // Only use detected value if it's different from the default
+    // (meaning we actually recognized the model)
+    if (customWindow !== MODEL_CONTEXT_WINDOW_DEFAULT) {
+      return customWindow
+    }
+  }
+
+  // Final fallback: try heuristic detection for any model, even without
+  // an active custom provider (e.g. when using --model flag directly).
+  const detected = detectContextWindowFromModelName(model)
+  if (detected) {
+    return detected
+  }
+
   return MODEL_CONTEXT_WINDOW_DEFAULT
 }
 

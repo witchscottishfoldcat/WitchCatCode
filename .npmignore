@@ -5,6 +5,7 @@
 *.tmp
 *.swp
 *.swo
+*.tgz
 .claude/
 .idea/
 .vscode/
@@ -24,3 +25,4 @@ AGENTS.md
 node_modules/.cache/
 node_modules/.bin/
 node_modules/.package-lock.json
+temp_extract/

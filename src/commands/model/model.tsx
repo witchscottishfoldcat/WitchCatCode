@@ -7,7 +7,8 @@ import { ModelPicker } from '../../components/ModelPicker.js';
 import { COMMON_HELP_ARGS, COMMON_INFO_ARGS } from '../../constants/xml.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
 import { useAppState, useSetAppState } from '../../state/AppState.js';
-import type { LocalJSXCommandCall } from '../../types/command.js';
+import type { LocalJSXCommandCall, LocalJSXCommandContext } from '../../types/command.js';
+import type { ToolUseContext } from '../../Tool.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 import { clearFastModeCooldown, isFastModeAvailable, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
@@ -27,6 +28,11 @@ import { getDefaultMainLoopModelSetting, isOpus1mMergeEnabled, renderDefaultMode
 import { getModelOptions, type ModelOption } from '../../utils/model/modelOptions.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
+import { tokenCountWithEstimation } from '../../utils/tokens.js';
+import { getContextWindowForModel } from '../../utils/context.js';
+import { getEffectiveContextWindowSize, getAutoCompactThreshold } from '../../services/compact/autoCompact.js';
+import { formatTokens } from '../../utils/format.js';
+import { getDetectedModelInfo } from '../../utils/model/contextWindowDetection.js';
 
 function extractAccountName(baseURL: string | undefined, providerId: string): string {
   if (providerId === 'anthropic-like') {
@@ -385,12 +391,14 @@ function ModelPickerWrapper({
 
 function SetModelAndClose({
   args,
-  onDone
+  onDone,
+  context,
 }: {
   args: string;
   onDone: (result?: string, options?: {
     display?: CommandResultDisplay;
   }) => void;
+  context: ToolUseContext & LocalJSXCommandContext;
 }): React.ReactNode {
   const isFastMode = useAppState(s => s.fastMode);
   const setAppState = useSetAppState();
@@ -445,7 +453,62 @@ function SetModelAndClose({
         });
       }
     }
+
+    /**
+     * Check if switching to a model with a smaller context window would
+     * cause the current conversation to exceed the new model's capacity.
+     * Returns a warning message if there's a problem, or null if safe.
+     */
+    function checkContextWindowCompatibility(
+      targetModel: string,
+    ): { safe: true } | { safe: false; warning: string; currentTokens: number; targetWindow: number } {
+      const messages = context.messages;
+      if (!messages || messages.length === 0) {
+        return { safe: true };
+      }
+
+      const currentTokenCount = tokenCountWithEstimation(messages);
+      const targetContextWindow = getContextWindowForModel(targetModel);
+      const targetEffectiveWindow = getEffectiveContextWindowSize(targetModel);
+      const targetCompactThreshold = getAutoCompactThreshold(targetModel);
+
+      // If current context is within the new model's effective window, it's safe
+      if (currentTokenCount <= targetEffectiveWindow) {
+        return { safe: true };
+      }
+
+      // Context exceeds the new model's capacity
+      const detected = getDetectedModelInfo(targetModel);
+      const modelDisplay = detected
+        ? `${detected.name} (${formatTokens(detected.contextWindow)} context)`
+        : renderModelLabel(targetModel);
+
+      let warning = `⚠️  Context window warning: Current conversation (${formatTokens(currentTokenCount)}) exceeds ${modelDisplay}'s effective capacity (${formatTokens(targetEffectiveWindow)}).`;
+
+      if (currentTokenCount > targetCompactThreshold) {
+        warning += `\n   The next message will likely fail with "prompt too long" and trigger emergency compaction, which may lose important context.`;
+      }
+
+      warning += `\n   Suggestion: Run /compact first to compress the conversation before switching models.`;
+
+      return {
+        safe: false,
+        warning,
+        currentTokens: currentTokenCount,
+        targetWindow: targetContextWindow,
+      };
+    }
+
     function setModel(modelValue: string | null): void {
+      // Check context window compatibility before switching
+      let compatibilityWarning = '';
+      if (modelValue) {
+        const check = checkContextWindowCompatibility(modelValue);
+        if (!check.safe) {
+          compatibilityWarning = '\n\n' + check.warning;
+        }
+      }
+
       persistSelectedConfiguredModel(modelValue);
       setAppState(prev => ({
         ...prev,
@@ -473,10 +536,16 @@ function SetModelAndClose({
       if (wasFastModeToggledOn === false) {
         message += ` · ${t('model.fastModeOff')}`;
       }
+
+      // Append context window compatibility warning if present
+      if (compatibilityWarning) {
+        message += compatibilityWarning;
+      }
+
       onDone(message);
     }
     void handleModelChange();
-  }, [model, onDone, setAppState]);
+  }, [model, onDone, setAppState, context]);
   return null;
 }
 
@@ -534,7 +603,7 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     logEvent('tengu_model_command_inline', {
       args: args as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
     });
-    return <SetModelAndClose args={args} onDone={onDone} />;
+    return <SetModelAndClose args={args} onDone={onDone} context={_context} />;
   }
   return <ModelPickerWrapper onDone={onDone} />;
 };
