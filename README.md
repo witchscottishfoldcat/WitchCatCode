@@ -228,6 +228,34 @@ witchcat --version
 
 ---
 
+## 🪟 Windows 终端使用建议
+
+如果你在 Windows 上使用本工具时遇到「AI 思考或编辑过程中视窗突然弹到 cmd 上方、滚轮无法向下滚动、必须用鼠标拖回去」这一现象，那是 Windows 控制台（conhost）的 [microsoft/terminal#14774](https://github.com/microsoft/terminal/issues/14774) 在作怪：高频重渲叠加 `ESC[2J` / 光标上移序列会把 viewport 拉到 scrollback 顶部。
+
+为获得最佳体验，按推荐度从高到低：
+
+1. **使用 [Windows Terminal](https://aka.ms/terminal) + 全屏模式**（推荐）
+   ```powershell
+   $env:CLAUDE_CODE_NO_FLICKER = "1"
+   witchcat
+   ```
+   全屏 alt-screen 模式完全绕开 LogUpdate 的滚动路径，是最彻底的修复。
+
+2. **使用 mintty（Git Bash / MSYS2）或 VS Code 集成终端**
+   两者都自动被识别为现代终端，行为与 Windows Terminal 一致。
+
+3. **保留 cmd / PowerShell（默认 conhost），让代码层自动降级动画**
+   本项目在 Windows 非全屏模式下会自动关闭高频闪烁源（思考脉冲、Spinner 微光、伙伴动画），把触发概率压到最低。也可以在交互界面里用 `/animation` 命令手动控制：
+   ```
+   /animation        # 显示当前设置和实际生效状态（不改动）
+   /animation on     # 强制开启动画（任何平台）
+   /animation off    # 强制关闭动画（任何平台）
+   /animation auto   # 清除手动设置，回到平台默认（Windows 非全屏自动关，其它默认开）
+   ```
+   设置会持久化到 `~/.Witchcat/.claude.json`。环境变量 `CLAUDE_CODE_FORCE_ANIMATIONS=1` 仍可作为应急 escape hatch（不写盘）。
+
+---
+
 ## 🛠️ 常用命令
 
 | 命令 | 说明 |

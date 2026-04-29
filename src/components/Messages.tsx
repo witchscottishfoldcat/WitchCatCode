@@ -715,7 +715,7 @@ const MessagesImpl = ({
           <AssistantThinkingMessage param={{
         type: 'thinking',
         thinking: streamingThinking.thinking
-      }} addMargin={false} isTranscriptMode={true} verbose={verbose} hideInTranscript={false} />
+      }} addMargin={false} isTranscriptMode={false} verbose={verbose} hideInTranscript={false} />
         </Box>}
     </>;
 };

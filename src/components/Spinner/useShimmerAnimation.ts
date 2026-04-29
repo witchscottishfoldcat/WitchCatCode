@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { stringWidth } from '../../ink/stringWidth.js'
 import { type DOMElement, useAnimationFrame } from '../../ink.js'
+import { shouldReduceWinAnimations } from '../../utils/fullscreen.js'
 import type { SpinnerMode } from './types.js'
 
 export function useShimmerAnimation(
@@ -14,10 +15,15 @@ export function useShimmerAnimation(
   // Notably, if the caller never attaches `ref` (e.g. conditional JSX),
   // useTerminalViewport stays at its initial isVisible:true and the
   // viewport-pause never kicks in, so this is the only stop mechanism.
-  const [ref, time] = useAnimationFrame(isStalled ? null : glimmerSpeed)
+  //
+  // Also unsubscribe on Windows non-fullscreen to avoid the 50ms shimmer
+  // amplifying microsoft/terminal#14774 viewport yank.
+  const winSuppressed = shouldReduceWinAnimations()
+  const inactive = isStalled || winSuppressed
+  const [ref, time] = useAnimationFrame(inactive ? null : glimmerSpeed)
   const messageWidth = useMemo(() => stringWidth(message), [message])
 
-  if (isStalled) {
+  if (inactive) {
     return [ref, -100]
   }
 

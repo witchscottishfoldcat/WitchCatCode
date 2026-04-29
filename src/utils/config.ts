@@ -279,6 +279,11 @@ export type GlobalConfig = {
   companion?: import('../buddy/types.js').StoredCompanion
   companionMuted?: boolean
 
+  // /animation override. When unset, falls back to the auto-gate that turns
+  // animations off on Windows non-fullscreen (microsoft/terminal#14774).
+  // 'on' / 'off' force the choice regardless of platform.
+  animations?: 'on' | 'off'
+
   // Feedback survey tracking
   feedbackSurveyState?: {
     lastShownTime?: number

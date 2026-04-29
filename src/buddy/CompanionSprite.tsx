@@ -8,7 +8,7 @@ import { Box, Text } from '../ink.js';
 import { useAppState, useSetAppState } from '../state/AppState.js';
 import type { AppState } from '../state/AppStateStore.js';
 import { getGlobalConfig } from '../utils/config.js';
-import { isFullscreenActive } from '../utils/fullscreen.js';
+import { isFullscreenActive, shouldReduceWinAnimations } from '../utils/fullscreen.js';
 import type { Theme } from '../utils/theme.js';
 import { getCompanion } from './companion.js';
 import { renderFace, renderSprite, spriteFrameCount } from './sprites.js';
@@ -198,10 +198,16 @@ export function CompanionSprite(): React.ReactNode {
       forPetAt: petAt
     });
   }
+  // Skip the 500ms tick on Windows non-fullscreen — every tick re-renders
+  // the sprite (potentially adding/removing the heart row above the body),
+  // and the resulting height churn is a primary trigger for the
+  // microsoft/terminal#14774 viewport yank in LogUpdate's diff paths.
+  const winSuppressed = shouldReduceWinAnimations();
   useEffect(() => {
+    if (winSuppressed) return;
     const timer = setInterval(setT => setT((t: number) => t + 1), TICK_MS, setTick);
     return () => clearInterval(timer);
-  }, []);
+  }, [winSuppressed]);
   useEffect(() => {
     if (!reaction) return;
     lastSpokeTick.current = tick;
@@ -219,7 +225,9 @@ export function CompanionSprite(): React.ReactNode {
   const colWidth = spriteColWidth(stringWidth(companion.name));
   const bubbleAge = reaction ? tick - lastSpokeTick.current : 0;
   const fading = reaction !== undefined && bubbleAge >= BUBBLE_SHOW - FADE_WINDOW;
-  const petAge = petAt ? tick - petStartTick : Infinity;
+  // winSuppressed: force petAge=Infinity so petting=false → no heart row,
+  // no height change between tick frames.
+  const petAge = (petAt && !winSuppressed) ? tick - petStartTick : Infinity;
   const petting = petAge * TICK_MS < PET_BURST_MS;
 
   // Narrow terminals: collapse to one-line face. When speaking, the quip
@@ -243,7 +251,11 @@ export function CompanionSprite(): React.ReactNode {
   const heartFrame = petting ? PET_HEARTS[petAge % PET_HEARTS.length] : null;
   let spriteFrame: number;
   let blink = false;
-  if (reaction || petting) {
+  if (winSuppressed) {
+    // Pin to idle pose 0, no blink: the sprite is fully static so the
+    // diff between frames is empty and no reset path can be triggered.
+    spriteFrame = 0;
+  } else if (reaction || petting) {
     // Excited: cycle all fidget frames fast
     spriteFrame = tick % frameCount;
   } else {

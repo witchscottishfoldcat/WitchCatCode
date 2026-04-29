@@ -1,5 +1,6 @@
 import { spawnSync } from 'child_process'
 import { getIsInteractive } from '../bootstrap/state.js'
+import { getGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
@@ -189,6 +190,37 @@ export function isMouseClicksDisabled(): boolean {
  */
 export function isFullscreenActive(): boolean {
   return getIsInteractive() && isFullscreenEnvEnabled()
+}
+
+/**
+ * Whether to suppress periodic UI animations to avoid the Windows
+ * cursor-up viewport-yank bug (microsoft/terminal#14774). High-frequency
+ * re-renders amplify the chance that a height change crosses the viewport
+ * boundary and triggers fullResetSequence_CAUSES_FLICKER → ESC[2J/ESC[H,
+ * which itself yanks the viewport on Windows consoles.
+ *
+ * Resolution order:
+ *   1. `/animation on|off` user override (globalConfig.animations) — wins
+ *      everywhere, lets users force the choice on any platform
+ *   2. CLAUDE_CODE_FORCE_ANIMATIONS=1 env var — escape hatch for non-TTY /
+ *      bootstrap callers that run before config is loaded
+ *   3. Fullscreen mode — alt-screen + virtualized scroll dodges LogUpdate's
+ *      reset paths entirely, so animations are always safe
+ *   4. Auto-gate — disable on Windows / WT_SESSION
+ */
+export function shouldReduceWinAnimations(): boolean {
+  // Reading config can fail very early in startup before the config file is
+  // loaded. Wrap so a transient failure falls through to the env/auto path.
+  try {
+    const override = getGlobalConfig().animations
+    if (override === 'off') return true
+    if (override === 'on') return false
+  } catch {
+    // fall through
+  }
+  if (isEnvTruthy(process.env.CLAUDE_CODE_FORCE_ANIMATIONS)) return false
+  if (isFullscreenEnvEnabled()) return false
+  return process.platform === 'win32' || !!process.env.WT_SESSION
 }
 
 /**
