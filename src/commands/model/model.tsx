@@ -234,10 +234,15 @@ type ProviderSelectOption = {
   disabled?: boolean;
 };
 
-function getProviderOptions(): ProviderSelectOption[] {
+function getProviderOptions(
+  // Override the storage-derived active provider when the caller knows the
+  // session is actually on a built-in alias. Storage may retain stale
+  // markers from a prior custom-provider selection (Bug C).
+  forceBuiltinActive: boolean = false,
+): ProviderSelectOption[] {
   const storage = readCustomApiStorage();
   const providers = storage.providers ?? [];
-  const activeProvider = getActiveProviderConfig(storage);
+  const activeProvider = forceBuiltinActive ? undefined : getActiveProviderConfig(storage);
   const activeProviderKey = activeProvider ? getProviderKeyFromConfig(activeProvider) : 'builtin';
 
   // Sort providers: active first, then by kind
@@ -258,7 +263,7 @@ function getProviderOptions(): ProviderSelectOption[] {
   const isBuiltinActive = activeProvider === undefined;
   result.push({
     value: 'builtin',
-    label: `${getProviderIcon('anthropic-like')} Anthropic`,
+    label: `${getProviderIcon('anthropic-like')} Anthropic${isBuiltinActive ? ' (current)' : ''}`,
     description: 'Built-in Claude models',
     provider: null,
   });
@@ -292,11 +297,24 @@ type ModelSelectOption = {
   isCurrent?: boolean;
 };
 
-function getModelsForProvider(provider: ProviderConfig | null, fastMode: boolean): ModelSelectOption[] {
+function getModelsForProvider(
+  provider: ProviderConfig | null,
+  fastMode: boolean,
+  // Caller's view of "the model currently in use" — overrides storage when the
+  // session has switched to a built-in alias since the last storage write
+  // (Bug C). Pass null to fall back to storage.
+  effectiveActiveModel: string | null = null,
+): ModelSelectOption[] {
   const storage = readCustomApiStorage();
-  const activeProvider = getActiveProviderConfig(storage);
-  const isBuiltinActive = activeProvider === undefined;
-  const activeModel = storage.activeModel ?? storage.model;
+  const storageActiveProvider = getActiveProviderConfig(storage);
+  // If caller indicates a built-in alias is in use, treat builtin as active
+  // regardless of storage state.
+  const builtinAliasActive =
+    effectiveActiveModel != null && isKnownAlias(effectiveActiveModel);
+  const isBuiltinActive = builtinAliasActive || storageActiveProvider === undefined;
+  const activeModel = builtinAliasActive
+    ? effectiveActiveModel
+    : (storage.activeModel ?? storage.model);
 
   if (provider === null) {
     // Builtin Anthropic models - hardcode standard options to avoid picking up custom models
@@ -305,12 +323,22 @@ function getModelsForProvider(provider: ProviderConfig | null, fastMode: boolean
       { value: 'opus', label: 'Opus', description: 'Opus 4.6 · Most capable for complex work' },
       { value: 'haiku', label: 'Haiku', description: 'Haiku 4.5 · Fastest for quick answers' },
     ];
-    // Add 1M context variants if available
-    if (process.env.ANTHROPIC_ENABLE_SONNET_1M === 'true' || process.env.ANTHROPIC_ENABLE_SONNET_1M === '1') {
-      builtinOptions.splice(1, 0, { value: 'sonnet[1m]', label: 'Sonnet (1M context)', description: 'Sonnet 4.6 with 1M context' });
+    // Add 1M context variants if available — locate by value rather than a
+    // hard-coded index, otherwise inserting Sonnet[1M] shifts Opus down and
+    // the subsequent splice for Opus[1M] lands BEFORE Opus rather than after.
+    const sonnet1mEnabled = process.env.ANTHROPIC_ENABLE_SONNET_1M === 'true' || process.env.ANTHROPIC_ENABLE_SONNET_1M === '1';
+    const opus1mEnabled = process.env.ANTHROPIC_ENABLE_OPUS_1M === 'true' || process.env.ANTHROPIC_ENABLE_OPUS_1M === '1';
+    if (sonnet1mEnabled) {
+      const sonnetIdx = builtinOptions.findIndex(o => o.value === 'sonnet');
+      if (sonnetIdx !== -1) {
+        builtinOptions.splice(sonnetIdx + 1, 0, { value: 'sonnet[1m]', label: 'Sonnet (1M context)', description: 'Sonnet 4.6 with 1M context' });
+      }
     }
-    if (process.env.ANTHROPIC_ENABLE_OPUS_1M === 'true' || process.env.ANTHROPIC_ENABLE_OPUS_1M === '1') {
-      builtinOptions.splice(2, 0, { value: 'opus[1m]', label: 'Opus (1M context)', description: 'Opus 4.6 with 1M context' });
+    if (opus1mEnabled) {
+      const opusIdx = builtinOptions.findIndex(o => o.value === 'opus');
+      if (opusIdx !== -1) {
+        builtinOptions.splice(opusIdx + 1, 0, { value: 'opus[1m]', label: 'Opus (1M context)', description: 'Opus 4.6 with 1M context' });
+      }
     }
     return builtinOptions.map(opt => ({
       value: opt.value,
@@ -430,8 +458,17 @@ function ModelPickerWrapper({
   const [selectedProvider, setSelectedProvider] = React.useState<ProviderConfig | null>(null);
 
   const storage = readCustomApiStorage();
-  const activeProvider = getActiveProviderConfig(storage);
-  const currentModelName = storage.activeModel ?? storage.model ?? mainLoopModel;
+  const storageActiveProvider = getActiveProviderConfig(storage);
+  // If mainLoopModel is a built-in Anthropic alias (sonnet/opus/haiku/...),
+  // treat builtin as active even if storage still has a stale custom-provider
+  // selection from a prior session. Otherwise the picker mislabels the
+  // previous custom provider as "(current)" and shows its model under "→".
+  const mainLoopIsBuiltinAlias =
+    mainLoopModel != null && isKnownAlias(mainLoopModel);
+  const activeProvider = mainLoopIsBuiltinAlias ? undefined : storageActiveProvider;
+  const currentModelName = mainLoopIsBuiltinAlias
+    ? mainLoopModel
+    : (storage.activeModel ?? storage.model ?? mainLoopModel);
   const currentModelDisplay = (() => {
     const detected = getDetectedModelInfo(currentModelName);
     return detected ? detected.name : renderModelLabel(currentModelName);
@@ -538,7 +575,7 @@ function ModelPickerWrapper({
 
   // Provider level
   if (level === 'provider') {
-    const providerOptions = getProviderOptions();
+    const providerOptions = getProviderOptions(mainLoopIsBuiltinAlias);
     const activeProviderKey = activeProvider ? getProviderKeyFromConfig(activeProvider) : 'builtin';
     const defaultValue = activeProviderKey;
 
@@ -575,7 +612,11 @@ function ModelPickerWrapper({
   }
 
   // Model level
-  const modelOptions = getModelsForProvider(selectedProvider, isFastMode ?? false);
+  const modelOptions = getModelsForProvider(
+    selectedProvider,
+    isFastMode ?? false,
+    mainLoopIsBuiltinAlias ? mainLoopModel : null,
+  );
   const providerName = selectedProvider
     ? getProviderDisplayName(selectedProvider)
     : 'Anthropic';
