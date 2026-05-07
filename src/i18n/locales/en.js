@@ -1692,8 +1692,8 @@ const en = {
 
   // LocationStep
   'agent.wizard.location.subtitle': 'Choose location',
-  'agent.wizard.location.projectLabel': 'Project (.claude/agents/)',
-  'agent.wizard.location.personalLabel': 'Personal (~/.claude/agents/)',
+  'agent.wizard.location.projectLabel': 'Project (.witchcat/agents/)',
+  'agent.wizard.location.personalLabel': 'Personal (~/.witchcat/agents/)',
 
   // ToolsStep
   'agent.wizard.tools.subtitle': 'Select tools',
@@ -1704,11 +1704,11 @@ const en = {
   // MemoryStep
   'agent.wizard.memory.subtitle': 'Configure agent memory',
   'agent.wizard.memory.userScopeRecommended': 'User scope (~/.witchcat/agent-memory/) (Recommended)',
-  'agent.wizard.memory.projectScope': 'Project scope (.claude/agent-memory/)',
+  'agent.wizard.memory.projectScope': 'Project scope (.witchcat/agent-memory/)',
   'agent.wizard.memory.none': 'None (no persistent memory)',
-  'agent.wizard.memory.projectScopeRecommended': 'Project scope (.claude/agent-memory/) (Recommended)',
+  'agent.wizard.memory.projectScopeRecommended': 'Project scope (.witchcat/agent-memory/) (Recommended)',
   'agent.wizard.memory.userScope': 'User scope (~/.witchcat/agent-memory/)',
-  'agent.wizard.memory.localScope': 'Local scope (.claude/agent-memory-local/)',
+  'agent.wizard.memory.localScope': 'Local scope (.witchcat/agent-memory-local/)',
 
   // CreateAgentWizard
   'agent.wizard.createAgent.title': 'Create new agent',
@@ -1847,7 +1847,7 @@ const en = {
   'skills.pluginSkills': 'Plugin skills',
   'skills.mcpSkills': 'MCP skills',
   'skills.skillsSuffix': 'skills',
-  'skills.createSkillsHint': 'Create skills in .claude/skills/ or ~/.claude/skills/',
+  'skills.createSkillsHint': 'Create skills in .witchcat/skills/ or ~/.witchcat/skills/',
   'skills.noSkillsFound': 'No skills found',
   'skills.title': 'Skills',
   'skills.descriptionTokens': 'description tokens',
@@ -1900,7 +1900,7 @@ const en = {
   'memory.userMemory': 'User memory',
   'memory.projectMemory': 'Project memory',
   'memory.new': 'new',
-  'memory.savedInClaudeMd': 'Saved in ~/.claude/CLAUDE.md',
+  'memory.savedInClaudeMd': 'Saved in ~/.witchcat/CLAUDE.md',
   'memory.checkedInAt': 'Checked in at',
   'memory.savedIn': 'Saved in',
   'memory.atImported': '@-imported',

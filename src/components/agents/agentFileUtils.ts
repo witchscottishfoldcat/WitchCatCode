@@ -74,18 +74,18 @@ function getAgentDirectoryPath(location: SettingSource): string {
     case 'userSettings':
       return join(getClaudeConfigHomeDir(), 'agents')
     case 'projectSettings':
-      return join(getCwd(), '.claude', 'agents')
+      return join(getCwd(), '.witchcat', 'agents')
     case 'policySettings':
-      return join(getManagedFilePath(), '.claude', 'agents')
+      return join(getManagedFilePath(), '.witchcat', 'agents')
     case 'localSettings':
-      return join(getCwd(), '.claude', 'agents')
+      return join(getCwd(), '.witchcat', 'agents')
   }
 }
 
 function getRelativeAgentDirectoryPath(location: SettingSource): string {
   switch (location) {
     case 'projectSettings':
-      return join('.', '.claude', 'agents')
+      return join('.', '.witchcat', 'agents')
     default:
       return getAgentDirectoryPath(location)
   }

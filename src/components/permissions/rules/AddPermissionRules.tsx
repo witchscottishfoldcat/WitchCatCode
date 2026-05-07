@@ -34,7 +34,7 @@ export function optionForPermissionSaveDestination(saveDestination: EditableSett
     case 'userSettings':
       return {
         label: t('permission.addRules.userSettings'),
-        description: `${t('permission.addRules.savedIn')} ~/.claude/settings.json`,
+        description: `${t('permission.addRules.savedIn')} ~/.witchcat/settings.json`,
         value: saveDestination
       };
   }

@@ -1692,8 +1692,8 @@ const zhCN = {
 
   // LocationStep
   'agent.wizard.location.subtitle': '\u9009\u62e9\u4f4d\u7f6e',
-  'agent.wizard.location.projectLabel': '\u9879\u76ee (.claude/agents/)',
-  'agent.wizard.location.personalLabel': '\u4e2a\u4eba (~/.claude/agents/)',
+  'agent.wizard.location.projectLabel': '\u9879\u76ee (.witchcat/agents/)',
+  'agent.wizard.location.personalLabel': '\u4e2a\u4eba (~/.witchcat/agents/)',
 
   // ToolsStep
   'agent.wizard.tools.subtitle': '\u9009\u62e9\u5de5\u5177',
@@ -1704,11 +1704,11 @@ const zhCN = {
   // MemoryStep
   'agent.wizard.memory.subtitle': '\u914d\u7f6e\u4ee3\u7406\u8bb0\u5fc6',
   'agent.wizard.memory.userScopeRecommended': '\u7528\u6237\u8303\u56f4 (~/.witchcat/agent-memory/)\uff08\u63a8\u8350\uff09',
-  'agent.wizard.memory.projectScope': '\u9879\u76ee\u8303\u56f4 (.claude/agent-memory/)',
+  'agent.wizard.memory.projectScope': '\u9879\u76ee\u8303\u56f4 (.witchcat/agent-memory/)',
   'agent.wizard.memory.none': '\u65e0\uff08\u4e0d\u4fdd\u7559\u8bb0\u5fc6\uff09',
-  'agent.wizard.memory.projectScopeRecommended': '\u9879\u76ee\u8303\u56f4 (.claude/agent-memory/)\uff08\u63a8\u8350\uff09',
+  'agent.wizard.memory.projectScopeRecommended': '\u9879\u76ee\u8303\u56f4 (.witchcat/agent-memory/)\uff08\u63a8\u8350\uff09',
   'agent.wizard.memory.userScope': '\u7528\u6237\u8303\u56f4 (~/.witchcat/agent-memory/)',
-  'agent.wizard.memory.localScope': '\u672c\u5730\u8303\u56f4 (.claude/agent-memory-local/)',
+  'agent.wizard.memory.localScope': '\u672c\u5730\u8303\u56f4 (.witchcat/agent-memory-local/)',
 
   // CreateAgentWizard
   'agent.wizard.createAgent.title': '\u521b\u5efa\u65b0\u4ee3\u7406',
@@ -1847,7 +1847,7 @@ const zhCN = {
   'skills.pluginSkills': '\u63d2\u4ef6\u6280\u80fd',
   'skills.mcpSkills': 'MCP \u6280\u80fd',
   'skills.skillsSuffix': '\u6280\u80fd',
-  'skills.createSkillsHint': '\u5728 .claude/skills/ \u6216 ~/.claude/skills/ \u4e2d\u521b\u5efa\u6280\u80fd',
+  'skills.createSkillsHint': '\u5728 .witchcat/skills/ \u6216 ~/.witchcat/skills/ \u4e2d\u521b\u5efa\u6280\u80fd',
   'skills.noSkillsFound': '\u672a\u627e\u5230\u6280\u80fd',
   'skills.title': '\u6280\u80fd',
   'skills.descriptionTokens': '\u63cf\u8ff0\u6807\u8bb0',
@@ -1900,7 +1900,7 @@ const zhCN = {
   'memory.userMemory': '\u7528\u6237\u8bb0\u5fc6',
   'memory.projectMemory': '\u9879\u76ee\u8bb0\u5fc6',
   'memory.new': '\u65b0\u5efa',
-  'memory.savedInClaudeMd': '\u5df2\u4fdd\u5b58\u5728 ~/.claude/CLAUDE.md',
+  'memory.savedInClaudeMd': '\u5df2\u4fdd\u5b58\u5728 ~/.witchcat/CLAUDE.md',
   'memory.checkedInAt': '\u5df2\u63d0\u4ea4\u5728',
   'memory.savedIn': '\u5df2\u4fdd\u5b58\u5728',
   'memory.atImported': '@ \u5bfc\u5165',
