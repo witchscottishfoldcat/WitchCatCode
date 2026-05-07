@@ -37,7 +37,6 @@
     "start": "bun run ./src/bootstrap-entry.ts",
     "version": "bun run ./src/bootstrap-entry.ts --version",
     "dev:restore-check": "npx bun run ./src/dev-entry.ts",
-    "install": "node scripts/postinstall.mjs",
     "postinstall": "node scripts/postinstall.mjs"
   },
   "bin": {

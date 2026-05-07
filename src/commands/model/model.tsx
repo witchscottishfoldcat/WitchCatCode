@@ -372,13 +372,53 @@ function getModelsForProvider(provider: ProviderConfig | null, fastMode: boolean
   });
 }
 
+function checkContextWindowCompatibility(
+  targetModel: string,
+  messages: import('../../types/message.js').Message[] | undefined,
+): { safe: true } | { safe: false; warning: string; currentTokens: number; targetWindow: number } {
+  if (!messages || messages.length === 0) {
+    return { safe: true };
+  }
+
+  const currentTokenCount = tokenCountWithEstimation(messages);
+  const targetContextWindow = getContextWindowForModel(targetModel);
+  const targetEffectiveWindow = getEffectiveContextWindowSize(targetModel);
+  const targetCompactThreshold = getAutoCompactThreshold(targetModel);
+
+  if (currentTokenCount <= targetEffectiveWindow) {
+    return { safe: true };
+  }
+
+  const detected = getDetectedModelInfo(targetModel);
+  const modelDisplay = detected
+    ? `${detected.name} (${formatTokens(detected.contextWindow)} context)`
+    : renderModelLabel(targetModel);
+
+  let warning = `⚠️  Context window warning: Current conversation (${formatTokens(currentTokenCount)}) exceeds ${modelDisplay}'s effective capacity (${formatTokens(targetEffectiveWindow)}).`;
+
+  if (currentTokenCount > targetCompactThreshold) {
+    warning += `\n   The next message will likely fail with "prompt too long" and trigger emergency compaction, which may lose important context.`;
+  }
+
+  warning += `\n   Suggestion: Run /compact first to compress the conversation before switching models.`;
+
+  return {
+    safe: false,
+    warning,
+    currentTokens: currentTokenCount,
+    targetWindow: targetContextWindow,
+  };
+}
+
 function ModelPickerWrapper({
   onDone,
+  messages,
 }: {
   onDone: (
     result?: string,
     options?: { display?: CommandResultDisplay },
   ) => void
+  messages?: import('../../types/message.js').Message[]
 }): React.ReactNode {
   const mainLoopModel = useAppState(s => s.mainLoopModel);
   const mainLoopModelForSession = useAppState(s => s.mainLoopModelForSession);
@@ -487,6 +527,12 @@ function ModelPickerWrapper({
     if (wasFastModeToggledOn === false) {
       message += ` · ${t('model.fastModeOff')}`;
     }
+
+    const compatCheck = checkContextWindowCompatibility(selectedModel, messages);
+    if (!compatCheck.safe) {
+      message += '\n\n' + compatCheck.warning;
+    }
+
     onDone(message);
   }
 
@@ -630,56 +676,10 @@ function SetModelAndClose({
       }
     }
 
-    /**
-     * Check if switching to a model with a smaller context window would
-     * cause the current conversation to exceed the new model's capacity.
-     * Returns a warning message if there's a problem, or null if safe.
-     */
-    function checkContextWindowCompatibility(
-      targetModel: string,
-    ): { safe: true } | { safe: false; warning: string; currentTokens: number; targetWindow: number } {
-      const messages = context.messages;
-      if (!messages || messages.length === 0) {
-        return { safe: true };
-      }
-
-      const currentTokenCount = tokenCountWithEstimation(messages);
-      const targetContextWindow = getContextWindowForModel(targetModel);
-      const targetEffectiveWindow = getEffectiveContextWindowSize(targetModel);
-      const targetCompactThreshold = getAutoCompactThreshold(targetModel);
-
-      // If current context is within the new model's effective window, it's safe
-      if (currentTokenCount <= targetEffectiveWindow) {
-        return { safe: true };
-      }
-
-      // Context exceeds the new model's capacity
-      const detected = getDetectedModelInfo(targetModel);
-      const modelDisplay = detected
-        ? `${detected.name} (${formatTokens(detected.contextWindow)} context)`
-        : renderModelLabel(targetModel);
-
-      let warning = `⚠️  Context window warning: Current conversation (${formatTokens(currentTokenCount)}) exceeds ${modelDisplay}'s effective capacity (${formatTokens(targetEffectiveWindow)}).`;
-
-      if (currentTokenCount > targetCompactThreshold) {
-        warning += `\n   The next message will likely fail with "prompt too long" and trigger emergency compaction, which may lose important context.`;
-      }
-
-      warning += `\n   Suggestion: Run /compact first to compress the conversation before switching models.`;
-
-      return {
-        safe: false,
-        warning,
-        currentTokens: currentTokenCount,
-        targetWindow: targetContextWindow,
-      };
-    }
-
     function setModel(modelValue: string | null): void {
-      // Check context window compatibility before switching
       let compatibilityWarning = '';
       if (modelValue) {
-        const check = checkContextWindowCompatibility(modelValue);
+        const check = checkContextWindowCompatibility(modelValue, context.messages);
         if (!check.safe) {
           compatibilityWarning = '\n\n' + check.warning;
         }
@@ -701,7 +701,7 @@ function SetModelAndClose({
             fastMode: false
           }));
           wasFastModeToggledOn = false;
-        } else if (isFastModeSupportedByModel(modelValue) && isFastMode) {
+        } else if (isFastModeSupportedByModel(modelValue) && isFastModeAvailable() && isFastMode) {
           message += ` · ${t('model.fastModeOn')}`;
           wasFastModeToggledOn = true;
         }
@@ -781,7 +781,7 @@ export const call: LocalJSXCommandCall = async (onDone, _context, args) => {
     });
     return <SetModelAndClose args={args} onDone={onDone} context={_context} />;
   }
-  return <ModelPickerWrapper onDone={onDone} />;
+  return <ModelPickerWrapper onDone={onDone} messages={_context.messages} />;
 };
 function renderModelLabel(model: string | null): string {
   const persistedCustomModel = readCustomApiStorage().model?.trim();
