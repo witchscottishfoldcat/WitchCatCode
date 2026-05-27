@@ -14,7 +14,7 @@ import { OAuthService } from '../services/oauth/index.js';
 import { getOauthAccountInfo, validateForceLoginOrg } from '../utils/auth.js';
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
-import { type ProviderConfig, deriveProviderId, getProviderKeyFromConfig, readCustomApiStorage, writeCustomApiStorage, isGlmLike, isAnthropicCompatible, GLM_DEFAULT_BASE_URL, GLM_DEFAULT_MODELS } from '../utils/customApiStorage.js';
+import { type ProviderConfig, deriveProviderId, getProviderKeyFromConfig, readCustomApiStorage, writeCustomApiStorage, isGlmLike, isMimoLike, isAnthropicCompatible, GLM_DEFAULT_BASE_URL, GLM_DEFAULT_MODELS, MIMO_DEFAULT_BASE_URL, MIMO_DEFAULT_MODELS } from '../utils/customApiStorage.js';
 import { logError } from '../utils/log.js';
 import { getSettings_DEPRECATED } from '../utils/settings/settings.js';
 import { Select } from './CustomSelect/select.js';
@@ -29,7 +29,7 @@ type Props = {
   forceLoginMethod?: 'claudeai' | 'console';
   onTextInputActiveChange?: (active: boolean) => void;
 };
-type CompatibleApiProvider = 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
+type CompatibleApiProvider = 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like' | 'mimo-like';
 type OpenAICompatibleAuthMode = 'chat-completions' | 'responses' | 'oauth';
 type GeminiCompatibleAuthMode = 'vertex-compatible' | 'gemini-cli-oauth';
 type CompatibleAuthMode = 'api-key' | OpenAICompatibleAuthMode | GeminiCompatibleAuthMode;
@@ -125,6 +125,9 @@ function extractAccountNameFromUrl(baseURL: string | undefined, providerId: stri
   if (providerId === 'glm-like') {
     return baseURL ? extractHost(baseURL) : 'GLM';
   }
+  if (providerId === 'mimo-like') {
+    return baseURL ? extractHost(baseURL) : 'MiMo (Xiaomi)';
+  }
   if (!baseURL) return 'OpenAI-compatible';
   return extractHost(baseURL);
 }
@@ -135,7 +138,8 @@ function extractHost(url: string): string {
     let host = u.hostname
       .replace(/^api[.-]/, '')
       .replace(/^openai[.-]/, '')
-      .replace(/^claude[.-]/, '');
+      .replace(/^claude[.-]/, '')
+      .replace(/^token-plan(?:-[a-z]+)?[.-]/, '');
     if (host.includes('.')) {
       host = host.split('.')[0]!;
     }
@@ -341,12 +345,13 @@ export function ConsoleOAuthFlow({
   const startCompatibleApiConfig = useCallback((provider: CompatibleApiProvider) => {
     const nextAuthMode = getDefaultAuthMode(provider);
     const isGlm = isGlmLike(provider);
-    const glmBaseURL = isGlm ? GLM_DEFAULT_BASE_URL : undefined;
+    const isMimo = isMimoLike(provider);
+    const presetBaseURL = isGlm ? GLM_DEFAULT_BASE_URL : isMimo ? MIMO_DEFAULT_BASE_URL : undefined;
     const nextProviderKey = {
       kind: provider,
-      id: provider === 'openai-like' ? 'openai' : deriveProviderId(glmBaseURL, provider),
+      id: provider === 'openai-like' ? 'openai' : deriveProviderId(presetBaseURL, provider),
       authMode: nextAuthMode,
-      baseURL: glmBaseURL,
+      baseURL: presetBaseURL,
     };
     setCompatibleApiProvider(provider);
     setCompatibleAuthMode(nextAuthMode);
@@ -357,13 +362,16 @@ export function ConsoleOAuthFlow({
     if (isGlm) {
       setCustomBaseURL(GLM_DEFAULT_BASE_URL);
     }
+    if (isMimo) {
+      setCustomBaseURL(MIMO_DEFAULT_BASE_URL);
+    }
     setCustomApiKey('');
-    setCustomModels(isGlm ? GLM_DEFAULT_MODELS.join(' ') : getProviderModelsInput(persistedProviders, nextProviderKey));
+    setCustomModels(isGlm ? GLM_DEFAULT_MODELS.join(' ') : isMimo ? MIMO_DEFAULT_MODELS.join(' ') : getProviderModelsInput(persistedProviders, nextProviderKey));
     setOAuthStatus({
       state: 'custom_config',
       provider,
       authMode: nextAuthMode,
-      step: isGlm ? 'apiKey' : provider === 'anthropic-like' ? 'baseURL' : 'authMode'
+      step: isGlm || isMimo ? 'apiKey' : provider === 'anthropic-like' ? 'baseURL' : 'authMode'
     });
   }, [persistedProviders]);
 
@@ -787,7 +795,9 @@ export function ConsoleOAuthFlow({
               ? t('oauth.geminiEndpointSaved', { authMode: safeOauthStatus.authMode })
               : safeOauthStatus.provider === 'glm-like'
                 ? t('oauth.glmEndpointSaved')
-                : t('oauth.anthropicEndpointSaved'),
+                : safeOauthStatus.provider === 'mimo-like'
+                  ? t('oauth.mimoEndpointSaved')
+                  : t('oauth.anthropicEndpointSaved'),
         notificationType: 'auth_success'
       }, terminal);
     }
@@ -1114,7 +1124,9 @@ function OAuthStatusMessage({
                     ? 'Gemini-compatible'
                     : provider.kind === 'glm-like'
                       ? 'GLM (智谱AI)'
-                      : 'Anthropic-compatible';
+                      : provider.kind === 'mimo-like'
+                        ? 'MiMo (Xiaomi)'
+                        : 'Anthropic-compatible';
                 const authLabel = provider.authMode === 'oauth'
                   ? 'OAuth'
                   : provider.authMode === 'responses'
@@ -1267,6 +1279,14 @@ function OAuthStatusMessage({
                     </Text>
                   ),
                   value: 'glm-like'
+                },
+                {
+                  label: (
+                    <Text>
+                      {t('oauth.mimoLikeApi')}
+                    </Text>
+                  ),
+                  value: 'mimo-like'
                 }
               ]}
               onChange={value => {
@@ -1288,7 +1308,9 @@ function OAuthStatusMessage({
           ? 'Gemini-compatible API'
           : oauthStatus.provider === 'glm-like'
             ? 'GLM (智谱AI)'
-            : 'Anthropic-compatible API';
+            : oauthStatus.provider === 'mimo-like'
+              ? 'MiMo (Xiaomi)'
+              : 'Anthropic-compatible API';
 
       if (oauthStatus.step === 'authMode') {
         return (

@@ -1,4 +1,4 @@
-﻿import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
+import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { randomUUID } from 'crypto'
 import type { GoogleAuth } from 'google-auth-library'
 import {
@@ -110,7 +110,7 @@ export async function getAnthropicClient({
     ? {
         ...readCustomApiStorage(),
         providerKind: rp.kind,
-        provider: rp.kind === 'openai-like'
+        provider: rp.kind === 'openai-like' || rp.kind === 'mimo-like'
           ? 'openai' as const
           : rp.kind === 'anthropic-like' || rp.kind === 'glm-like'
             ? 'anthropic' as const
@@ -121,7 +121,7 @@ export async function getAnthropicClient({
     : readCustomApiStorage()
   const activeProviderConfig = rp?.provider ?? getActiveProviderConfig(customApiStorage)
   const customApiProvider =
-    customApiStorage.providerKind === 'openai-like'
+    customApiStorage.providerKind === 'openai-like' || customApiStorage.providerKind === 'mimo-like'
       ? 'openai'
       : customApiStorage.providerKind === 'anthropic-like' || customApiStorage.providerKind === 'glm-like'
         ? 'anthropic'

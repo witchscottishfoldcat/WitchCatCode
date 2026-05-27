@@ -130,7 +130,7 @@ export function SkillsMenu(t0) {
     }
     return t5;
   }
-  const renderSkill = _temp3;
+  const renderSkill = (skill_1) => _temp3(skill_1, descriptionTokens);
   let t3;
   if ($[10] !== skillsBySource) {
     t3 = source_0 => {
@@ -229,7 +229,7 @@ export function SkillsMenu(t0) {
   }
   return t14;
 }
-function _temp3(skill_0) {
+function _temp3(skill_0, descriptionTokens) {
   const estimatedTokens = estimateSkillFrontmatterTokens(skill_0);
   const tokenDisplay = `~${formatTokens(estimatedTokens)}`;
   const pluginName = skill_0.source === "plugin" ? skill_0.pluginInfo?.pluginManifest.name : undefined;

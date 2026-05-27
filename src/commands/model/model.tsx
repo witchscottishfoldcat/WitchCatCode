@@ -1,4 +1,4 @@
-﻿﻿﻿import { c as _c } from "react/compiler-runtime";
+﻿import { c as _c } from "react/compiler-runtime";
 import chalk from 'chalk';
 import * as React from 'react';
 import { t } from '../../i18n/core.js';
@@ -20,6 +20,9 @@ import {
   writeCustomApiStorage,
   type ProviderAuthMode,
   type ProviderConfig,
+  type CustomApiStorageData,
+  MIMO_DEFAULT_BASE_URL,
+  MIMO_DEFAULT_MODELS,
 } from '../../utils/customApiStorage.js';
 import {
   type ReasoningSelection,
@@ -63,7 +66,7 @@ function tryExtractHost(url: string): string {
 }
 
 function makeConfiguredOptionValue(
-  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like',
+  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like' | 'mimo-like',
   providerId: string,
   baseURL: string | undefined,
   authMode: ProviderAuthMode,
@@ -79,7 +82,7 @@ function isConfiguredProviderValue(value: string): boolean {
 const BUILTIN_NO_PREFERENCE = '__NO_PREFERENCE__'
 
 function parseConfiguredOptionValue(value: string): {
-  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
+  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like' | 'mimo-like';
   providerId: string;
   baseURL: string | undefined;
   authMode: ProviderAuthMode;
@@ -95,7 +98,8 @@ function parseConfiguredOptionValue(value: string): {
     providerKind !== 'anthropic-like' &&
     providerKind !== 'openai-like' &&
     providerKind !== 'gemini-like' &&
-    providerKind !== 'glm-like'
+    providerKind !== 'glm-like' &&
+    providerKind !== 'mimo-like'
   ) return null;
   const providerId = value.slice(first + 2, second);
   if (!providerId) return null;
@@ -165,7 +169,7 @@ function persistSelectedConfiguredModel(
     activeModel: parsed.model,
     activeAuthMode: providerForModel.authMode,
     provider:
-      providerForModel.kind === 'openai-like'
+      providerForModel.kind === 'openai-like' || providerForModel.kind === 'mimo-like'
         ? 'openai'
         : providerForModel.kind === 'gemini-like'
           ? 'gemini'
@@ -207,11 +211,17 @@ function formatReasoningMessage(model: string | null, reasoning: ReasoningSelect
 
 // Helper to get provider display name
 function getProviderDisplayName(provider: ProviderConfig): string {
+  const FRIENDLY_NAMES: Record<string, string> = {
+    xiaomimimo: 'MiMo (Xiaomi)',
+    mimo: 'MiMo (Xiaomi)',
+  }
+  if (FRIENDLY_NAMES[provider.id]) return FRIENDLY_NAMES[provider.id];
   if (provider.id) return provider.id;
   if (provider.baseURL) return extractAccountName(provider.baseURL, provider.kind);
   return provider.kind === 'anthropic-like' ? 'Anthropic'
     : provider.kind === 'openai-like' ? 'OpenAI Compatible'
     : provider.kind === 'gemini-like' ? 'Gemini Compatible'
+    : provider.kind === 'mimo-like' ? 'MiMo (Xiaomi)'
     : 'GLM Zhipu';
 }
 
@@ -222,6 +232,7 @@ function getProviderIcon(kind: string): string {
     case 'openai-like': return '◇';
     case 'gemini-like': return '▲';
     case 'glm-like': return '▼';
+    case 'mimo-like': return '■';
     default: return '●';
   }
 }
@@ -246,7 +257,7 @@ function getProviderOptions(
   const activeProviderKey = activeProvider ? getProviderKeyFromConfig(activeProvider) : 'builtin';
 
   // Sort providers: active first, then by kind
-  const providerOrder = ['anthropic-like', 'openai-like', 'gemini-like', 'glm-like'];
+  const providerOrder = ['anthropic-like', 'openai-like', 'gemini-like', 'glm-like', 'mimo-like'];
   const sortedProviders = [...providers].sort((a, b) => {
     const aKey = getProviderKeyFromConfig(a);
     const bKey = getProviderKeyFromConfig(b);
@@ -282,6 +293,23 @@ function getProviderOptions(
     });
   }
 
+  const hasMimoProvider = providers.some(p => p.kind === 'mimo-like')
+  if (!hasMimoProvider) {
+    const mimoPreset: ProviderConfig = {
+      id: 'mimo',
+      kind: 'mimo-like',
+      authMode: 'chat-completions',
+      baseURL: MIMO_DEFAULT_BASE_URL,
+      models: [...MIMO_DEFAULT_MODELS],
+    }
+    result.push({
+      value: '__mimo_preset__',
+      label: `${getProviderIcon('mimo-like')} MiMo (Xiaomi) · ${t('model.setupRequired')}`,
+      description: `8 models · OpenAI-compatible`,
+      provider: mimoPreset,
+    })
+  }
+
   return result;
 }
 
@@ -291,7 +319,7 @@ type ModelSelectOption = {
   description: string;
   model: string;
   providerId: string;
-  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like';
+  providerKind: 'anthropic-like' | 'openai-like' | 'gemini-like' | 'glm-like' | 'mimo-like';
   authMode: ProviderAuthMode;
   reasoning?: ProviderConfig['reasoning'];
   isCurrent?: boolean;
@@ -359,7 +387,9 @@ function getModelsForProvider(
       ? t('model.providerLabel.geminiCompatible')
       : provider.kind === 'glm-like'
         ? t('model.providerLabel.glmZhipu')
-        : t('model.providerLabel.anthropicCompatible');
+        : provider.kind === 'mimo-like'
+          ? t('model.providerLabel.mimoXiaomi')
+          : t('model.providerLabel.anthropicCompatible');
   const authLabel = provider.authMode === 'api-key'
     ? t('model.authLabel.apiKey')
     : provider.authMode === 'chat-completions'
@@ -494,6 +524,25 @@ function ModelPickerWrapper({
 
   function handleProviderSelect(providerKey: string): void {
     const providers = storage.providers ?? [];
+    if (providerKey === '__mimo_preset__') {
+      const mimoConfig: ProviderConfig = {
+        id: 'mimo',
+        kind: 'mimo-like',
+        authMode: 'chat-completions',
+        baseURL: MIMO_DEFAULT_BASE_URL,
+        apiKey: '',
+        models: [...MIMO_DEFAULT_MODELS],
+      }
+      const updatedProviders = [...providers, mimoConfig]
+      const updatedStorage: CustomApiStorageData = {
+        ...storage,
+        providers: updatedProviders,
+      }
+      writeCustomApiStorage(updatedStorage)
+      setSelectedProvider(mimoConfig)
+      setLevel('model')
+      return
+    }
     const provider = providerKey === 'builtin'
       ? null
       : providers.find(p => getProviderKeyFromConfig(p) === providerKey) ?? null;

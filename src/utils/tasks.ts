@@ -452,7 +452,14 @@ export async function listTasks(taskListId: string): Promise<Task[]> {
     .filter(f => f.endsWith('.json'))
     .map(f => f.replace('.json', ''))
   const results = await Promise.all(taskIds.map(id => getTask(taskListId, id)))
-  return results.filter((t): t is Task => t !== null)
+  return results
+    .filter((t): t is Task => t !== null)
+    .sort((a, b) => {
+      const numA = parseInt(a.id, 10)
+      const numB = parseInt(b.id, 10)
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+      return a.id.localeCompare(b.id)
+    })
 }
 
 export async function blockTask(

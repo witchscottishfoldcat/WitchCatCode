@@ -143,6 +143,14 @@ const KNOWN_MODEL_CONTEXT_WINDOWS: Array<{
 
   // OpenRouter generic
   { pattern: /openrouter/i, contextWindow: 128_000, name: 'OpenRouter' },
+
+  // MiMo (Xiaomi)
+  { pattern: /mimo[\-_]?v2\.5[\-_]?pro/i, contextWindow: 128_000, name: 'MiMo V2.5 Pro' },
+  { pattern: /mimo[\-_]?v2\.5/i, contextWindow: 128_000, name: 'MiMo V2.5' },
+  { pattern: /mimo[\-_]?v2[\-_]?pro/i, contextWindow: 128_000, name: 'MiMo V2 Pro' },
+  { pattern: /mimo[\-_]?v2[\-_]?omni/i, contextWindow: 128_000, name: 'MiMo V2 Omni' },
+  { pattern: /mimo[\-_]?v2/i, contextWindow: 128_000, name: 'MiMo V2' },
+  { pattern: /mimo/i, contextWindow: 128_000, name: 'MiMo' },
 ]
 
 /**

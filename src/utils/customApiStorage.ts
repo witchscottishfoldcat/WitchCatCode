@@ -5,6 +5,7 @@ export type CompatibleProviderKind =
   | 'openai-like'
   | 'gemini-like'
   | 'glm-like'
+  | 'mimo-like'
 
 export const GLM_DEFAULT_BASE_URL = 'https://open.bigmodel.cn/api/anthropic'
 export const GLM_DEFAULT_MODELS = ['glm-4.5-air', 'glm-5-turbo', 'glm-5.1']
@@ -12,8 +13,28 @@ export const GLM_DEFAULT_MODELS = ['glm-4.5-air', 'glm-5-turbo', 'glm-5.1']
 export const DEEPSEEK_DEFAULT_BASE_URL = 'https://api.deepseek.com'
 export const DEEPSEEK_DEFAULT_MODELS = ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner']
 
+export const MIMO_DEFAULT_BASE_URL = 'https://token-plan-sgp.xiaomimimo.com/v1'
+export const MIMO_DEFAULT_MODELS = [
+  'mimo-v2.5-pro',
+  'mimo-v2.5',
+  'mimo-v2.5-tts',
+  'mimo-v2.5-tts-voiceclone',
+  'mimo-v2.5-tts-voicedesign',
+  'mimo-v2-pro',
+  'mimo-v2-omni',
+  'mimo-v2-tts',
+]
+
 export function isGlmLike(kind: CompatibleProviderKind | undefined): boolean {
   return kind === 'glm-like'
+}
+
+export function isMimoLike(kind: CompatibleProviderKind | undefined): boolean {
+  return kind === 'mimo-like'
+}
+
+export function isOpenAiCompatible(kind: CompatibleProviderKind | undefined): boolean {
+  return kind === 'openai-like' || kind === 'mimo-like'
 }
 
 export function isAnthropicCompatible(kind: CompatibleProviderKind | undefined): boolean {
@@ -111,7 +132,9 @@ export function deriveProviderId(
         ? 'gemini'
         : kind === 'glm-like'
           ? 'glm'
-          : 'anthropic'
+          : kind === 'mimo-like'
+            ? 'mimo'
+            : 'anthropic'
   }
 
   try {
@@ -123,12 +146,13 @@ export function deriveProviderId(
       .replace(/^generativelanguage[.-]/, '')
       .replace(/^googleapis[.-]/, '')
       .replace(/^open[.-]/, '')
+      .replace(/^token-plan(?:-[a-z]+)?[.-]/, '')
       .replace(/^www\./, '')
 
     const parts = host.split('.').filter(Boolean)
     const providerId = parts[0]?.toLowerCase()
 
-    return providerId || (kind === 'openai-like' ? 'openai' : kind === 'gemini-like' ? 'gemini' : kind === 'glm-like' ? 'glm' : 'anthropic')
+    return providerId || (kind === 'openai-like' ? 'openai' : kind === 'gemini-like' ? 'gemini' : kind === 'glm-like' ? 'glm' : kind === 'mimo-like' ? 'mimo' : 'anthropic')
   } catch {
     return (baseURL
       .replace(/^https?:\/\//, '')
@@ -139,15 +163,16 @@ export function deriveProviderId(
       .replace(/^generativelanguage[.-]/, '')
       .replace(/^googleapis[.-]/, '')
       .replace(/^open[.-]/, '')
+      .replace(/^token-plan(?:-[a-z]+)?[.-]/, '')
       .replace(/^www\./, '')
       .split('.')[0] ||
-      (kind === 'openai-like' ? 'openai' : kind === 'gemini-like' ? 'gemini' : kind === 'glm-like' ? 'glm' : 'anthropic'))
+      (kind === 'openai-like' ? 'openai' : kind === 'gemini-like' ? 'gemini' : kind === 'glm-like' ? 'glm' : kind === 'mimo-like' ? 'mimo' : 'anthropic'))
       .toLowerCase()
   }
 }
 
 function normalizeProviderKind(value: unknown): CompatibleProviderKind | null {
-  return value === 'anthropic-like' || value === 'openai-like' || value === 'gemini-like' || value === 'glm-like' ? value : null
+  return value === 'anthropic-like' || value === 'openai-like' || value === 'gemini-like' || value === 'glm-like' || value === 'mimo-like' ? value : null
 }
 
 function normalizeLegacyProviderKind(value: unknown): CompatibleProviderKind {
@@ -246,7 +271,7 @@ function buildProviderSummary(
 > {
   return {
     provider:
-      provider?.kind === 'openai-like'
+      provider?.kind === 'openai-like' || provider?.kind === 'mimo-like'
         ? 'openai'
         : provider?.kind === 'anthropic-like'
           ? 'anthropic'
@@ -282,7 +307,7 @@ const AUTH_MODE_ALIASES: Record<string, ProviderAuthMode> = {
 function normalizeAuthMode(raw: string, kind: CompatibleProviderKind): ProviderAuthMode {
   const normalized = AUTH_MODE_ALIASES[raw]
   if (normalized) return normalized
-  if (kind === 'openai-like') return 'chat-completions'
+  if (kind === 'openai-like' || kind === 'mimo-like') return 'chat-completions'
   if (kind === 'gemini-like') return 'vertex-compatible'
   return 'api-key'
 }
@@ -294,7 +319,7 @@ function normalizeProviderConfig(value: Record<string, unknown>): ProviderConfig
   const authMode =
     typeof value.authMode === 'string'
       ? normalizeAuthMode(value.authMode, kind)
-      : kind === 'openai-like'
+      : kind === 'openai-like' || kind === 'mimo-like'
         ? 'chat-completions'
         : kind === 'gemini-like'
           ? 'vertex-compatible'
@@ -329,7 +354,7 @@ function migrateLegacyShape(value: Record<string, unknown>): CustomApiStorageDat
   const provider = {
     id: providerId,
     kind,
-    authMode: kind === 'openai-like' ? 'chat-completions' : kind === 'gemini-like' ? 'vertex-compatible' : 'api-key',
+    authMode: kind === 'openai-like' || kind === 'mimo-like' ? 'chat-completions' : kind === 'gemini-like' ? 'vertex-compatible' : 'api-key',
     baseURL,
     apiKey: typeof value.apiKey === 'string' ? value.apiKey : undefined,
     models,

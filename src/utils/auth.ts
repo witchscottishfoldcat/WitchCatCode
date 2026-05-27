@@ -123,7 +123,7 @@ export function hasCustomProviderAuth(): boolean {
   const provider = getActiveProviderConfig(storage)
   if (!provider) return false
   if (provider.kind === 'gemini-like') return hasGeminiCustomAuth()
-  if (provider.kind === 'glm-like' || provider.kind === 'openai-like') return !!provider.apiKey
+  if (provider.kind === 'glm-like' || provider.kind === 'openai-like' || provider.kind === 'mimo-like') return !!provider.apiKey
   if (provider.kind === 'anthropic-like') return !!provider.apiKey && !!provider.baseURL
   return false
 }
