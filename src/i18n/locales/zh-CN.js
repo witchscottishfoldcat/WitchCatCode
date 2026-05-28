@@ -2005,6 +2005,15 @@ const zhCN = {
   'feed.homeDirWarning': '\u6ce8\u610f\uff1a\u60a8\u5df2\u5728\u4e3b\u76ee\u5f55\u4e2d\u542f\u52a8 claude\u3002\u4e3a\u83b7\u5f97\u6700\u4f73\u4f53\u9a8c\uff0c\u8bf7\u5728\u9879\u76ee\u76ee\u5f55\u4e2d\u542f\u52a8\u3002',
   'feed.shareTextWithReward': '\u5206\u4eab Claude Code \u5e76\u8d62\u53d6 {amount} \u989d\u5916\u7528\u91cf',
   'feed.shareText': '\u4e0e\u670b\u53cb\u5206\u4eab Claude Code',
+
+  // gui command
+  'command.gui.description': '\u6253\u5f00 Web GUI \u63a7\u5236\u53f0',
+  'gui.launcher.starting': '\u6b63\u5728\u542f\u52a8 Web GUI \u670d\u52a1\u5668...',
+  'gui.launcher.ready': 'Web GUI \u5df2\u5c31\u7eea\uff01',
+  'gui.launcher.url': '\u5730\u5740',
+  'gui.launcher.error': 'Web GUI \u670d\u52a1\u5668\u542f\u52a8\u5931\u8d25',
+  'gui.launcher.hint': '\u5728\u6d4f\u89c8\u5668\u4e2d\u6253\u5f00\u4e0a\u8ff0\u5730\u5740\u8bbf\u95ee Web GUI\u3002\u6309 Ctrl+C \u505c\u6b62\u670d\u52a1\u3002',
+  'gui.launcher.pressToExit': '\u6309\u4efb\u610f\u952e\u9000\u51fa\u3002',
 }
 
 export default zhCN

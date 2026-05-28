@@ -2005,6 +2005,15 @@ const en = {
   'feed.homeDirWarning': 'Note: You have launched claude in your home directory. For the best experience, launch it in a project directory instead.',
   'feed.shareTextWithReward': 'Share Claude Code and earn {amount} of extra usage',
   'feed.shareText': 'Share Claude Code with friends',
+
+  // gui command
+  'command.gui.description': 'Open the Web GUI console',
+  'gui.launcher.starting': 'Starting Web GUI server...',
+  'gui.launcher.ready': 'Web GUI is ready!',
+  'gui.launcher.url': 'URL',
+  'gui.launcher.error': 'Failed to start Web GUI server',
+  'gui.launcher.hint': 'Open the URL in your browser to access the Web GUI. Press Ctrl+C to stop.',
+  'gui.launcher.pressToExit': 'Press any key to exit.',
 }
 
 export default en

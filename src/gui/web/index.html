@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WitchcatCode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f9fafb;
+      --bg-tertiary: #f3f4f6;
+      --bg-sidebar: #f9fafb;
+      --border: #e5e7eb;
+      --border-light: #f3f4f6;
+      --text: #111827;
+      --text-secondary: #4b5563;
+      --text-muted: #9ca3af;
+      --text-placeholder: #d1d5db;
+      --accent: #1a1a1a;
+      --accent-hover: #374151;
+      --accent-text: #ffffff;
+      --green: #059669;
+      --green-bg: #ecfdf5;
+      --green-border: #a7f3d0;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --red-border: #fecaca;
+      --orange: #d97706;
+      --orange-bg: #fffbeb;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-xs: 6px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 6px rgba(0,0,0,0.04), 0 12px 24px rgba(0,0,0,0.06);
+    }
+    html { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Layout */
+    .app { display: flex; height: 100vh; }
+    .sidebar {
+      width: 260px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sidebar-brand {
+      padding: 20px 16px 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-icon {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: var(--radius-xs);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--accent-text);
+      font-family: 'Inter', sans-serif;
+    }
+    .brand-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+    .brand-tag { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .sidebar-nav { flex: 1; padding: 4px 12px; }
+    .nav-group { margin-bottom: 20px; }
+    .nav-group-title {
+      font-size: 11px; font-weight: 500;
+      color: var(--text-muted);
+      padding: 0 8px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: var(--radius-xs);
+      cursor: pointer; color: var(--text-secondary); font-size: 13.5px;
+      transition: all 0.15s ease; margin-bottom: 1px;
+      font-weight: 500;
+    }
+    .nav-item:hover { background: var(--bg-tertiary); color: var(--text); }
+    .nav-item.active {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+    .nav-icon { width: 18px; display: flex; align-items: center; justify-content: center; }
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-light);
+      font-size: 11px; color: var(--text-muted);
+    }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; padding: 32px 40px; }
+    .main-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .main-title { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+    .main-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .refresh-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: var(--radius-xs);
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text-secondary); font-size: 13px; cursor: pointer;
+      transition: all 0.15s; font-weight: 500;
+    }
+    .refresh-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+    /* Cards */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      transition: all 0.2s ease;
+    }
+    .stat-card:hover { border-color: var(--text-placeholder); box-shadow: var(--shadow); }
+    .stat-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .stat-card-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .stat-card-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-xs);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .stat-card-value { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .stat-card-change { font-size: 12px; color: var(--text-muted); }
+    .icon-accent { background: var(--bg-tertiary); color: var(--text); }
+    .icon-green { background: var(--green-bg); color: var(--green); }
+    .icon-red { background: var(--red-bg); color: var(--red); }
+    .icon-orange { background: var(--orange-bg); color: var(--orange); }
+    .icon-blue { background: var(--blue-bg); color: var(--blue); }
+
+    /* Section Card */
+    .section { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+    }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .section-count {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; background: var(--bg-secondary); color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 12px 20px;
+      font-size: 11px; font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+    }
+    td { padding: 14px 20px; border-bottom: 1px solid var(--border-light); font-size: 13.5px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-secondary); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .badge-gray { background: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border); }
+    .badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid #bfdbfe; }
+
+    /* Key mask */
+    .key-mask {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--text-muted);
+      background: var(--bg-secondary); padding: 4px 8px;
+      border-radius: var(--radius-xs); border: 1px solid var(--border);
+    }
+
+    /* Model chips */
+    .model-chip {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: var(--radius-xs);
+      font-size: 11px; font-weight: 500;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      color: var(--text-secondary); margin: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Session row */
+    .session-prompt { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+    .session-meta { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .session-size { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state-icon { margin-bottom: 12px; opacity: 0.4; }
+    .empty-state-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+    .empty-state-desc { font-size: 13px; color: var(--text-muted); }
+
+    /* Loading */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 80px; gap: 8px; }
+    .spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border);
+      border-top-color: var(--text); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: var(--text-muted); }
+
+    /* Config table */
+    .config-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border-light); }
+    .config-row:last-child { border-bottom: none; }
+    .config-key { width: 160px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .config-value { flex: 1; font-size: 13.5px; color: var(--text); }
+    .config-value code {
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      background: var(--bg-secondary); padding: 3px 8px;
+      border-radius: var(--radius-xs); border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Chart bar */
+    .chart-bar-bg {
+      background: var(--bg-tertiary); border-radius: 4px; height: 6px; overflow: hidden;
+    }
+    .chart-bar-fill {
+      height: 100%; border-radius: 4px;
+      background: var(--accent);
+      transition: width 0.5s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 16px; }
+      .card-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .card-grid { grid-template-columns: 1fr; }
+      .config-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .config-key { width: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">WC</div>
+      <div>
+        <div class="brand-name">WitchcatCode</div>
+        <div class="brand-tag">控制台</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">仪表盘</div>
+        <div class="nav-item active" data-page="overview" onclick="navigate('overview')">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span>
+          概览
+        </div>
+        <div class="nav-item" data-page="stats" onclick="navigate('stats')">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+          统计数据
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">配置</div>
+        <div class="nav-item" data-page="providers" onclick="navigate('providers')">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+          服务商
+        </div>
+        <div class="nav-item" data-page="sessions" onclick="navigate('sessions')">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          会话
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">v1.1.5</div>
+  </aside>
+  <main class="main" id="main-content">
+    <div class="loading"><div class="spinner"></div><span class="loading-text">加载中...</span></div>
+  </main>
+</div>
+<script>
+(function() {
+  const TOKEN = new URLSearchParams(window.location.search).get('token');
+  if (!TOKEN) {
+    document.getElementById('main-content').innerHTML =
+      '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg></div><div class="empty-state-title">未授权</div><div class="empty-state-desc">缺少身份验证令牌</div></div>';
+    return;
+  }
+
+  const API = '/api';
+  const headers = { 'Authorization': 'Bearer ' + TOKEN };
+  let currentPage = 'overview';
+  let cachedData = { providers: null, config: null, sessions: null, stats: null };
+
+  async function fetchApi(path) {
+    const resp = await fetch(API + path, { headers });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp.json();
+  }
+
+  function fmtTokens(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return String(n);
+  }
+  function fmtCost(usd) { return '$' + usd.toFixed(4); }
+  function fmtSize(bytes) {
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return bytes + ' B';
+  }
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  function esc(s) { if (s == null) return ''; const el = document.createElement('div'); el.textContent = String(s); return el.innerHTML; }
+
+  function iconSvg(path, size) {
+    const s = size || 14;
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' + path + '</svg>';
+  }
+
+  function statCard(label, value, iconClass, iconSvgHtml, subtext) {
+    return '<div class="stat-card">' +
+      '<div class="stat-card-header"><span class="stat-card-label">' + label + '</span><span class="stat-card-icon ' + iconClass + '">' + iconSvgHtml + '</span></div>' +
+      '<div class="stat-card-value">' + value + '</div>' +
+      (subtext ? '<div class="stat-card-change">' + subtext + '</div>' : '') +
+      '</div>';
+  }
+
+  function renderOverview() {
+    const s = cachedData.stats;
+    const c = cachedData.config;
+    const total = (s ? s.totalInputTokens + s.totalOutputTokens : 0);
+    const totalLines = (s ? (s.linesAdded || 0) + (s.linesRemoved || 0) : 0);
+    return '<div class="main-header"><div><div class="main-title">概览</div><div class="main-subtitle">实时系统状态与指标</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
+      '<div class="card-grid">' +
+      statCard('总 Token 数', fmtTokens(total), 'icon-accent', iconSvg('<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'), (s ? fmtTokens(s.totalInputTokens) + ' 输入 / ' + fmtTokens(s.totalOutputTokens) + ' 输出' : '')) +
+      statCard('总花费', fmtCost(s?.totalCostUSD || 0), 'icon-green', iconSvg('<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'), '美元') +
+      statCard('代码行变更', fmtTokens(totalLines), 'icon-blue', iconSvg('<path d="M12 5v14M5 12h14"/>'), '+' + (s?.linesAdded || 0) + ' / -' + (s?.linesRemoved || 0)) +
+      statCard('API 调用', s?.apiCallCount || 0, 'icon-orange', iconSvg('<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'), '总请求数') +
+      '</div>' +
+      '<div class="section">' +
+      '<div class="section-header"><span class="section-title">当前配置</span></div>' +
+      '<div class="config-row"><span class="config-key">活跃服务商</span><span class="config-value"><code>' + esc(c?.providerId || c?.providerKind || '-') + '</code></span></div>' +
+      '<div class="config-row"><span class="config-key">活跃模型</span><span class="config-value"><code>' + esc(c?.activeModel || '-') + '</code></span></div>' +
+      '<div class="config-row"><span class="config-key">认证模式</span><span class="config-value"><code>' + esc(c?.authMode || '-') + '</code></span></div>' +
+      '<div class="config-row"><span class="config-key">基础地址</span><span class="config-value">' + (c?.baseURL ? '<code>' + esc(c.baseURL) + '</code>' : '<span style="color:var(--text-muted)">-</span>') + '</span></div>' +
+      '</div>';
+  }
+
+  function renderProviders() {
+    const providers = cachedData.providers || [];
+    return '<div class="main-header"><div><div class="main-title">服务商</div><div class="main-subtitle">API 服务配置与凭证</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
+      (providers.length === 0 ? '<div class="section"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="empty-state-title">未配置服务商</div><div class="empty-state-desc">使用 /model 命令配置 API 服务商</div></div></div>' :
+      '<div class="section"><table><thead><tr><th>服务商</th><th>类型</th><th>认证</th><th>API Key</th><th>基础地址</th><th>模型</th><th>状态</th></tr></thead><tbody>' +
+      providers.map(p => '<tr>' +
+        '<td><strong>' + esc(p.id) + '</strong></td>' +
+        '<td><span class="model-chip">' + esc(p.kind) + '</span></td>' +
+        '<td>' + esc(p.authMode) + '</td>' +
+        '<td><span class="key-mask">' + esc(p.maskedApiKey) + '</span></td>' +
+        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><code style="font-size:11px">' + esc(p.baseURL || '-') + '</code></td>' +
+        '<td>' + (p.models || []).map(m => '<span class="model-chip">' + esc(m) + '</span>').join('') + '</td>' +
+        '<td>' + (p.isActive ? '<span class="badge badge-green"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span> 活跃</span>' : '<span class="badge badge-gray">未激活</span>') + '</td>' +
+      '</tr>').join('') +
+      '</tbody></table></div>');
+  }
+
+  function renderSessions() {
+    const sessions = cachedData.sessions || [];
+    return '<div class="main-header"><div><div class="main-title">会话</div><div class="main-subtitle">对话历史与记忆</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
+      (sessions.length === 0 ? '<div class="section"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="empty-state-title">暂无会话</div><div class="empty-state-desc">在 CLI 中开始对话以创建会话</div></div></div>' :
+      '<div class="section"><div class="section-header"><span class="section-title">最近会话</span><span class="section-count">' + sessions.length + '</span></div><table><thead><tr><th>会话 ID</th><th>项目路径</th><th>首条提示</th><th>大小</th><th>创建时间</th></tr></thead><tbody>' +
+      sessions.map(s => '<tr class="session-row"><td><code style="font-size:11px;color:var(--blue)">' + esc(s.sessionId.slice(0, 12)) + '...</code></td><td>' + esc(s.projectPath) + '</td><td class="session-prompt">' + esc(s.firstPrompt || '-') + '</td><td class="session-size">' + fmtSize(s.sizeBytes) + '</td><td class="session-meta">' + fmtDate(s.createdAt) + '</td></tr>').join('') +
+      '</tbody></table></div>');
+  }
+
+  function renderStats() {
+    const s = cachedData.stats;
+    const modelEntries = s ? Object.entries(s.modelUsage) : [];
+    const maxTokens = modelEntries.length > 0 ? Math.max(...modelEntries.map(([,u]) => u.inputTokens + u.outputTokens)) : 1;
+    return '<div class="main-header"><div><div class="main-title">统计数据</div><div class="main-subtitle">Token 用量与模型分布</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
+      '<div class="card-grid">' +
+      statCard('总 Token 数', fmtTokens((s?.totalInputTokens || 0) + (s?.totalOutputTokens || 0)), 'icon-accent', iconSvg('<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'), '所有模型合计') +
+      statCard('API 耗时', s ? (s.totalAPIDurationMs / 1000).toFixed(1) + '秒' : '-', 'icon-blue', iconSvg('<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/>'), 'API 请求总时间') +
+      statCard('总耗时', s ? (s.totalDurationMs / 1000).toFixed(1) + '秒' : '-', 'icon-orange', iconSvg('<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/>'), '含系统开销') +
+      '</div>' +
+      '<div class="section"><div class="section-header"><span class="section-title">模型用量</span><span class="section-count">' + modelEntries.length + '</span></div>' +
+      (modelEntries.length === 0 ? '<div class="empty-state"><div class="empty-state-title">暂无模型使用数据</div><div class="empty-state-desc">开始对话后将显示使用数据</div></div>' :
+      '<table><thead><tr><th>模型</th><th>输入 Token</th><th>输出 Token</th><th>总计</th><th style="width:200px">分布</th></tr></thead><tbody>' +
+      modelEntries.map(([model, usage]) => {
+        const total = usage.inputTokens + usage.outputTokens;
+        const pct = maxTokens > 0 ? (total / maxTokens * 100).toFixed(0) : 0;
+        return '<tr><td><span class="model-chip">' + esc(model) + '</span></td><td>' + fmtTokens(usage.inputTokens) + '</td><td>' + fmtTokens(usage.outputTokens) + '</td><td><strong>' + fmtTokens(total) + '</strong></td><td><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:' + pct + '%"></div></div></td></tr>';
+      }).join('') +
+      '</tbody></table>') +
+      '</div>';
+  }
+
+  function render() {
+    const el = document.getElementById('main-content');
+    switch (currentPage) {
+      case 'overview': el.innerHTML = renderOverview(); break;
+      case 'providers': el.innerHTML = renderProviders(); break;
+      case 'sessions': el.innerHTML = renderSessions(); break;
+      case 'stats': el.innerHTML = renderStats(); break;
+    }
+  }
+
+  window.navigate = function(page) {
+    currentPage = page;
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+    render();
+  };
+
+  window.reload = async function() {
+    document.getElementById('main-content').innerHTML = '<div class="loading"><div class="spinner"></div><span class="loading-text">加载中...</span></div>';
+    await loadAll();
+  };
+
+  async function loadAll() {
+    try {
+      const [providers, config, sessions, stats] = await Promise.all([
+        fetchApi('/config/providers').catch(() => []),
+        fetchApi('/config/current').catch(() => ({})),
+        fetchApi('/sessions').catch(() => []),
+        fetchApi('/stats/overview').catch(() => ({})),
+      ]);
+      cachedData = { providers, config, sessions, stats };
+      render();
+    } catch (e) {
+      document.getElementById('main-content').innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg></div><div class="empty-state-title">出错了</div><div class="empty-state-desc">' + esc(e.message) + '</div></div>';
+    }
+  }
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
