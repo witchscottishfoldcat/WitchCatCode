@@ -236,6 +236,89 @@
       transition: width 0.5s ease;
     }
 
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 480px; max-width: 90vw;
+      box-shadow: var(--shadow-lg); overflow: hidden;
+      transform: translateY(8px); transition: transform 0.2s ease;
+    }
+    .modal-overlay.show .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+    }
+    .modal-title { font-size: 15px; font-weight: 600; }
+    .modal-close {
+      width: 28px; height: 28px; border-radius: var(--radius-xs);
+      border: none; background: transparent; color: var(--text-muted);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .modal-close:hover { background: var(--bg-secondary); color: var(--text); }
+    .modal-body { padding: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label {
+      display: block; font-size: 12px; font-weight: 500;
+      color: var(--text-secondary); margin-bottom: 6px;
+    }
+    .form-input, .form-select {
+      width: 100%; padding: 8px 12px; border-radius: var(--radius-xs);
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); font-size: 13.5px; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus {
+      outline: none; border-color: var(--text-muted);
+    }
+    .form-input::placeholder { color: var(--text-placeholder); }
+    .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 8px;
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+    }
+    .btn {
+      padding: 8px 16px; border-radius: var(--radius-xs); font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+      font-family: inherit;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-text); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--bg-secondary); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+    /* Action buttons in table */
+    .action-btn {
+      padding: 4px 10px; border-radius: var(--radius-xs);
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text-secondary); font-size: 12px; cursor: pointer;
+      transition: all 0.15s; font-family: inherit; font-weight: 500;
+    }
+    .action-btn:hover { border-color: var(--text-muted); color: var(--text); }
+    .action-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+    .action-btn.primary:hover { background: var(--accent-hover); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      padding: 12px 20px; border-radius: var(--radius-xs);
+      background: var(--accent); color: var(--accent-text);
+      font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow-lg); transform: translateY(100px);
+      transition: transform 0.3s ease; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); }
+    .toast.error { background: var(--red); }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar { display: none; }
@@ -289,6 +372,10 @@
     <div class="loading"><div class="spinner"></div><span class="loading-text">加载中...</span></div>
   </main>
 </div>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal" onclick="event.stopPropagation()"></div>
+</div>
+<div class="toast" id="toast"></div>
 <script>
 (function() {
   const TOKEN = new URLSearchParams(window.location.search).get('token');
@@ -365,7 +452,7 @@
     const providers = cachedData.providers || [];
     return '<div class="main-header"><div><div class="main-title">服务商</div><div class="main-subtitle">API 服务配置与凭证</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
       (providers.length === 0 ? '<div class="section"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="empty-state-title">未配置服务商</div><div class="empty-state-desc">使用 /model 命令配置 API 服务商</div></div></div>' :
-      '<div class="section"><table><thead><tr><th>服务商</th><th>类型</th><th>认证</th><th>API Key</th><th>基础地址</th><th>模型</th><th>状态</th></tr></thead><tbody>' +
+      '<div class="section"><table><thead><tr><th>服务商</th><th>类型</th><th>认证</th><th>API Key</th><th>基础地址</th><th>模型</th><th>状态</th><th style="width:120px">操作</th></tr></thead><tbody>' +
       providers.map(p => '<tr>' +
         '<td><strong>' + esc(p.id) + '</strong></td>' +
         '<td><span class="model-chip">' + esc(p.kind) + '</span></td>' +
@@ -374,6 +461,10 @@
         '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><code style="font-size:11px">' + esc(p.baseURL || '-') + '</code></td>' +
         '<td>' + (p.models || []).map(m => '<span class="model-chip">' + esc(m) + '</span>').join('') + '</td>' +
         '<td>' + (p.isActive ? '<span class="badge badge-green"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span> 活跃</span>' : '<span class="badge badge-gray">未激活</span>') + '</td>' +
+        '<td><div style="display:flex;gap:4px">' +
+        '<button class="action-btn" onclick="openEditModal(' + "'" + esc(p.id) + "'" + ')">编辑</button>' +
+        (p.isActive ? '' : '<button class="action-btn primary" onclick="activateProvider(' + "'" + esc(p.id) + "'" + ')">激活</button>') +
+        '</div></td>' +
       '</tr>').join('') +
       '</tbody></table></div>');
   }
@@ -446,6 +537,92 @@
   }
 
   loadAll();
+
+  /* Modal */
+  window.openEditModal = function(providerId) {
+    const p = (cachedData.providers || []).find(x => x.id === providerId);
+    if (!p) return;
+    const modal = document.getElementById('modal');
+    modal.innerHTML =
+      '<div class="modal-header"><span class="modal-title">编辑服务商</span><button class="modal-close" onclick="closeModal()">' + iconSvg('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>') + '</button></div>' +
+      '<div class="modal-body">' +
+      '<div class="form-group"><label class="form-label">服务商 ID</label><input class="form-input" id="edit-id" value="' + esc(p.id) + '" disabled /></div>' +
+      '<div class="form-group"><label class="form-label">类型</label><select class="form-select" id="edit-kind">' +
+      '<option value="anthropic-like"' + (p.kind === 'anthropic-like' ? ' selected' : '') + '>anthropic-like</option>' +
+      '<option value="openai-like"' + (p.kind === 'openai-like' ? ' selected' : '') + '>openai-like</option>' +
+      '<option value="gemini-like"' + (p.kind === 'gemini-like' ? ' selected' : '') + '>gemini-like</option>' +
+      '<option value="glm-like"' + (p.kind === 'glm-like' ? ' selected' : '') + '>glm-like</option>' +
+      '<option value="mimo-like"' + (p.kind === 'mimo-like' ? ' selected' : '') + '>mimo-like</option>' +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">认证模式</label><select class="form-select" id="edit-auth">' +
+      '<option value="api-key"' + (p.authMode === 'api-key' ? ' selected' : '') + '>api-key</option>' +
+      '<option value="chat-completions"' + (p.authMode === 'chat-completions' ? ' selected' : '') + '>chat-completions</option>' +
+      '<option value="responses"' + (p.authMode === 'responses' ? ' selected' : '') + '>responses</option>' +
+      '<option value="oauth"' + (p.authMode === 'oauth' ? ' selected' : '') + '>oauth</option>' +
+      '<option value="vertex-compatible"' + (p.authMode === 'vertex-compatible' ? ' selected' : '') + '>vertex-compatible</option>' +
+      '<option value="gemini-cli-oauth"' + (p.authMode === 'gemini-cli-oauth' ? ' selected' : '') + '>gemini-cli-oauth</option>' +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">基础地址</label><input class="form-input" id="edit-baseurl" value="' + esc(p.baseURL || '') + '" placeholder="https://api.example.com" /></div>' +
+      '<div class="form-group"><label class="form-label">API Key</label><input class="form-input" id="edit-apikey" type="password" value="" placeholder="留空则保持不变" /><div class="form-hint">留空表示不修改现有 API Key</div></div>' +
+      '<div class="form-group"><label class="form-label">模型列表</label><input class="form-input" id="edit-models" value="' + esc((p.models || []).join(', ')) + '" placeholder="model-1, model-2" /><div class="form-hint">用逗号分隔多个模型</div></div>' +
+      '</div>' +
+      '<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveProvider()">保存</button></div>';
+    document.getElementById('modal-overlay').classList.add('show');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  };
+
+  window.saveProvider = async function() {
+    const id = document.getElementById('edit-id').value;
+    const kind = document.getElementById('edit-kind').value;
+    const authMode = document.getElementById('edit-auth').value;
+    const baseURL = document.getElementById('edit-baseurl').value || undefined;
+    const apiKey = document.getElementById('edit-apikey').value || undefined;
+    const modelsRaw = document.getElementById('edit-models').value;
+    const models = modelsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+    const body = { id, kind, authMode, baseURL, models };
+    if (apiKey) body.apiKey = apiKey;
+
+    try {
+      const resp = await fetch(API + '/config/providers', {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      showToast('保存成功');
+      closeModal();
+      await reload();
+    } catch (e) {
+      showToast('保存失败: ' + e.message, true);
+    }
+  };
+
+  window.activateProvider = async function(providerId) {
+    try {
+      const resp = await fetch(API + '/config/activate', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId }),
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      showToast('已激活');
+      await reload();
+    } catch (e) {
+      showToast('激活失败: ' + e.message, true);
+    }
+  };
+
+  function showToast(msg, isError) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
 })();
 </script>
 </body>

@@ -1,8 +1,12 @@
 import {
   readCustomApiStorage,
+  writeCustomApiStorage,
   getActiveProviderConfig,
+  getProviderKeyFromConfig,
   type ProviderConfig,
   type CustomApiStorageData,
+  type CompatibleProviderKind,
+  type ProviderAuthMode,
 } from '../../utils/customApiStorage.js'
 
 function maskApiKey(key: string | undefined): string {
@@ -28,6 +32,15 @@ export type CurrentConfig = {
   providerId: string | undefined
   authMode: string | undefined
   baseURL: string | undefined
+}
+
+export type UpdateProviderInput = {
+  id: string
+  kind: CompatibleProviderKind
+  authMode: ProviderAuthMode
+  baseURL?: string
+  apiKey?: string
+  models: string[]
 }
 
 export function createConfigService() {
@@ -58,6 +71,51 @@ export function createConfigService() {
         authMode: data.authMode,
         baseURL: data.baseURL,
       }
+    },
+
+    updateProvider(input: UpdateProviderInput): boolean {
+      const data = readCustomApiStorage()
+      const providers = data.providers ?? []
+      const idx = providers.findIndex(p => p.id === input.id)
+      if (idx === -1) return false
+
+      const updated: ProviderConfig = {
+        ...providers[idx],
+        ...input,
+      }
+      const nextProviders = [...providers]
+      nextProviders[idx] = updated
+
+      const next: CustomApiStorageData = {
+        ...data,
+        providers: nextProviders,
+      }
+      writeCustomApiStorage(next)
+      return true
+    },
+
+    setActiveProvider(providerId: string): boolean {
+      const data = readCustomApiStorage()
+      const providers = data.providers ?? []
+      const provider = providers.find(p => p.id === providerId)
+      if (!provider) return false
+
+      const next: CustomApiStorageData = {
+        ...data,
+        activeProviderKey: getProviderKeyFromConfig(provider),
+        activeProvider: provider.id,
+        activeAuthMode: provider.authMode,
+        activeModel: provider.models[0],
+        providerKind: provider.kind,
+        providerId: provider.id,
+        authMode: provider.authMode,
+        baseURL: provider.baseURL,
+        apiKey: provider.apiKey,
+        model: provider.models[0],
+        savedModels: provider.models,
+      }
+      writeCustomApiStorage(next)
+      return true
     },
   }
 }
