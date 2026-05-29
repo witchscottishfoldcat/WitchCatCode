@@ -35,5 +35,17 @@ export async function handleConfigRoutes(
     const current = services.configService.getCurrentConfig()
     return Response.json(current)
   }
+  if (path === '/api/config/model' && request.method === 'POST') {
+    try {
+      const body = await request.json()
+      const model = typeof body.model === 'string' ? body.model : undefined
+      if (!model) return Response.json({ error: 'Missing model' }, { status: 400 })
+      const ok = services.configService.setActiveModel(model)
+      if (!ok) return Response.json({ error: 'Invalid model' }, { status: 400 })
+      return Response.json({ success: true })
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
+  }
   return new Response('Not Found', { status: 404 })
 }

@@ -125,6 +125,11 @@ type OpenAIChatMessage = {
   content?: string | OpenAIChatContentPart[] | null
   tool_call_id?: string
   tool_calls?: OpenAIToolCall[]
+  // Reasoning produced by the model on a prior assistant turn. Some providers
+  // (e.g. DeepSeek) reject a follow-up request — "reasoning_content in the
+  // thinking mode must be passed back to the API" — unless the reasoning that
+  // accompanied that turn's tool calls is echoed back here.
+  reasoning_content?: string
 }
 
 type OpenAIChatReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
@@ -939,9 +944,19 @@ export function convertAnthropicRequestToOpenAI(input: {
           },
         }))
 
+      // Echo back any reasoning the model produced on this turn. Required by
+      // providers like DeepSeek when the turn includes tool calls; harmlessly
+      // ignored by providers that don't consume reasoning_content. Empty when
+      // the turn had no thinking blocks, so nothing is added.
+      const reasoningContent = blocks
+        .filter(block => block.type === 'thinking')
+        .map(block => (typeof block.thinking === 'string' ? block.thinking : ''))
+        .join('')
+
       messages.push({
         role: 'assistant',
         content: text || null,
+        ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
         ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
       })
     }

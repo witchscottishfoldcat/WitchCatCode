@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WitchcatCode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #ffffff; --bg-soft: #f9f9f9; --bg-tert: #f1f1f1;
+      --border: #e3e3e3; --border-light: #f3f3f3;
+      --text: #0d0d0d; --text-sec: #5e5e5e; --text-muted: #999999;
+      --accent: #000000; --accent-text: #ffffff;
+      --blue: #2563eb; --green: #10a37f; --green-bg: #e6f6f1;
+      --red: #dc2626; --red-bg: #fef2f2; --amber: #d97706; --amber-bg: #fffbeb;
+      --radius: 16px; --radius-sm: 12px; --radius-xs: 8px; --max-w: 800px;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+      font-size: 15px; line-height: 1.6; }
+    code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .app { display: flex; height: 100vh; }
+
+    /* Sidebar: session history */
+    .sidebar { width: 260px; flex-shrink: 0; background: var(--bg-soft);
+      border-right: 1px solid var(--border-light); display: flex; flex-direction: column; }
+    .sb-head { padding: 20px 16px 14px; display: flex; align-items: center; gap: 10px; }
+    .sb-logo { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius-xs);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+      font-weight: 700; color: var(--accent-text); }
+    .sb-title { font-size: 15px; font-weight: 600; flex: 1; letter-spacing: -0.3px; }
+    .new-btn { display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin: 0 16px 12px; padding: 10px; border-radius: var(--radius-xs);
+      border: 1px solid var(--border); background: var(--bg); cursor: pointer;
+      font-size: 14px; font-weight: 500; color: var(--text); font-family: inherit;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s; }
+    .new-btn:hover { background: var(--bg-tert); border-color: #d0d0d0; }
+    .sb-section { font-size: 12px; color: var(--text-muted); padding: 8px 16px 6px; font-weight: 500; }
+    .sb-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+    .sess { padding: 10px 12px; border-radius: var(--radius-xs); cursor: pointer; margin-bottom: 2px; transition: background 0.2s; }
+    .sess:hover { background: var(--bg-tert); }
+    .sess.active { background: #eaeaea; }
+    .sess-title { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    .sess-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .sb-empty { padding: 24px 16px; text-align: center; font-size: 13px; color: var(--text-muted); }
+    .sb-foot { padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
+
+    .layout { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+    /* Top bar (transparent and cleaner) */
+    .topbar { height: 60px; flex-shrink: 0; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 24px; gap: 10px; position: absolute; top:0; left:0; right:0; z-index: 10; }
+    .topbar.danger { background: var(--red-bg); }
+    .cwd { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; flex: 1; min-width: 0; }
+    .tb-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .cost { font-size: 13px; color: var(--text-muted); }
+    .sel { font-size: 13px; font-weight: 500; padding: 8px 12px; border: 1px solid var(--border);
+      border-radius: var(--radius-xs); background: var(--bg); color: var(--text); cursor: pointer;
+      font-family: inherit; max-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: border-color 0.2s; }
+    .sel:hover { border-color: #d0d0d0; }
+    .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-xs); border: 1px solid var(--border);
+      background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-sec); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .icon-btn:hover { background: var(--bg-soft); color: var(--text); }
+    .icon-btn:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+
+    .body { flex: 1; display: flex; min-height: 0; background: var(--bg); }
+    /* Padding bottom increased for floating input */
+    .transcript { flex: 1; overflow-y: auto; padding: 80px 0 160px; scroll-behavior: smooth; }
+    .inner { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+    .changes { width: 340px; flex-shrink: 0; border-left: 1px solid var(--border-light);
+      display: flex; flex-direction: column; background: var(--bg-soft); }
+    .changes.hidden { display: none; }
+    .changes-head { padding: 18px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; }
+    .changes-title { font-size: 15px; font-weight: 600; }
+    .changes-list { flex: 1; overflow-y: auto; padding: 10px; }
+    .change-item { padding: 10px 12px; border-radius: var(--radius-xs); cursor: pointer;
+      font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .change-item:hover { background: #eaeaea; }
+    .change-item .verb { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+      background: var(--bg-tert); color: var(--text-sec); }
+    .change-path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
+    .diff-view { flex: 1; overflow: auto; padding: 16px; font-size: 13px; display: none; border-top: 1px solid var(--border-light); }
+    .diff-view pre { white-space: pre-wrap; word-break: break-all; font-family: 'JetBrains Mono', monospace; line-height: 1.5; }
+    .diff-add { background: var(--green-bg); color: var(--green); display: block; }
+    .diff-del { background: var(--red-bg); color: var(--red); display: block; }
+
+    
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .msg-user { display: flex; justify-content: flex-end; }
+    .bubble { background: var(--bg-soft); color: var(--text); padding: 14px 20px;
+      border-radius: 20px 20px 6px 20px; max-width: 80%; font-size: 15px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+    .ai { display: flex; gap: 16px; align-items: flex-start; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+      color: var(--accent-text); flex-shrink: 0; }
+    .ai-body { flex: 1; min-width: 0; margin-top: 4px; }
+    .ai-text { font-size: 15px; line-height: 1.7; word-break: break-word; color: var(--text); }
+    .ai-text p { margin-bottom: 12px; } .ai-text p:last-child { margin: 0; }
+    .ai-text code { background: var(--bg-soft); padding: 3px 6px; border-radius: 6px; font-size: 13.5px; border: 1px solid var(--border-light); }
+    .ai-text pre { background: var(--bg-soft); color: var(--text); border-radius: var(--radius-sm); padding: 16px;
+      overflow-x: auto; margin: 16px 0; font-size: 13.5px; line-height: 1.6; border: 1px solid var(--border-light); }
+    .ai-text pre code { background: none; padding: 0; color: inherit; border: none; }
+
+    .think { margin: 12px 0; }
+    .think summary { font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; user-select: none; }
+    .think .think-body { font-size: 13.5px; color: var(--text-sec); white-space: pre-wrap;
+      border-left: 3px solid var(--border-light); padding: 4px 0 4px 16px; margin-top: 10px; line-height: 1.6; }
+
+    .tool { border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 16px 0; overflow: hidden; background: var(--bg); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .tool-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; font-size: 14px; }
+    .tool-name { font-weight: 600; color: var(--text); }
+    .tool-summary { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    .tool-status { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; flex-shrink: 0; }
+    .st-run { background: var(--amber-bg); color: var(--amber); }
+    .st-ok { background: var(--green-bg); color: var(--green); }
+    .st-err { background: var(--red-bg); color: var(--red); }
+    .tool-body { border-top: 1px solid var(--border-light); padding: 16px; font-size: 13px; display: none; background: var(--bg-soft); }
+    .tool-body.open { display: block; }
+    .tool-body pre { white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow: auto;
+      font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+    .spin { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--amber);
+      border-radius: 50%; animation: rot .8s linear infinite; display: inline-block; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    .perm { border: 1px solid #fcd34d; background: #fffbeb; border-radius: var(--radius-sm);
+      padding: 20px; margin: 16px 0; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); }
+    .perm-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #b45309; }
+    .perm-tool { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #92400e;
+      margin-bottom: 16px; word-break: break-all; }
+    .perm-detail { background: #ffffff; border: 1px solid #fde68a; border-radius: var(--radius-xs);
+      padding: 12px 16px; font-size: 13px; margin-bottom: 16px; max-height: 250px; overflow: auto;
+      font-family: 'JetBrains Mono', monospace; white-space: pre-wrap; word-break: break-all; color: #92400e; }
+    .perm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .perm-actions button { padding: 9px 16px; border-radius: 20px; font-size: 14px;
+      font-weight: 600; cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: all 0.2s; }
+    .perm-allow { background: var(--accent); color: var(--accent-text); }
+    .perm-allow:hover { opacity: 0.85; }
+    .perm-always { background: var(--bg); color: var(--text); border-color: var(--border); }
+    .perm-always:hover { background: var(--bg-soft); }
+    .perm-deny { background: var(--bg); color: var(--red); border-color: #fca5a5; }
+    .perm-deny:hover { background: var(--red-bg); }
+    .perm.resolved { opacity: .6; box-shadow: none; } .perm.resolved .perm-actions { display: none; }
+    .perm-outcome { font-size: 14px; font-weight: 600; margin-top: 10px; }
+
+    .err { background: var(--red-bg); border: 1px solid #fecaca; border-radius: var(--radius-sm);
+      padding: 16px 20px; color: var(--red); font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
+
+    .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 100px 24px 60px; text-align: center; }
+    .welcome h2 { font-size: 32px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .welcome p { font-size: 16px; color: var(--text-sec); max-width: 500px; line-height: 1.6; margin-bottom: 40px; }
+    
+    /* Modern card grid for hints */
+    .hints { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 720px; width: 100%; }
+    .hint { padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg);
+      text-align: left; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 8px; }
+    .hint:hover { border-color: #d0d0d0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
+    .hint-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 4px; }
+    .hint-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .hint-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Floating Input Area */
+    .input-area { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 24px 32px; flex-shrink: 0; background: linear-gradient(to top, rgba(255,255,255,1) 40%, rgba(255,255,255,0)); pointer-events: none; z-index: 20; }
+    .input-wrap { max-width: var(--max-w); margin: 0 auto; pointer-events: auto; }
+    .input-box { display: flex; align-items: flex-end; border: 1px solid #e0e0e0;
+      border-radius: 24px; background: var(--bg-soft); overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.08); transition: all 0.2s ease; padding: 4px 8px 4px 16px; }
+    .input-box:focus-within { border-color: #b0b0b0; background: var(--bg); box-shadow: 0 12px 48px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    textarea.input { flex: 1; border: none; outline: none; padding: 14px 0; font-size: 15px;
+      font-family: inherit; resize: none; min-height: 52px; max-height: 200px; line-height: 1.6;
+      background: transparent; color: var(--text); margin-right: 8px; }
+    textarea.input::placeholder { color: var(--text-muted); }
+    .send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent);
+      color: var(--accent-text); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      margin: 6px 0; flex-shrink: 0; transition: transform 0.15s, opacity 0.15s; }
+    .send:hover { opacity: .85; transform: scale(1.05); } 
+    .send:active { transform: scale(0.95); }
+    .send:disabled { opacity: .3; cursor: not-allowed; transform: none; background: #c0c0c0; }
+    .hint-line { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; opacity: 0.8; }
+
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      z-index: 200; padding: 12px 24px; border-radius: 24px; background: var(--accent); color: var(--accent-text);
+      font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,.15); transition: transform .4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.err { background: var(--red); }
+
+    @media (max-width: 1000px) { .changes { display: none; } }
+    @media (max-width: 760px) { .sidebar { display: none; } .topbar { padding: 0 16px; } .input-area { padding: 16px; } }
+  
+    .input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 0 8px; }
+    .input-footer .hint-line { margin-top: 0; }
+    .input-footer .tb-right { gap: 6px; }
+    .input-footer .sel { font-size: 12.5px; padding: 6px 10px; border: none; background: transparent; color: var(--text-sec); cursor: pointer; box-shadow: none; border-radius: var(--radius-xs); transition: all 0.2s;}
+    .input-footer .sel:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+    .input-footer .icon-btn { width: 30px; height: 30px; border: none; background: transparent; box-shadow: none; color: var(--text-sec); transition: all 0.2s;}
+    .input-footer .icon-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+    .input-footer .cost { font-size: 12.5px; color: var(--text-muted); }
+  .msg { margin-bottom: 30px; animation: msgPop .45s cubic-bezier(0.175, 0.885, 0.32, 1.15); transform-origin: bottom center; }
+    @keyframes msgPop { 
+        0% { opacity: 0; transform: translateY(16px) scale(0.97); } 
+        100% { opacity: 1; transform: translateY(0) scale(1); } 
+    }
+    
+    .tool { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 16px 0; overflow: hidden; background: var(--bg); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .tool:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); border-color: #d0d0d0; }
+    .tool-body.open { display: block; animation: expandTool .3s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes expandTool {
+        0% { opacity: 0; max-height: 0; transform: translateY(-4px); }
+        100% { opacity: 1; max-height: 400px; transform: translateY(0); }
+    }
+    
+    .ai-body.typing { animation: pulse 1.5s infinite ease-in-out; }
+    @keyframes pulse { 0% { opacity: 0.85; } 50% { opacity: 1; } 100% { opacity: 0.85; } }
+
+    /* Todo / plan checklist */
+    .todo { border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 16px 0;
+      background: var(--bg); overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .todo-head { padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--text);
+      border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; }
+    .todo-count { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: auto; }
+    .todo-list { padding: 8px 14px 12px; }
+    .todo-item { display: flex; align-items: flex-start; gap: 10px; padding: 5px 2px; font-size: 14px; }
+    .todo-box { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border);
+      flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; line-height: 1; }
+    .todo-item.done .todo-box { background: var(--green); border-color: var(--green); color: #fff; }
+    .todo-item.active .todo-box { border-color: var(--amber); color: var(--amber); }
+    .todo-item.done .todo-text { color: var(--text-muted); text-decoration: line-through; }
+    .todo-item.active .todo-text { color: var(--text); font-weight: 500; }
+    .todo-text { color: var(--text-sec); line-height: 1.5; }
+    .cwd { cursor: pointer; }
+    .cwd:hover { color: var(--text-sec); }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar: history -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
+      <span class="sb-title">WitchcatCode</span>
+    </div>
+    <button class="new-btn" onclick="newChat()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      新对话
+    </button>
+    <div class="sb-section">会话历史</div>
+    <div class="sb-list" id="sessList"><div class="sb-empty">加载中…</div></div>
+    <div class="sb-foot"><a href="javascript:void(0)" onclick="window.open('/index.html?token='+TOKEN,'_self')" style="color:var(--text-sec);text-decoration:none">← 仪表盘</a></div>
+  </aside>
+
+  <div class="layout">
+    <header class="topbar" id="topbar">
+      <span class="cwd" id="cwd" title="点击设置新对话的工作目录" onclick="setCwd()">—</span>
+
+    </header>
+
+    <div class="body">
+      <div class="transcript" id="transcript">
+        <div class="inner" id="inner">
+                    <div class="welcome" id="welcome">
+            <h2>我们应该在 aiqt2 中构建什么？</h2>
+            <p>WitchcatCode 已经准备就绪。在这里提出需求，让我们开始吧！</p>
+            <div class="hints">
+              <div class="hint" onclick="quick('连接消息传送')">
+                <div class="hint-icon">💬</div>
+                <div class="hint-title">连接消息传送</div>
+                <div class="hint-desc">从近期团队讨论中获取背景信息</div>
+              </div>
+              <div class="hint" onclick="quick('连接电子邮件')">
+                <div class="hint-icon">📧</div>
+                <div class="hint-title">连接电子邮件</div>
+                <div class="hint-desc">总结电子邮件中利益相关方的请求</div>
+              </div>
+              <div class="hint" onclick="quick('连接文件')">
+                <div class="hint-icon">📄</div>
+                <div class="hint-title">连接文件</div>
+                <div class="hint-desc">审查结果、研究资料和计划</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="changes hidden" id="changes">
+        <div class="changes-head"><span class="changes-title">改动</span><span class="cost" id="changeCount">0</span></div>
+        <div class="changes-list" id="changesList"></div>
+        <div class="diff-view" id="diffView"></div>
+      </aside>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <div class="input-box">
+          <textarea class="input" id="input" placeholder="给 WitchcatCode 一个任务…" rows="1"
+            onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send" id="send" onclick="sendMsg()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+          </button>
+        </div>
+        <div class="input-footer">
+          <div class="hint-line">Enter 发送 · Shift+Enter 换行</div>
+          <div class="tb-right">
+        <span class="cost" id="cost"></span>
+        <select class="sel" id="model" title="模型" onchange="onModelChange(this.value)"></select>
+        <select class="sel" id="thinking" title="思考" onchange="onThinkingChange(this.value)">
+          <option value="auto">思考：自动</option>
+          <option value="off">思考：关闭</option>
+        </select>
+        <select class="sel" id="mode" title="权限模式" onchange="onModeChange(this.value)">
+          <option value="read-only">只读（需批准）</option>
+          <option value="auto">自动（工作区）</option>
+          <option value="full-access">完全访问</option>
+        </select>
+        <button class="icon-btn" id="stopBtn" onclick="abortTurn()" title="中断" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
+      </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var TOKEN = new URLSearchParams(location.search).get('token');
+  window.TOKEN = TOKEN;
+  if (!TOKEN) {
+    document.getElementById('inner').innerHTML =
+      '<div class="welcome"><div class="welcome-icon" style="background:#dc2626">!</div><h2>未授权</h2><p>缺少身份验证令牌，请从 CLI 启动 GUI。</p></div>';
+    return;
+  }
+  var API = '/api', AUTH = { 'Authorization': 'Bearer ' + TOKEN };
+
+  var ws = null, sessionId = null, mode = 'read-only', model = '', thinking = 'auto';
+  var streaming = false, resumeNext = false, projectCwd = '';
+  var aiTurn = null, blockEls = {}, toolEls = {}, changes = {}, changeOrder = [];
+
+  /* ---------- WebSocket ---------- */
+  function connect() {
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/?token=' + TOKEN);
+    ws.onopen = function () { toast('已连接'); };
+    ws.onmessage = function (ev) { try { handle(JSON.parse(ev.data)); } catch (e) {} };
+    ws.onclose = function () { setStreaming(false); setTimeout(connect, 3000); };
+  }
+  function wsSend(obj) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { toast('连接已断开，正在重连…', true); return false; }
+    try { ws.send(JSON.stringify(obj)); return true; } catch (e) { toast('发送失败', true); return false; }
+  }
+
+  function handle(msg) {
+    var d = msg.data || {};
+    if (msg.type === 'stats') { return; } // dashboard broadcast; ignore here
+    if (d.sessionId && sessionId && d.sessionId !== sessionId &&
+        msg.type !== 'chat:started') return;
+    switch (msg.type) {
+      case 'chat:started': onStarted(d); break;
+      case 'session:init': onInit(d); break;
+      case 'msg:text': appendBlock(d.messageId, d.delta, 'text'); break;
+      case 'msg:thinking': appendBlock(d.messageId, d.delta, 'thinking'); break;
+      case 'tool:use': onToolUse(d); break;
+      case 'tool:result': onToolResult(d); break;
+      case 'perm:request': onPerm(d); break;
+      case 'chat:done': onDone(d); break;
+      case 'chat:error': onError(d); break;
+      case 'chat:cleared': resetTranscript(); break;
+      case 'session:exit': if (streaming) setStreaming(false); break;
+      case 'mode:set': if (d.mode) { mode = d.mode; document.getElementById('mode').value = d.mode; applyModeUI(); } break;
+    }
+  }
+
+  function onStarted(d) {
+    sessionId = d.sessionId;
+    resumeNext = false;
+    if (d.mode) { mode = d.mode; document.getElementById('mode').value = d.mode; applyModeUI(); }
+    hideWelcome();
+    appendUser(d.userMessage);
+    startAiTurn();
+    setStreaming(true);
+    markActiveSession();
+  }
+  function onInit(d) { if (!sessionId) sessionId = d.sessionId; if (d.cwd) { projectCwd = d.cwd; document.getElementById('cwd').textContent = d.cwd; } }
+  window.setCwd = function () {
+    if (sessionId) { toast('当前会话已固定目录；请先「新对话」再修改', true); return; }
+    var v = prompt('设置新对话的工作目录（绝对路径，留空用默认）', projectCwd || '');
+    if (v === null) return;
+    projectCwd = v.trim();
+    document.getElementById('cwd').textContent = projectCwd || '默认目录';
+  };
+  function onDone(d) {
+    finishAiTurn(); setStreaming(false);
+    if (typeof d.costUSD === 'number' && d.costUSD > 0) document.getElementById('cost').textContent = '$' + d.costUSD.toFixed(4);
+    if (d.isError && d.result) appendError(d.result);
+    loadSessions(); // refresh history (new session may have appeared)
+  }
+  function onError(d) { appendError(d.error || '未知错误'); setStreaming(false); }
+
+  /* ---------- Rendering ---------- */
+  function inner() { return document.getElementById('inner'); }
+  function hideWelcome() { var w = document.getElementById('welcome'); if (w) w.remove(); }
+  function scroll() { var t = document.getElementById('transcript'); t.scrollTop = t.scrollHeight; }
+
+  function appendUser(text) {
+    var div = document.createElement('div');
+    div.className = 'msg msg-user';
+    div.innerHTML = '<div class="bubble"></div>';
+    div.querySelector('.bubble').textContent = text;
+    inner().appendChild(div); scroll();
+  }
+  function startAiTurn() {
+    blockEls = {};
+    todoEl = null;
+    var div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="avatar">WC</div><div class="ai-body"></div>';
+    inner().appendChild(div);
+    aiTurn = div.querySelector('.ai-body'); scroll();
+  }
+  function finishAiTurn() {
+    for (var k in blockEls) { var b = blockEls[k]; if (b.kind === 'text') b.el.innerHTML = md(b.raw); }
+  }
+  function appendBlock(messageId, delta, kind) {
+    if (!aiTurn) startAiTurn();
+    var b = blockEls[messageId];
+    if (!b) {
+      if (kind === 'thinking') {
+        var det = document.createElement('details'); det.className = 'think';
+        det.innerHTML = '<summary>💭 思考过程</summary><div class="think-body"></div>';
+        aiTurn.appendChild(det);
+        b = blockEls[messageId] = { el: det.querySelector('.think-body'), raw: '', kind: kind };
+      } else {
+        var p = document.createElement('div'); p.className = 'ai-text';
+        aiTurn.appendChild(p);
+        b = blockEls[messageId] = { el: p, raw: '', kind: kind };
+      }
+    }
+    b.raw += delta; b.el.textContent = b.raw; scroll();
+  }
+
+  function toolSummary(name, input) {
+    return input.file_path || input.path || input.pattern ||
+      (input.command ? String(input.command).slice(0, 80) : '') || input.url || input.query || '';
+  }
+  var todoEl = null;
+  function renderTodos(todos) {
+    if (!aiTurn) startAiTurn();
+    if (!todoEl) {
+      todoEl = document.createElement('div'); todoEl.className = 'todo';
+      todoEl.innerHTML = '<div class="todo-head">📋 任务清单 <span class="todo-count"></span></div><div class="todo-list"></div>';
+      aiTurn.appendChild(todoEl);
+    }
+    var done = todos.filter(function (t) { return t.status === 'completed'; }).length;
+    todoEl.querySelector('.todo-count').textContent = done + '/' + todos.length;
+    var list = todoEl.querySelector('.todo-list'); list.innerHTML = '';
+    todos.forEach(function (t) {
+      var cls = t.status === 'completed' ? 'done' : (t.status === 'in_progress' ? 'active' : '');
+      var box = t.status === 'completed' ? '✓' : (t.status === 'in_progress' ? '●' : '');
+      var text = t.status === 'in_progress' ? (t.activeForm || t.content) : t.content;
+      var item = document.createElement('div'); item.className = 'todo-item ' + cls;
+      item.innerHTML = '<span class="todo-box">' + box + '</span><span class="todo-text"></span>';
+      item.querySelector('.todo-text').textContent = text;
+      list.appendChild(item);
+    });
+    scroll();
+  }
+
+  function onToolUse(d) {
+    if (!aiTurn) startAiTurn();
+    if (d.name === 'TodoWrite') {
+      renderTodos(((d.input || {}).todos) || []);
+      toolEls[d.toolUseId] = { todo: true };
+      return;
+    }
+    var card = document.createElement('div'); card.className = 'tool';
+    card.innerHTML = '<div class="tool-head"><span class="tool-name"></span><span class="tool-summary"></span>' +
+      '<span class="tool-status st-run"><span class="spin"></span></span></div><div class="tool-body"><pre></pre></div>';
+    card.querySelector('.tool-name').textContent = d.name;
+    card.querySelector('.tool-summary').textContent = toolSummary(d.name, d.input || {});
+    card.querySelector('.tool-body pre').textContent = JSON.stringify(d.input, null, 2);
+    var body = card.querySelector('.tool-body');
+    card.querySelector('.tool-head').onclick = function () { body.classList.toggle('open'); };
+    aiTurn.appendChild(card);
+    toolEls[d.toolUseId] = { card: card, body: body, status: card.querySelector('.tool-status') };
+    if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].indexOf(d.name) >= 0) {
+      var fp = (d.input || {}).file_path || (d.input || {}).path;
+      if (fp) { if (!changes[fp]) changeOrder.push(fp); changes[fp] = { verb: d.name, input: d.input || {} }; renderChanges(); }
+    }
+    scroll();
+  }
+  function onToolResult(d) {
+    var t = toolEls[d.toolUseId]; if (!t || t.todo) return;
+    t.status.className = 'tool-status ' + (d.isError ? 'st-err' : 'st-ok');
+    t.status.textContent = d.isError ? '失败' : '完成';
+    if (d.content) { t.body.querySelector('pre').textContent = d.content.slice(0, 4000); if (d.isError) t.body.classList.add('open'); }
+    scroll();
+  }
+
+  function onPerm(d) {
+    if (!aiTurn) startAiTurn();
+    var div = document.createElement('div'); div.className = 'perm';
+    var detail = formatPermDetail(d.name, d.input || {});
+    div.innerHTML = '<div class="perm-title">⚠️ 需要批准</div><div class="perm-tool"></div>' +
+      (detail ? '<div class="perm-detail"></div>' : '') +
+      '<div class="perm-actions"><button class="perm-allow">允许一次</button>' +
+      '<button class="perm-always">本会话总是允许</button><button class="perm-deny">拒绝</button></div>' +
+      '<div class="perm-outcome" style="display:none"></div>';
+    div.querySelector('.perm-tool').textContent = d.name + (toolSummary(d.name, d.input || {}) ? ' · ' + toolSummary(d.name, d.input || {}) : '');
+    if (detail) div.querySelector('.perm-detail').textContent = detail;
+    var outcome = div.querySelector('.perm-outcome');
+    function respond(decision, scope, label) {
+      wsSend({ type: 'perm:response', payload: { sessionId: sessionId, requestId: d.requestId, decision: decision, scope: scope, updatedInput: d.input } });
+      div.classList.add('resolved'); outcome.style.display = 'block'; outcome.textContent = label;
+      outcome.style.color = decision === 'deny' ? 'var(--red)' : 'var(--green)';
+    }
+    div.querySelector('.perm-allow').onclick = function () { respond('allow', 'once', '✓ 已允许'); };
+    div.querySelector('.perm-always').onclick = function () { respond('allow', 'always', '✓ 已允许（本会话）'); };
+    div.querySelector('.perm-deny').onclick = function () { respond('deny', 'once', '✕ 已拒绝'); };
+    aiTurn.appendChild(div); scroll();
+  }
+  function formatPermDetail(name, input) {
+    if (name === 'Bash') return input.command || '';
+    if (name === 'Write') return (input.file_path || '') + '\n\n' + (input.content || '').slice(0, 1500);
+    if (name === 'Edit') return (input.file_path || '') + '\n\n- ' + (input.old_string || '').slice(0, 500) + '\n+ ' + (input.new_string || '').slice(0, 500);
+    var keys = Object.keys(input); return keys.length ? JSON.stringify(input, null, 2).slice(0, 1200) : '';
+  }
+  function appendError(text) { if (!aiTurn) startAiTurn(); var d = document.createElement('div'); d.className = 'err'; d.textContent = text; aiTurn.appendChild(d); scroll(); }
+
+  /* ---------- Changes panel ---------- */
+  function renderChanges() {
+    var panel = document.getElementById('changes'); panel.classList.remove('hidden');
+    document.getElementById('changeCount').textContent = changeOrder.length;
+    var list = document.getElementById('changesList'); list.innerHTML = '';
+    changeOrder.forEach(function (fp) {
+      var c = changes[fp]; var item = document.createElement('div'); item.className = 'change-item';
+      item.innerHTML = '<span class="verb"></span><span class="change-path"></span>';
+      item.querySelector('.verb').textContent = c.verb; item.querySelector('.change-path').textContent = fp;
+      item.onclick = function () { showDiff(fp); };
+      list.appendChild(item);
+    });
+  }
+  function showDiff(fp) {
+    var c = changes[fp]; if (!c) return; var v = document.getElementById('diffView'); v.style.display = 'block';
+    var html = '<div style="font-weight:600;margin-bottom:8px;word-break:break-all">' + esc(fp) + '</div>';
+    if (c.verb === 'Write') html += '<pre>' + (c.input.content || '').split('\n').map(function (l) { return '<span class="diff-add">+ ' + esc(l) + '</span>'; }).join('') + '</pre>';
+    else if (c.verb === 'Edit') html += '<pre><span class="diff-del">- ' + esc(c.input.old_string || '') + '</span><span class="diff-add">+ ' + esc(c.input.new_string || '') + '</span></pre>';
+    else html += '<pre>' + esc(JSON.stringify(c.input, null, 2)) + '</pre>';
+    v.innerHTML = html;
+  }
+
+  /* ---------- Session history ---------- */
+  var sessions = [];
+  function loadSessions() {
+    fetch(API + '/sessions', { headers: AUTH }).then(function (r) { return r.json(); }).then(function (list) {
+      sessions = Array.isArray(list) ? list : [];
+      renderSessions();
+    }).catch(function () {});
+  }
+  function renderSessions() {
+    var el = document.getElementById('sessList');
+    if (!sessions.length) { el.innerHTML = '<div class="sb-empty">暂无会话历史</div>'; return; }
+    el.innerHTML = '';
+    sessions.forEach(function (s) {
+      var item = document.createElement('div');
+      item.className = 'sess' + (s.sessionId === sessionId ? ' active' : '');
+      item.dataset.id = s.sessionId;
+      item.innerHTML = '<div class="sess-title"></div><div class="sess-meta"></div>';
+      item.querySelector('.sess-title').textContent = s.firstPrompt || ('会话 ' + s.sessionId.slice(0, 8));
+      item.querySelector('.sess-meta').textContent = fmtDate(s.createdAt);
+      item.onclick = function () { openSession(s); };
+      el.appendChild(item);
+    });
+  }
+  function markActiveSession() {
+    document.querySelectorAll('.sess').forEach(function (n) { n.classList.toggle('active', n.dataset.id === sessionId); });
+  }
+  function openSession(s) {
+    fetch(API + '/sessions/' + encodeURIComponent(s.sessionId) + '?project=' + encodeURIComponent(s.projectPath), { headers: AUTH })
+      .then(function (r) { return r.json(); }).then(function (detail) {
+        resetTranscriptDom();
+        sessionId = s.sessionId; resumeNext = true;
+        hideWelcome();
+        (detail.messages || []).forEach(function (m) {
+          if (m.role === 'user') appendUser(m.content);
+          else if (m.role === 'assistant') { startAiTurn(); var p = document.createElement('div'); p.className = 'ai-text'; p.innerHTML = md(m.content); aiTurn.appendChild(p); }
+        });
+        var note = document.createElement('div'); note.className = 'sb-empty';
+        note.style.textAlign = 'center'; note.textContent = '— 已加载历史，继续输入即可接着对话 —';
+        inner().appendChild(note);
+        markActiveSession(); scroll();
+        toast('已打开会话');
+      }).catch(function () { toast('打开会话失败', true); });
+  }
+
+  /* ---------- Model / config ---------- */
+  function loadConfig() {
+    Promise.all([
+      fetch(API + '/config/providers', { headers: AUTH }).then(function (r) { return r.json(); }).catch(function () { return []; }),
+      fetch(API + '/config/current', { headers: AUTH }).then(function (r) { return r.json(); }).catch(function () { return {}; })
+    ]).then(function (res) {
+      var providers = res[0] || [], cur = res[1] || {};
+      var active = providers.find(function (p) { return p.isActive; });
+      var models = active ? (active.models || []) : [];
+      model = cur.activeModel || (models[0] || '');
+      var sel = document.getElementById('model');
+      if (!models.length) { sel.innerHTML = '<option>默认模型</option>'; sel.disabled = true; return; }
+      sel.innerHTML = models.map(function (m) { return '<option value="' + esc(m) + '"' + (m === model ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('');
+    });
+  }
+
+  /* ---------- Actions ---------- */
+  window.sendMsg = function () {
+    var inp = document.getElementById('input'); var text = inp.value.trim();
+    if (!text || streaming) return;
+    if (!wsSend({ type: 'chat:start', payload: { sessionId: sessionId, message: text, mode: mode, model: model || undefined, thinking: thinking, resume: resumeNext || undefined, cwd: projectCwd || undefined } })) return;
+    inp.value = ''; autoResize(inp);
+  };
+  window.quick = function (t) { if (streaming) return; wsSend({ type: 'chat:start', payload: { sessionId: sessionId, message: t, mode: mode, model: model || undefined, thinking: thinking, cwd: projectCwd || undefined } }); };
+  window.onKey = function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } };
+  window.autoResize = function (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 150) + 'px'; };
+  window.abortTurn = function () { if (sessionId) wsSend({ type: 'chat:abort', payload: { sessionId: sessionId } }); setStreaming(false); };
+  window.newChat = function () { if (sessionId) wsSend({ type: 'chat:clear', payload: { sessionId: sessionId } }); resetTranscript(); };
+  window.onModeChange = function (m) {
+    if (m === 'full-access' && !confirm('完全访问模式下，AI 可不经批准读写任意文件、执行命令、联网。确定开启？')) {
+      document.getElementById('mode').value = mode; return;
+    }
+    mode = m; applyModeUI();
+    if (sessionId) wsSend({ type: 'mode:set', payload: { sessionId: sessionId, mode: mode } });
+  };
+  window.onModelChange = function (m) { model = m; if (sessionId) wsSend({ type: 'model:set', payload: { sessionId: sessionId, model: m } }); };
+  window.onThinkingChange = function (t) { thinking = t; if (sessionId) wsSend({ type: 'thinking:set', payload: { sessionId: sessionId, thinking: t } }); };
+  function applyModeUI() { document.getElementById('topbar').classList.toggle('danger', mode === 'full-access'); }
+
+  function resetTranscriptDom() {
+    aiTurn = null; blockEls = {}; toolEls = {}; changes = {}; changeOrder = []; todoEl = null;
+    document.getElementById('changes').classList.add('hidden');
+    document.getElementById('diffView').style.display = 'none';
+    document.getElementById('cost').textContent = '';
+    inner().innerHTML = '';
+  }
+  function resetTranscript() {
+    sessionId = null; resumeNext = false; resetTranscriptDom();
+    inner().innerHTML = `<div class="welcome" id="welcome">
+            <h2>我们应该在 aiqt2 中构建什么？</h2>
+            <p>WitchcatCode 已经准备就绪。在这里提出需求，让我们开始吧！</p>
+            <div class="hints">
+              <div class="hint" onclick="quick('连接消息传送')">
+                <div class="hint-icon">💬</div>
+                <div class="hint-title">连接消息传送</div>
+                <div class="hint-desc">从近期团队讨论中获取背景信息</div>
+              </div>
+              <div class="hint" onclick="quick('连接电子邮件')">
+                <div class="hint-icon">📧</div>
+                <div class="hint-title">连接电子邮件</div>
+                <div class="hint-desc">总结电子邮件中利益相关方的请求</div>
+              </div>
+              <div class="hint" onclick="quick('连接文件')">
+                <div class="hint-icon">📄</div>
+                <div class="hint-title">连接文件</div>
+                <div class="hint-desc">审查结果、研究资料和计划</div>
+              </div>
+            </div>
+          </div>`;
+    setStreaming(false); markActiveSession();
+  }
+  function setStreaming(v) { streaming = v; document.getElementById('send').disabled = v; document.getElementById('stopBtn').disabled = !v; }
+
+  /* ---------- utils ---------- */
+  function esc(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function fmtDate(iso) { if (!iso) return ''; var d = new Date(iso); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function md(text) {
+    if (!text) return '';
+    var h = esc(text);
+    h = h.replace(/```(\w*)\n([\s\S]*?)```/g, function (_, l, c) { return '<pre><code>' + c.replace(/\n$/, '') + '</code></pre>'; });
+    h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+    h = '<p>' + h + '</p>';
+    h = h.replace(/<p><pre>/g, '<pre>').replace(/<\/pre><\/p>/g, '</pre>');
+    return h;
+  }
+  function toast(m, e) { var t = document.getElementById('toast'); t.textContent = m; t.className = 'toast' + (e ? ' err' : ''); t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2200); }
+
+  connect(); loadSessions(); loadConfig();
+  document.getElementById('input').focus();
+})();
+</script>
+</body>
+</html>

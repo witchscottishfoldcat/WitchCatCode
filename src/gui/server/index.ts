@@ -5,6 +5,7 @@ import { createConfigService } from '../services/configService.js'
 import { createSessionService } from '../services/sessionService.js'
 import { createStatsService } from '../services/statsService.js'
 import { getStaticAsset } from './staticAssets.js'
+import { addWsClient, removeWsClient, startBroadcastLoop, stopBroadcastLoop, handleWsMessage } from './websocket.js'
 
 const DEFAULT_PORT = 9277
 const TOKEN_PARAM = 'token'
@@ -34,6 +35,10 @@ function withCors(headers: Headers): Headers {
 function authenticate(url: URL): boolean {
   const tokenParam = url.searchParams.get(TOKEN_PARAM)
   return validateToken(tokenParam, serverToken)
+}
+
+function isWebSocketUpgrade(request: Request): boolean {
+  return request.headers.get('upgrade')?.toLowerCase() === 'websocket'
 }
 
 function handleRequest(request: Request, ctx: ApiContext): Response | Promise<Response> {
@@ -75,6 +80,19 @@ function handleRequest(request: Request, ctx: ApiContext): Response | Promise<Re
     })
   }
 
+  if (path === '/chat' || path === '/chat.html') {
+    const chatAsset = getStaticAsset('/chat.html')
+    if (chatAsset) {
+      return new Response(chatAsset.content, {
+        headers: {
+          'Content-Type': chatAsset.contentType,
+          'Cache-Control': 'no-cache',
+          ...CORS_HEADERS,
+        },
+      })
+    }
+  }
+
   const index = getStaticAsset('/index.html')
   if (index) {
     return new Response(index.content, {
@@ -100,17 +118,53 @@ export async function startGuiServer(port = DEFAULT_PORT): Promise<{ url: string
 
   const ctx: ApiContext = { services }
 
-  serverInstance = Bun.serve({
-    port,
-    hostname: '127.0.0.1',
-    fetch: (request) => handleRequest(request, ctx),
-  })
+  try {
+    serverInstance = Bun.serve({
+      port,
+      hostname: '127.0.0.1',
+      fetch: (request, server) => {
+        // WebSocket upgrade must be handled here; Bun only invokes the
+        // `websocket` handlers if `server.upgrade()` is called and returns true.
+        if (isWebSocketUpgrade(request)) {
+          const url = new URL(request.url)
+          if (!authenticate(url)) {
+            return new Response('Unauthorized', { status: 401 })
+          }
+          if (server.upgrade(request)) {
+            return undefined
+          }
+          return new Response('WebSocket upgrade failed', { status: 400 })
+        }
+        return handleRequest(request, ctx)
+      },
+      websocket: {
+        open(ws) {
+          addWsClient(ws)
+        },
+        close(ws) {
+          removeWsClient(ws)
+        },
+        message(ws, message) {
+          handleWsMessage(ws, message)
+        },
+      },
+    })
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code
+    if (code === 'EADDRINUSE') {
+      throw new Error(`端口 ${port} 已被占用，请关闭占用该端口的程序或更换端口后重试。`)
+    }
+    throw err
+  }
+
+  startBroadcastLoop(services)
 
   const url = `http://localhost:${serverInstance.port}?${TOKEN_PARAM}=${serverToken}`
   return { url, token: serverToken }
 }
 
 export function stopGuiServer(): void {
+  stopBroadcastLoop()
   if (serverInstance) {
     serverInstance.stop()
     serverInstance = null

@@ -336,7 +336,7 @@
 <div class="app" id="app">
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">WC</div>
+      <div class="brand-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
       <div>
         <div class="brand-name">WitchcatCode</div>
         <div class="brand-tag">控制台</div>
@@ -365,6 +365,13 @@
           会话
         </div>
       </div>
+      <div class="nav-group">
+        <div class="nav-group-title">工具</div>
+        <div class="nav-item" onclick="window.open('/chat.html?token='+TOKEN,'_self')">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h6"/></svg></span>
+          AI 对话
+        </div>
+      </div>
     </nav>
     <div class="sidebar-footer">v1.1.5</div>
   </aside>
@@ -379,6 +386,7 @@
 <script>
 (function() {
   const TOKEN = new URLSearchParams(window.location.search).get('token');
+  window.TOKEN = TOKEN;
   if (!TOKEN) {
     document.getElementById('main-content').innerHTML =
       '<div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg></div><div class="empty-state-title">未授权</div><div class="empty-state-desc">缺少身份验证令牌</div></div>';
@@ -427,6 +435,30 @@
       '</div>';
   }
 
+  function renderModelSelect(providers, activeModel) {
+    const activeProvider = providers?.find(p => p.isActive);
+    const models = activeProvider?.models || [];
+    if (models.length === 0) return '<code>-</code>';
+    return '<select class="form-select" style="width:auto;min-width:160px;font-size:12px;padding:4px 8px" onchange="switchModel(this.value)" onclick="event.stopPropagation()">' +
+      models.map(m => '<option value="' + esc(m) + '"' + (m === activeModel ? ' selected' : '') + '>' + esc(m) + '</option>').join('') +
+      '</select>';
+  }
+
+  window.switchModel = async function(model) {
+    try {
+      const resp = await fetch(API + '/config/model', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model }),
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      showToast('已切换模型');
+      await reload();
+    } catch (e) {
+      showToast('切换失败: ' + e.message, true);
+    }
+  };
+
   function renderOverview() {
     const s = cachedData.stats;
     const c = cachedData.config;
@@ -437,12 +469,12 @@
       statCard('总 Token 数', fmtTokens(total), 'icon-accent', iconSvg('<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'), (s ? fmtTokens(s.totalInputTokens) + ' 输入 / ' + fmtTokens(s.totalOutputTokens) + ' 输出' : '')) +
       statCard('总花费', fmtCost(s?.totalCostUSD || 0), 'icon-green', iconSvg('<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'), '美元') +
       statCard('代码行变更', fmtTokens(totalLines), 'icon-blue', iconSvg('<path d="M12 5v14M5 12h14"/>'), '+' + (s?.linesAdded || 0) + ' / -' + (s?.linesRemoved || 0)) +
-      statCard('API 调用', s?.apiCallCount || 0, 'icon-orange', iconSvg('<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'), '总请求数') +
+      statCard('缓存读取', fmtTokens(s?.cacheReadTokens || 0), 'icon-orange', iconSvg('<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'), '缓存命中 Token') +
       '</div>' +
       '<div class="section">' +
       '<div class="section-header"><span class="section-title">当前配置</span></div>' +
       '<div class="config-row"><span class="config-key">活跃服务商</span><span class="config-value"><code>' + esc(c?.providerId || c?.providerKind || '-') + '</code></span></div>' +
-      '<div class="config-row"><span class="config-key">活跃模型</span><span class="config-value"><code>' + esc(c?.activeModel || '-') + '</code></span></div>' +
+      '<div class="config-row"><span class="config-key">活跃模型</span><span class="config-value">' + renderModelSelect(cachedData.providers, c?.activeModel) + '</span></div>' +
       '<div class="config-row"><span class="config-key">认证模式</span><span class="config-value"><code>' + esc(c?.authMode || '-') + '</code></span></div>' +
       '<div class="config-row"><span class="config-key">基础地址</span><span class="config-value">' + (c?.baseURL ? '<code>' + esc(c.baseURL) + '</code>' : '<span style="color:var(--text-muted)">-</span>') + '</span></div>' +
       '</div>';
@@ -473,8 +505,8 @@
     const sessions = cachedData.sessions || [];
     return '<div class="main-header"><div><div class="main-title">会话</div><div class="main-subtitle">对话历史与记忆</div></div><button class="refresh-btn" onclick="reload()">' + iconSvg('<path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>') + ' 刷新</button></div>' +
       (sessions.length === 0 ? '<div class="section"><div class="empty-state"><div class="empty-state-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="empty-state-title">暂无会话</div><div class="empty-state-desc">在 CLI 中开始对话以创建会话</div></div></div>' :
-      '<div class="section"><div class="section-header"><span class="section-title">最近会话</span><span class="section-count">' + sessions.length + '</span></div><table><thead><tr><th>会话 ID</th><th>项目路径</th><th>首条提示</th><th>大小</th><th>创建时间</th></tr></thead><tbody>' +
-      sessions.map(s => '<tr class="session-row"><td><code style="font-size:11px;color:var(--blue)">' + esc(s.sessionId.slice(0, 12)) + '...</code></td><td>' + esc(s.projectPath) + '</td><td class="session-prompt">' + esc(s.firstPrompt || '-') + '</td><td class="session-size">' + fmtSize(s.sizeBytes) + '</td><td class="session-meta">' + fmtDate(s.createdAt) + '</td></tr>').join('') +
+      '<div class="section"><div class="section-header"><span class="section-title">最近会话</span><span class="section-count">' + sessions.length + '</span></div><table><thead><tr><th>会话 ID</th><th>项目路径</th><th>首条提示</th><th>大小</th><th>创建时间</th><th style="width:100px">操作</th></tr></thead><tbody>' +
+      sessions.map(s => '<tr class="session-row"><td><code style="font-size:11px;color:var(--blue);cursor:pointer" onclick="viewSession(' + "'" + esc(s.sessionId) + "','" + esc(s.projectPath) + "'" + ')">' + esc(s.sessionId.slice(0, 12)) + '...</code></td><td>' + esc(s.projectPath) + '</td><td class="session-prompt">' + esc(s.firstPrompt || '-') + '</td><td class="session-size">' + fmtSize(s.sizeBytes) + '</td><td class="session-meta">' + fmtDate(s.createdAt) + '</td><td><button class="action-btn" style="color:var(--red);border-color:var(--red-border)" onclick="deleteSession(' + "'" + esc(s.sessionId) + "','" + esc(s.projectPath) + "'" + ')">删除</button></td></tr>').join('') +
       '</tbody></table></div>');
   }
 
@@ -537,6 +569,24 @@
   }
 
   loadAll();
+
+  /* WebSocket */
+  (function connectWs() {
+    const wsUrl = 'ws://' + window.location.host + '/?token=' + TOKEN;
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = function(ev) {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'stats' && msg.data) {
+          cachedData = msg.data;
+          render();
+        }
+      } catch {}
+    };
+    ws.onclose = function() {
+      setTimeout(connectWs, 3000);
+    };
+  })();
 
   /* Modal */
   window.openEditModal = function(providerId) {
@@ -613,6 +663,49 @@
       await reload();
     } catch (e) {
       showToast('激活失败: ' + e.message, true);
+    }
+  };
+
+  window.viewSession = async function(sessionId, projectPath) {
+    try {
+      const detail = await fetchApi('/sessions/' + encodeURIComponent(sessionId) + '?project=' + encodeURIComponent(projectPath));
+      const modal = document.getElementById('modal');
+      modal.innerHTML =
+        '<div class="modal-header"><span class="modal-title">会话详情</span><button class="modal-close" onclick="closeModal()">' + iconSvg('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>') + '</button></div>' +
+        '<div class="modal-body" style="max-height:60vh;overflow-y:auto">' +
+        '<div style="display:flex;gap:16px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">' +
+        '<span>ID: <code>' + esc(sessionId.slice(0, 16)) + '...</code></span>' +
+        '<span>项目: ' + esc(projectPath) + '</span>' +
+        '<span>大小: ' + fmtSize(detail.sizeBytes) + '</span>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:12px">' +
+        (detail.messages || []).map(m => {
+          const isUser = m.role === 'user';
+          return '<div style="display:flex;gap:10px;align-items:flex-start">' +
+            '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;' + (isUser ? 'background:var(--bg-tertiary);color:var(--text-secondary)' : 'background:var(--accent);color:var(--accent-text)') + '">' + (isUser ? 'U' : 'A') + '</div>' +
+            '<div style="flex:1;background:' + (isUser ? 'var(--bg-secondary)' : 'var(--bg-tertiary)') + ';border-radius:var(--radius-xs);padding:10px 14px;font-size:13px;line-height:1.6;color:var(--text);border:1px solid ' + (isUser ? 'var(--border-light)' : 'var(--border)') + '">' + esc(m.content.slice(0, 500)) + (m.content.length > 500 ? '...' : '') + '</div>' +
+            '</div>';
+        }).join('') +
+        '</div>' +
+        '</div>';
+      document.getElementById('modal-overlay').classList.add('show');
+    } catch (e) {
+      showToast('加载详情失败: ' + e.message, true);
+    }
+  };
+
+  window.deleteSession = async function(sessionId, projectPath) {
+    if (!confirm('确定要删除此会话吗？此操作不可恢复。')) return;
+    try {
+      const resp = await fetch(API + '/sessions/' + encodeURIComponent(sessionId) + '?project=' + encodeURIComponent(projectPath), {
+        method: 'DELETE',
+        headers,
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      showToast('已删除');
+      await reload();
+    } catch (e) {
+      showToast('删除失败: ' + e.message, true);
     }
   };
 

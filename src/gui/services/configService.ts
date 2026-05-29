@@ -117,5 +117,22 @@ export function createConfigService() {
       writeCustomApiStorage(next)
       return true
     },
+
+    setActiveModel(model: string): boolean {
+      const data = readCustomApiStorage()
+      const providers = data.providers ?? []
+      const active = getActiveProviderConfig(data)
+      if (!active) return false
+      const provider = providers.find(p => p.id === active.id)
+      if (!provider || !provider.models.includes(model)) return false
+
+      const next: CustomApiStorageData = {
+        ...data,
+        activeModel: model,
+        model,
+      }
+      writeCustomApiStorage(next)
+      return true
+    },
   }
 }

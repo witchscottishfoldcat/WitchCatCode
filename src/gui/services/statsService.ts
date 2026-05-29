@@ -6,8 +6,8 @@ import {
   getTotalAPIDuration,
   getTotalLinesAdded,
   getTotalLinesRemoved,
+  getTotalCacheReadInputTokens,
   getModelUsage,
-  getUsageForModel,
 } from '../../bootstrap/state.js'
 
 export type StatsOverview = {
@@ -18,6 +18,7 @@ export type StatsOverview = {
   totalAPIDurationMs: number
   linesAdded: number
   linesRemoved: number
+  cacheReadTokens: number
   modelUsage: Record<string, { inputTokens: number; outputTokens: number }>
 }
 
@@ -42,6 +43,7 @@ export function createStatsService() {
         totalAPIDurationMs: getTotalAPIDuration(),
         linesAdded: getTotalLinesAdded(),
         linesRemoved: getTotalLinesRemoved(),
+        cacheReadTokens: getTotalCacheReadInputTokens(),
         modelUsage,
       }
     },

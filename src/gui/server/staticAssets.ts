@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join, resolve, sep } from 'path'
 import { readFileSync } from 'fs'
 
 const MIME_TYPES: Record<string, string> = {
@@ -28,6 +28,17 @@ function tryReadFile(...candidates: string[]): string | null {
   return null
 }
 
+/**
+ * Resolve a request path against a base dir, rejecting any path that escapes
+ * the base dir (path traversal, e.g. `/../../package.json`).
+ */
+function safeResolve(baseDir: string, requestPath: string): string | null {
+  const resolved = resolve(baseDir, '.' + (requestPath.startsWith('/') ? requestPath : '/' + requestPath))
+  const baseWithSep = baseDir.endsWith(sep) ? baseDir : baseDir + sep
+  if (resolved !== baseDir && !resolved.startsWith(baseWithSep)) return null
+  return resolved
+}
+
 function loadAssets(): Map<string, { content: string; contentType: string }> {
   if (assetsCache) return assetsCache
 
@@ -36,6 +47,11 @@ function loadAssets(): Map<string, { content: string; contentType: string }> {
   const indexHtml = tryReadFile(join(WEB_DIR, 'index.html'), join(DIST_DIR, 'index.html'))
   if (indexHtml) {
     assetsCache.set('/index.html', { content: indexHtml, contentType: 'text/html; charset=utf-8' })
+  }
+
+  const chatHtml = tryReadFile(join(WEB_DIR, 'chat.html'), join(DIST_DIR, 'chat.html'))
+  if (chatHtml) {
+    assetsCache.set('/chat.html', { content: chatHtml, contentType: 'text/html; charset=utf-8' })
   }
 
   return assetsCache
@@ -49,7 +65,10 @@ export function getStaticAsset(path: string): { content: string; contentType: st
   const ext = getExt(path)
   const contentType = MIME_TYPES[ext]
   if (contentType) {
-    const content = tryReadFile(join(WEB_DIR, path), join(DIST_DIR, path))
+    const webPath = safeResolve(WEB_DIR, path)
+    const distPath = safeResolve(DIST_DIR, path)
+    if (!webPath && !distPath) return null
+    const content = tryReadFile(...[webPath, distPath].filter((p): p is string => p !== null))
     if (content) {
       assets.set(path, { content, contentType })
       return { content, contentType }
